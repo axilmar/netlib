@@ -2,16 +2,11 @@
 #define NETLIB_FIELD_HPP
 
 
-#include <type_traits>
+#include "serialization.hpp"
 #include "internals/next_field_base.hpp"
 
 
 namespace netlib {
-
-
-    //forward declarations
-    template <class T> void serialize(const T& value, byte_buffer& buffer);
-    template <class T> void deserialize(T& value, const byte_buffer& buffer, byte_buffer::position& pos);
 
 
     //field prototype.
