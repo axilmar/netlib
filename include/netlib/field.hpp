@@ -10,8 +10,8 @@ namespace netlib {
 
 
     //forward declarations
-    template <class T> void serialize(const T& value, std::vector<std::byte>& buffer);
-    template <class T> void deserialize(T& value, const std::vector<std::byte>& buffer, size_t& index);
+    template <class T> void serialize(const T& value, byte_buffer& buffer);
+    template <class T> void deserialize(T& value, const byte_buffer& buffer, byte_buffer::position& pos);
 
 
     //field prototype.
@@ -66,7 +66,7 @@ namespace netlib {
          * It invokes the standalone version of the function.
          * @param buffer output buffer.
          */
-        void serialize(std::vector<std::byte>& buffer) const final {
+        void serialize(byte_buffer& buffer) const final {
             ::serialize(value, buffer);
         }
 
@@ -74,10 +74,10 @@ namespace netlib {
          * Implementation of the field's deserialization.
          * It invokes the standalone version of the function.
          * @param buffer input buffer.
-         * @param index current position.
+         * @param pos current position.
          */
-        void deserialize(const std::vector<std::byte>& buffer, size_t& index) final {
-            ::deserialize(value, buffer, index);
+        void deserialize(const byte_buffer& buffer, byte_buffer::position& pos) final {
+            ::deserialize(value, buffer, pos);
         }
     };
 
@@ -103,7 +103,7 @@ namespace netlib {
          * It invokes the standalone version of the function.
          * @param buffer output buffer.
          */
-        void serialize(std::vector<std::byte>& buffer) const final {
+        void serialize(byte_buffer& buffer) const final {
             ::serialize(static_cast<const T&>(*this), buffer);
         }
 
@@ -111,10 +111,10 @@ namespace netlib {
          * Implementation of the field's deserialization.
          * It invokes the standalone version of the function.
          * @param buffer input buffer.
-         * @param index current position.
+         * @param pos current position.
          */
-        void deserialize(const std::vector<std::byte>& buffer, size_t& index) final {
-            ::deserialize(static_cast<T&>(*this), buffer, index);
+        void deserialize(const byte_buffer& buffer, byte_buffer::position& pos) final {
+            ::deserialize(static_cast<T&>(*this), buffer, pos);
         }
     };
 

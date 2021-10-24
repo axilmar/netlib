@@ -9,9 +9,6 @@
 namespace netlib {
 
 
-    template <class T>
-
-
 } //namespace netlib
 
 
