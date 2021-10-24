@@ -11,6 +11,12 @@ namespace netlib {
 
 
     /**
+     * Message id type. 
+     */
+    using message_id = uint16_t;
+
+
+    /**
      * Base class for messages.
      */
     class message {
@@ -19,7 +25,7 @@ namespace netlib {
          * The first field message is always its id,
          * in order to allow the message to be deserialized on the receiver.
          */
-        field<uint16_t, internals::first_field_base> id;
+        field<message_id, internals::first_field_base> id;
 
         /**
          * Returns a const pointer to the first field, which is the message id.
