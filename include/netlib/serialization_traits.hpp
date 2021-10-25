@@ -159,36 +159,6 @@ namespace netlib {
 
 
     /**
-     * Returns object from pointer.
-     * @param ptr pointer.
-     * @return object.
-     */
-    template <class T> const T& dereference_pointer(const T* const ptr) {
-        return *ptr;
-    }
-
-
-    /**
-     * Returns object from unique ptr.
-     * @param ptr pointer.
-     * @return object.
-     */
-    template <class T, class Deleter> const T& dereference_pointer(const std::unique_ptr<T, Deleter>& ptr) {
-        return *ptr.get();
-    }
-
-
-    /**
-     * Returns object from shared ptr.
-     * @param ptr pointer.
-     * @return object.
-     */
-    template <class T> const T& dereference_pointer(const std::shared_ptr<T>& ptr) {
-        return *ptr.get();
-    }
-
-
-    /**
      * Create object for raw pointer.
      * @param ptr ptr to set.
      * @return reference to object that was created.

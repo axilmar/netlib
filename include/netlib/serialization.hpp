@@ -176,7 +176,7 @@ namespace netlib {
             serialize(v, buffer);
 
             //write object
-            serialize(dereference_pointer(ptr), buffer);
+            serialize(*ptr, buffer);
         }
 
         //else the pointer is null, write false
