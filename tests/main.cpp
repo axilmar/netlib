@@ -42,7 +42,7 @@ class test_endpoint : public endpoint {
 public:
 
 protected:
-    void send(const byte_buffer& buffer) final {
+    void send(byte_buffer& buffer) final {
         temp_buffer = buffer;
     }
 

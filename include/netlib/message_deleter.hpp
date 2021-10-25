@@ -10,7 +10,7 @@ namespace netlib {
 
 
     /**
-     * Holds a reference to the memory resource that created a message, 
+     * Holds a reference to the memory resource that was used for message creation, 
      * in order to return the memory chunk to the resource.
      */
     class message_deleter {

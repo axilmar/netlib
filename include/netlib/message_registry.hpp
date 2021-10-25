@@ -2,7 +2,6 @@
 #define NETLIB_MESSAGE_REGISTRY_HPP
 
 
-#include <functional>
 #include "message_deleter.hpp"
 
 
@@ -20,7 +19,7 @@ namespace netlib {
          * @param memres memory resource.
          * @return a pointer to message.
          */
-        using message_creation_function = std::function<message_pointer(std::pmr::memory_resource& memres)>;
+        using message_creation_function = message_pointer (*)(std::pmr::memory_resource& memres);
 
         /**
          * Registers a message creation function.
@@ -36,6 +35,7 @@ namespace netlib {
          * @param id message id.
          * @param memres memory resource.
          * @return pointer to created message.
+         * @exception std::invalid_argument thrown if there was no registration found for the given message id.
          */
         static message_pointer create_message(message_id id, std::pmr::memory_resource& memres);
 
@@ -45,6 +45,7 @@ namespace netlib {
          * Thread-safe function.
          * @param id message id.
          * @return pointer to created message.
+         * @exception std::invalid_argument thrown if there was no registration found for the given message id.
          */
         static message_pointer create_message(message_id id);
     };
@@ -61,10 +62,14 @@ namespace netlib {
          * @param id message id.
          */
         message_registration(message_id id) {
-            message_registry::register_message(id, [](std::pmr::memory_resource& memres) {
-                void* mem = memres.allocate(sizeof(T));
-                return message_pointer(new (mem) T(), message_deleter(memres, sizeof(T)));
-            });
+            message_registry::register_message(id, &create_message);
+        }
+
+    private:
+        //the message creation function.
+        static message_pointer create_message(std::pmr::memory_resource& memres) {
+            void* mem = memres.allocate(sizeof(T));
+            return { new (mem) T(), message_deleter(memres, sizeof(T)) };
         }
     };
 

@@ -35,6 +35,12 @@ namespace netlib {
     }
 
 
+    //the default message creation function throws std::invalid_argument on the message id
+    static message_pointer invalid_message_creation_function(std::pmr::memory_resource& memres) {
+        throw std::invalid_argument("id");
+    }
+
+
     //Registers a message creation function.
     void message_registry::register_message(message_id id, message_creation_function&& func) {
         message_registry_data& mrd = get_message_registry_data();
@@ -44,7 +50,7 @@ namespace netlib {
 
         //make space for the given id
         if (id >= mrd.message_creation_functions.size()) {
-            mrd.message_creation_functions.resize(id + 1);
+            mrd.message_creation_functions.resize(id + 1, invalid_message_creation_function);
         }
 
         //set the function
@@ -61,7 +67,7 @@ namespace netlib {
 
         //make room in the local table for the function
         if (id >= message_creation_functions.size()) {
-            message_creation_functions.resize(id + 1);
+            message_creation_functions.resize(id + 1, invalid_message_creation_function);
         }
 
         //copy the function to the local table
