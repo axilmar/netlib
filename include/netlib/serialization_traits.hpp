@@ -1,10 +1,11 @@
-#ifndef NETLIB_CONTAINER_TRAITS_HPP
-#define NETLIB_CONTAINER_TRAITS_HPP
+#ifndef NETLIB_SERIALIZATION_TRAITS_HPP
+#define NETLIB_SERIALIZATION_TRAITS_HPP
 
 
 #include <type_traits>
 #include <utility>
 #include <tuple>
+#include <memory>
 
 
 namespace netlib {
@@ -123,7 +124,104 @@ namespace netlib {
     template <class T> inline constexpr bool is_tuple_v = is_tuple<T>::value;
 
 
+    /**
+     * Trait for pointers.
+     */
+    template <class T> struct is_pointer : std::false_type {
+    };
+
+
+    /**
+     * Specialization for T*.
+     */
+    template <class T> struct is_pointer<T*> : std::true_type {
+    };
+
+
+    /**
+     * Specialization for std::unique_ptr<T, Deleter>.
+     */
+    template <class T, class Deleter> struct is_pointer<std::unique_ptr<T, Deleter>> : std::true_type {
+    };
+
+
+    /**
+     * Specialization for std::shared_ptr<T>.
+     */
+    template <class T> struct is_pointer<std::shared_ptr<T>> : std::true_type {
+    };
+
+
+    /**
+     * Variable for is_pointer<T> template.
+     */
+    template <class T> inline constexpr bool is_pointer_v = is_pointer<T>::value;
+
+
+    /**
+     * Returns object from pointer.
+     * @param ptr pointer.
+     * @return object.
+     */
+    template <class T> const T& dereference_pointer(const T* const ptr) {
+        return *ptr;
+    }
+
+
+    /**
+     * Returns object from unique ptr.
+     * @param ptr pointer.
+     * @return object.
+     */
+    template <class T, class Deleter> const T& dereference_pointer(const std::unique_ptr<T, Deleter>& ptr) {
+        return *ptr.get();
+    }
+
+
+    /**
+     * Returns object from shared ptr.
+     * @param ptr pointer.
+     * @return object.
+     */
+    template <class T> const T& dereference_pointer(const std::shared_ptr<T>& ptr) {
+        return *ptr.get();
+    }
+
+
+    /**
+     * Create object for raw pointer.
+     * @param ptr ptr to set.
+     * @return reference to object that was created.
+     */
+    template <class T> T& make_object(T*& ptr) {
+        ptr = new T();
+        return *ptr;
+    }
+
+
+    /**
+     * Create object for unique pointer.
+     * @param ptr ptr to set.
+     * @return reference to object that was created.
+     */
+    template <class T, class Deleter> T& make_object(std::unique_ptr<T, Deleter>& ptr) {
+        ptr = std::make_unique<T>();
+        return *ptr.get();
+    }
+
+
+    /**
+     * Create object for shared pointer.
+     * @param ptr ptr to set.
+     * @return reference to object that was created.
+     */
+    template <class T> T& make_object(std::shared_ptr<T>& ptr) {
+        ptr = std::make_shared<T>();
+        return *ptr.get();
+    }
+
+
 } //namespace netlib
 
 
-#endif //NETLIB_CONTAINER_TRAITS_HPP
+#endif //NETLIB_SERIALIZATION_TRAITS_HPP

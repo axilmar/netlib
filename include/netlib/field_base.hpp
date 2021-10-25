@@ -50,10 +50,16 @@ namespace netlib {
         virtual void deserialize_this(const byte_buffer& buffer, byte_buffer::position& pos) = 0;
 
         /**
-         * Returns a copy of the value.
-         * @return a copy of the value.
+         * Returns a const reference of the value.
+         * @return a const reference of the value.
          */
         virtual std::any get_value() const = 0;
+
+        /**
+         * Returns a reference of the value.
+         * @return a reference of the value.
+         */
+        virtual std::any get_value() = 0;
 
     protected:
         /**

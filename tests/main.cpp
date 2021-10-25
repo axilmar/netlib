@@ -7,6 +7,13 @@
 using namespace netlib;
 
 
+class my_object {
+public:
+    float value{0};
+    my_object(float v = 0) : value(v) {}
+};
+
+
 class test_message : public message {
 public:
     field<std::vector<int>> data1;
@@ -19,6 +26,10 @@ public:
         field<float> y;
         field<float> z;
     } position;
+
+    field<my_object*> object1{ nullptr };
+    field<std::unique_ptr<my_object>> object2;
+    field<std::shared_ptr<my_object>> object3;
 };
 
 
@@ -29,6 +40,9 @@ int main() {
     msg1.data2.insert(20);
     msg1.p1.first = 30;
     msg1.p1.second = 40;
+    msg1.object1 = new my_object(1.0f);
+    msg1.object2 = std::make_unique<my_object>(2.0f);
+    msg1.object3 = std::make_shared<my_object>(3.0f);
 
     byte_buffer buffer;
     msg1.serialize(buffer);

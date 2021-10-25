@@ -17,12 +17,22 @@ namespace netlib {
      * Declaration of a non-class field.
      * @param T type of field.
      */
-    template <class T, class Base> class field<T, Base, std::enable_if_t<!std::is_class_v<T>>> : public Base {
+    template <class T, class Base> class field<T, Base, std::enable_if_t<!std::is_class_v<T> || is_pointer_v<T>>> : public Base {
     public:
         /**
          * The field's value.
          */
-        T value{};
+        T value;
+
+        /**
+         * The default constructor.
+         */
+        field() : value{} {}
+
+        /**
+         * Constructor from value.
+         */
+        template <class Y> field(Y&& v) : value(std::forward<Y>(v)) {}
 
         /**
          * Used as const ref.
@@ -76,20 +86,28 @@ namespace netlib {
         }
 
         /**
-         * Returns a copy of the value.
-         * @return a copy of the value.
+         * Returns a const reference of the value.
+         * @return a const reference of the value.
          */
         std::any get_value() const final {
-            return value;
+            return std::cref(value);
+        }
+
+        /**
+         * Returns a reference of the value.
+         * @return a reference of the value.
+         */
+        std::any get_value() final {
+            return std::ref(value);
         }
     };
 
 
     /**
      * Field implementation for classes.
-     * @param T type of class to inherit from.
+     * @param T type of class to inherit from; it must not be a pointer class.
      */
-    template <class T, class Base> class field<T, Base, std::enable_if_t<std::is_class_v<T>>> : public Base, public T {
+    template <class T, class Base> class field<T, Base, std::enable_if_t<std::is_class_v<T> && !is_pointer_v<T>>> : public Base, public T {
     public:
         using T::T;
 
@@ -121,11 +139,19 @@ namespace netlib {
         }
 
         /**
-         * Returns a copy of the class.
-         * @return a copy of the class.
+         * Returns a const reference of the underlying object.
+         * @return a const reference of the underlying object.
          */
         std::any get_value() const final {
-            return *this;
+            return std::cref(*this);
+        }
+
+        /**
+         * Returns a reference of the underlying object.
+         * @return a reference of the underlying object.
+         */
+        std::any get_value() final {
+            return std::ref(*this);
         }
     };
 
