@@ -38,6 +38,18 @@ namespace netlib {
          * @return pointer to the first field.
          */
         field_base* get_first_field() { return &id; }
+
+        /**
+         * Serializes this message.
+         * @param buffer destination buffer.
+         */
+        void serialize(byte_buffer& buffer) const;
+
+        /**
+         * Deserializes this message.
+         * @param buffer source buffer.
+         */
+        void deserialize(const byte_buffer& buffer);
     };
 
 

@@ -2,6 +2,7 @@
 #define NETLIB_FIELD_BASE_HPP
 
 
+#include <any>
 #include "byte_buffer.hpp"
 
 
@@ -39,14 +40,20 @@ namespace netlib {
          * Interface for serializing this field.
          * @param buffer destination buffer.
          */
-        virtual void serialize(byte_buffer& buffer) const = 0;
+        virtual void serialize_this(byte_buffer& buffer) const = 0;
 
         /**
          * Interface for deserializing this field.
          * @param buffer deserialization buffer.
          * @param pos buffer index; on return, the next available position.
          */
-        virtual void deserialize(const byte_buffer& buffer, byte_buffer::position& pos) = 0;
+        virtual void deserialize_this(const byte_buffer& buffer, byte_buffer::position& pos) = 0;
+
+        /**
+         * Returns a copy of the value.
+         * @return a copy of the value.
+         */
+        virtual std::any get_value() const = 0;
 
     protected:
         /**

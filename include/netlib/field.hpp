@@ -22,7 +22,7 @@ namespace netlib {
         /**
          * The field's value.
          */
-        T value;
+        T value{};
 
         /**
          * Used as const ref.
@@ -61,8 +61,8 @@ namespace netlib {
          * It invokes the standalone version of the function.
          * @param buffer output buffer.
          */
-        void serialize(byte_buffer& buffer) const final {
-            ::serialize(value, buffer);
+        void serialize_this(byte_buffer& buffer) const final {
+            serialize(value, buffer);
         }
 
         /**
@@ -71,8 +71,16 @@ namespace netlib {
          * @param buffer input buffer.
          * @param pos current position.
          */
-        void deserialize(const byte_buffer& buffer, byte_buffer::position& pos) final {
-            ::deserialize(value, buffer, pos);
+        void deserialize_this(const byte_buffer& buffer, byte_buffer::position& pos) final {
+            deserialize(value, buffer, pos);
+        }
+
+        /**
+         * Returns a copy of the value.
+         * @return a copy of the value.
+         */
+        std::any get_value() const final {
+            return value;
         }
     };
 
@@ -98,7 +106,7 @@ namespace netlib {
          * It invokes the standalone version of the function.
          * @param buffer output buffer.
          */
-        void serialize(byte_buffer& buffer) const final {
+        void serialize_this(byte_buffer& buffer) const final {
             ::serialize(static_cast<const T&>(*this), buffer);
         }
 
@@ -108,8 +116,16 @@ namespace netlib {
          * @param buffer input buffer.
          * @param pos current position.
          */
-        void deserialize(const byte_buffer& buffer, byte_buffer::position& pos) final {
+        void deserialize_this(const byte_buffer& buffer, byte_buffer::position& pos) final {
             ::deserialize(static_cast<T&>(*this), buffer, pos);
+        }
+
+        /**
+         * Returns a copy of the class.
+         * @return a copy of the class.
+         */
+        std::any get_value() const final {
+            return *this;
         }
     };
 
