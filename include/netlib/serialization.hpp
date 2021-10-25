@@ -50,7 +50,7 @@ namespace netlib {
      * @param buffer output buffer.
      */
     template <class T>
-    std::enable_if_t<std::is_trivially_copyable_v<T>>
+    std::enable_if_t<std::is_trivially_copyable_v<T> && !is_tuple_v<T>>
     serialize(const T& value, byte_buffer& buffer) {
         //write position
         const auto pos = buffer.size();
@@ -71,7 +71,7 @@ namespace netlib {
      * @exception std::out_of_range thrown if the buffer does not have enough data for the given type.
      */
     template <class T>
-    std::enable_if_t<std::is_trivially_copyable_v<T>>
+    std::enable_if_t<std::is_trivially_copyable_v<T> && !is_tuple_v<T>>
     deserialize(T& value, const byte_buffer& buffer, byte_buffer::position& pos) {
         //check buffer
         if (pos + sizeof(T) > buffer.size()) {
@@ -140,7 +140,7 @@ namespace netlib {
      * @param buffer output buffer.
      */
     template <class T>
-    std::enable_if_t<is_tuple_v<T> && !std::is_trivially_copyable_v<T>>
+    std::enable_if_t<is_tuple_v<T>>
     serialize(const T& tpl, byte_buffer& buffer) {
         flatten_tuple(tpl, [&](const auto&... v) { ( serialize(v, buffer), ... ); });
     }
@@ -154,7 +154,7 @@ namespace netlib {
      * @exception std::out_of_range thrown if the buffer does not have enough data for the given type.
      */
     template <class T>
-    std::enable_if_t<is_tuple_v<T> && !std::is_trivially_copyable_v<T>>
+    std::enable_if_t<is_tuple_v<T>>
     deserialize(T& tpl, const byte_buffer& buffer, byte_buffer::position& pos) {
         flatten_tuple(tpl, [&](auto&... v) { ( deserialize(v, buffer, pos), ... ); });
     }
