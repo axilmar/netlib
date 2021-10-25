@@ -28,6 +28,17 @@ namespace netlib {
         field<message_id, internals::first_field_base> id;
 
         /**
+         * The constructor.
+         * @param id message id.
+         */
+        message(message_id id = 0) : id(id) {}
+
+        /**
+         * The destructor.
+         */
+        virtual ~message() {}
+
+        /**
          * Returns a const pointer to the first field, which is the message id.
          * @return pointer to the first field.
          */
