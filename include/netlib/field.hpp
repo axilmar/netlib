@@ -100,6 +100,13 @@ namespace netlib {
         std::any get_value() final {
             return std::ref(value);
         }
+
+        /**
+         * If T is a pointer type, then return pointer value.
+         */
+        const T& operator ->() const {
+            return value;
+        }
     };
 
 

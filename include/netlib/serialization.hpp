@@ -15,9 +15,8 @@ namespace netlib {
      * Checks if the current platform is little or big endian.
      * @return true if the current platform is little endian, false otherwise.
      */
-    inline bool is_little_endian() {
-        static const union { uint16_t v16; uint8_t v8[2]; } u{ 0x0201 };
-        return u.v8[0] == 0x01;
+    inline constexpr bool is_little_endian() {
+        return ((const uint8_t&)uint16_t(0x0201)) == 0x01;
     }
 
 
@@ -28,7 +27,7 @@ namespace netlib {
      */
     template <class T> void copy_value(void* buffer, const T& value) {
         //copy with little endian; little endian is the default
-        if (is_little_endian()) {
+        if constexpr (is_little_endian()) {
             *reinterpret_cast<T*>(buffer) = value;
         }
 
