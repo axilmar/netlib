@@ -131,6 +131,18 @@ namespace netlib {
     }
 
 
+    size_t socket::send(const byte_buffer& buffer, const socket_address& addr, int flags) {
+        const int result = ::sendto(m_handle, reinterpret_cast<const char*>(buffer.data()), static_cast<int>(buffer.size()), flags, reinterpret_cast<const sockaddr*>(addr.m_data), sizeof(addr.m_data));
+        if (result == SOCKET_ERROR) {
+            std::stringstream stream;
+            stream << "Send-to function failed; error: ";
+            stream << WSAGetLastError();
+            throw socket_error(stream.str());
+        }
+        return static_cast<size_t>(result);
+    }
+
+
     size_t socket::receive(byte_buffer& buffer, int flags) {
         const int result = ::recv(m_handle, reinterpret_cast<char*>(buffer.data()), static_cast<int>(buffer.size()), flags);
         if (result == SOCKET_ERROR) {

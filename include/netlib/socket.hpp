@@ -38,6 +38,8 @@ namespace netlib {
 
         size_t send(const byte_buffer& buffer, int flags = 0);
 
+        size_t send(const byte_buffer& buffer, const socket_address& addr, int flags = 0);
+
         size_t receive(byte_buffer& buffer, int flags = 0);
 
         size_t receive(byte_buffer& buffer, socket_address& addr, int flags = 0);
