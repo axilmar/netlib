@@ -5,6 +5,7 @@
 #include "netlib/message.hpp"
 #include "netlib/endpoint.hpp"
 #include "netlib/message_registry.hpp"
+#include "netlib/socket.hpp"
 
 
 using namespace netlib;
@@ -127,10 +128,72 @@ static void test_endpoint_() {
 }
 
 
+static void test_sockets() {
+    try {
+        static constexpr int COUNT = 100;
+        int consumer_count = 0;
+
+        socket_address test_addr({ "localhost", socket_address::ADDRESS_FAMILY_IP4 }, 10000);
+        std::cout << "test network_address: " << test_addr.get_address().to_string() << std::endl;
+        socket test_socket(socket::TYPE::UDP_IP4);
+        test_socket.bind(test_addr);
+
+        std::thread producer_thread([&]() {
+            try {
+                byte_buffer buffer;
+
+                std::string msg("hello world!");
+                for (char c : msg) {
+                    buffer.push_back((std::byte)c);
+                }
+
+                for (size_t i = 0; i < COUNT; ++i) {
+                    test_socket.send(buffer, test_addr);
+                }
+            }
+            catch (const socket_error& err) {
+                std::cout << "producer error: " << err.what() << std::endl;
+            }
+        });
+
+        std::thread consumer_thread([&]() {
+            try {
+                byte_buffer buffer(256);
+
+                for (consumer_count = 0; consumer_count < COUNT; ++consumer_count) {
+                    const size_t received_size = test_socket.receive(buffer);
+                    buffer.resize(received_size);
+
+                    std::string str;
+                    for (std::byte b : buffer) {
+                        str.push_back((char)b);
+                    }
+
+                    std::cout << consumer_count << ": received message: " << str << std::endl;
+                }
+            }
+            catch (const socket_error& err) {
+                std::cout << "consumer error: " << err.what() << std::endl;
+            }
+        });
+
+        producer_thread.join();
+        consumer_thread.join();
+
+        assert(consumer_count == COUNT);
+    }
+    catch (const socket_error& err) {
+        std::cout << err.what() << std::endl;
+    }
+}
+
+
 int main() {
-    test_serialization_traits();
-    test_message_();
-    test_endpoint_();
+    //test_serialization_traits();
+    //test_message_();
+    //test_endpoint_();
+
+    test_sockets();
 
     system("pause");
     return 0;

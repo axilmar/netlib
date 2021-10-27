@@ -3,6 +3,7 @@
 
 
 #include "message_deleter.hpp"
+#include "message_error.hpp"
 
 
 namespace netlib {
@@ -35,7 +36,7 @@ namespace netlib {
          * @param id message id.
          * @param memres memory resource.
          * @return pointer to created message.
-         * @exception std::invalid_argument thrown if there was no registration found for the given message id.
+         * @exception message_error thrown if there was no registration found for the given message id.
          */
         static message_pointer create_message(message_id id, std::pmr::memory_resource& memres);
 
@@ -45,7 +46,7 @@ namespace netlib {
          * Thread-safe function.
          * @param id message id.
          * @return pointer to created message.
-         * @exception std::invalid_argument thrown if there was no registration found for the given message id.
+         * @exception message_error thrown if there was no registration found for the given message id.
          */
         static message_pointer create_message(message_id id);
     };

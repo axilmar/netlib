@@ -8,6 +8,9 @@
 namespace netlib {
 
 
+    /**
+     * Exception thrown when a socket-related function fails.
+     */
     class socket_error : public std::runtime_error {
     public:
         using std::runtime_error::runtime_error;
