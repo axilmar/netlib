@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <utility>
+#include <type_traits>
 #include "socket_error.hpp"
 #include "socket_address.hpp"
 #include "byte_buffer.hpp"
@@ -181,10 +182,11 @@ namespace netlib {
          * Returns a socket option; typed interface.
          * @param level socket level.
          * @param option_id option id.
-         * @return socket option value.
+         * @return socket option value; must be a pod object.
          * @exception socket_error thrown if the operation was invalid.
          */
-        template <class T> T get_option(int level, int option_id) const {
+        template <class T, typename = std::enable_if_t<std::is_pod_v<T>>> 
+        T get_option(int level, int option_id) const {
             byte_buffer buffer{ sizeof(T) };
             get_option(level, option_id, buffer);
             return *reinterpret_cast<const T*>(buffer.data());
@@ -194,10 +196,11 @@ namespace netlib {
          * Sets a socket option; typed interface.
          * @param level socket level.
          * @param option_id option id.
-         * @param value value to set.
+         * @param value value to set; must be a pod object.
          * @exception socket_error thrown if the operation was invalid.
          */
-        template <class T> void set_option(int level, int option_id, const T& value) {
+        template <class T, typename = std::enable_if_t<std::is_pod_v<T>>> 
+        void set_option(int level, int option_id, const T& value) {
             byte_buffer buffer{ sizeof(T) };
             *reinterpret_cast<T*>(buffer.data()) = value;
             set_option(level, option_id, buffer);
