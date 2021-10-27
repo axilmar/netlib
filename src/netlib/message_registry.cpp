@@ -24,10 +24,6 @@ namespace netlib {
     static thread_local message_creation_function_table message_creation_functions;
 
 
-    //local thread memory resource
-    static thread_local std::pmr::unsynchronized_pool_resource thread_memory_pool;
-
-
     //get the message registry data
     static message_registry_data& get_message_registry_data() {
         static message_registry_data mrd;
@@ -79,12 +75,6 @@ namespace netlib {
 
         //create the message
         return message_creation_functions[id](memres);
-    }
-
-
-    //create message from message id.
-    message_pointer message_registry::create_message(message_id id) {
-        return create_message(id, thread_memory_pool);
     }
 
 

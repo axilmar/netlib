@@ -87,11 +87,11 @@ class test_endpoint : public endpoint {
 public:
 
 protected:
-    void send(byte_buffer& buffer) final {
+    void send_message_data(byte_buffer& buffer) final {
         temp_buffer = buffer;
     }
 
-    void receive(byte_buffer& buffer) final {
+    void receive_message_data(byte_buffer& buffer) final {
         buffer = temp_buffer;
     }
 };
@@ -191,9 +191,8 @@ static void test_sockets() {
 int main() {
     //test_serialization_traits();
     //test_message_();
-    //test_endpoint_();
-
-    test_sockets();
+    test_endpoint_();
+    //test_sockets();
 
     system("pause");
     return 0;

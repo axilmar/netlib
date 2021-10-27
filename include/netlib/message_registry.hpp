@@ -34,21 +34,11 @@ namespace netlib {
          * Creates the appropriate message object, depending on message id.
          * Thread-safe function.
          * @param id message id.
-         * @param memres memory resource.
+         * @param memres memory resource to use for allocating memory for the message.
          * @return pointer to created message.
          * @exception message_error thrown if there was no registration found for the given message id.
          */
         static message_pointer create_message(message_id id, std::pmr::memory_resource& memres);
-
-        /**
-         * Creates the appropriate message object, depending on message id.
-         * The message is created on a thread-local memory resource.
-         * Thread-safe function.
-         * @param id message id.
-         * @return pointer to created message.
-         * @exception message_error thrown if there was no registration found for the given message id.
-         */
-        static message_pointer create_message(message_id id);
     };
 
 
