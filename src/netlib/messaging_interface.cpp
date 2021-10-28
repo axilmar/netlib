@@ -1,4 +1,4 @@
-#include "netlib/endpoint.hpp"
+#include "netlib/messaging_interface.hpp"
 #include "netlib/message_registry.hpp"
 
 
@@ -6,7 +6,7 @@ namespace netlib {
 
 
     //internal buffers
-    static byte_buffer thread_buffer;
+    static thread_local byte_buffer thread_buffer;
 
 
     //global memory resource
@@ -14,7 +14,7 @@ namespace netlib {
 
 
     //Sends a message.
-    bool endpoint::send_message(const message& msg) {
+    bool messaging_interface::send_message(const message& msg) {
         //clear the temporary buffer
         thread_buffer.clear();
 
@@ -27,7 +27,7 @@ namespace netlib {
 
 
     //receives a message.
-    message_pointer endpoint::receive_message(std::pmr::memory_resource& memres, size_t max_message_size) {
+    message_pointer messaging_interface::receive_message(std::pmr::memory_resource& memres, size_t max_message_size) {
         //make room in the temporary buffer
         if (thread_buffer.size() < max_message_size) {
             thread_buffer.resize(max_message_size);
@@ -59,8 +59,8 @@ namespace netlib {
      * @param max_message_size maximum number of bytes to receive.
      * @return a pointer to received message.
      */
-    message_pointer endpoint::receive_message(size_t max_message_size) {
-        return endpoint::receive_message(global_message_memory_resource, max_message_size);
+    message_pointer messaging_interface::receive_message(size_t max_message_size) {
+        return messaging_interface::receive_message(global_message_memory_resource, max_message_size);
     }
 
 

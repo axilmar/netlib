@@ -1,11 +1,11 @@
-#include "netlib/socket_endpoint.hpp"
+#include "netlib/socket_messaging_interface.hpp"
 
 
 namespace netlib {
 
 
     //Sends the data with the help of this socket.
-    bool socket_endpoint::send_message_data(const byte_buffer& buffer) {
+    bool socket_messaging_interface::send_message_data(const byte_buffer& buffer) {
         //stream data
         if (is_streaming_socket()) {
 
@@ -26,7 +26,7 @@ namespace netlib {
 
 
     //Receives the data with the help of this socket.
-    bool socket_endpoint::receive_message_data(byte_buffer& buffer) {
+    bool socket_messaging_interface::receive_message_data(byte_buffer& buffer) {
         //receive streamed data
         if (is_streaming_socket()) {
 

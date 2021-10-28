@@ -43,7 +43,7 @@ namespace netlib {
      */
     template <class T> void copy_value(void* buffer, const T& value) {
         //copy with little endian; little endian is the default
-        if constexpr (is_little_endian()) {
+        if constexpr (is_little_endian() || sizeof(T) == 1) {
             *reinterpret_cast<T*>(buffer) = value;
         }
 

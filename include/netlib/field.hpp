@@ -17,7 +17,7 @@ namespace netlib {
      * Declaration of a non-class field.
      * @param T type of field.
      */
-    template <class T, class Base> class field<T, Base, std::enable_if_t<!std::is_class_v<T> || is_pointer_v<T>>> : public Base {
+    template <class T, class Base> class field<T, Base, std::enable_if_t<!std::is_class_v<T>>> : public Base {
     public:
         /**
          * The field's value.
@@ -56,6 +56,13 @@ namespace netlib {
         template <class V> field& operator = (V&& v) {
             value = std::forward<V>(v);
             return *this;
+        }
+
+        /**
+         * If T is a pointer type, then allow member access.
+         */
+        template <typename = std::enable_if_t<is_pointer_v<T>>> auto operator ->() const {
+            return value;
         }
 
         /**
@@ -100,13 +107,6 @@ namespace netlib {
         std::any get_value() final {
             return std::ref(value);
         }
-
-        /**
-         * If T is a pointer type, then return pointer value.
-         */
-        const T& operator ->() const {
-            return value;
-        }
     };
 
 
@@ -114,9 +114,11 @@ namespace netlib {
      * Field implementation for classes.
      * @param T type of class to inherit from; it must not be a pointer class.
      */
-    template <class T, class Base> class field<T, Base, std::enable_if_t<std::is_class_v<T> && !is_pointer_v<T>>> : public Base, public T {
+    template <class T, class Base> class field<T, Base, std::enable_if_t<std::is_class_v<T>>> : public Base, public T {
     public:
         using T::T;
+
+        using T::operator =;
 
         /**
          * Implementation of returning the typeinfo of the field.
@@ -132,7 +134,7 @@ namespace netlib {
          * @param buffer output buffer.
          */
         void serialize_this(byte_buffer& buffer) const final {
-            ::serialize(static_cast<const T&>(*this), buffer);
+            serialize(static_cast<const T&>(*this), buffer);
         }
 
         /**
@@ -142,7 +144,7 @@ namespace netlib {
          * @param pos current position.
          */
         void deserialize_this(const byte_buffer& buffer, byte_buffer::position& pos) final {
-            ::deserialize(static_cast<T&>(*this), buffer, pos);
+            deserialize(static_cast<T&>(*this), buffer, pos);
         }
 
         /**

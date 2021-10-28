@@ -74,6 +74,7 @@ namespace netlib {
         struct true_type { char c[1]; };
         struct false_type { char c[2]; };
         template <class C> static auto get_copy_func(void (C::* m)(const typename C::value_type&)) { return m; };
+        template <class C> static auto get_copy_func(void (C::* m)(typename C::value_type)) { return m; };
         template <class C> static auto get_move_func(void (C::* m)(typename C::value_type&&)) { return m; };
         template <class C> static true_type test_push_back_copy(decltype(get_copy_func<C>(&C::push_back)));
         template <class C> static false_type test_push_back_copy(...);

@@ -1,8 +1,8 @@
-#ifndef NETLIB_SOCKET_ENDPOINT_HPP
-#define NETLIB_SOCKET_ENDPOINT_HPP
+#ifndef NETLIB_SOCKET_MESSAGING_INTERFACE_HPP
+#define NETLIB_SOCKET_MESSAGING_INTERFACE_HPP
 
 
-#include "endpoint.hpp"
+#include "messaging_interface.hpp"
 #include "socket.hpp"
 
 
@@ -10,9 +10,9 @@ namespace netlib {
 
 
     /**
-     * An endpoint which uses a socket to send/receive message data. 
+     * An messaging_interface which uses a socket to send/receive message data. 
      */
-    class socket_endpoint : public endpoint, public socket {
+    class socket_messaging_interface : public messaging_interface, public socket {
     public:
         using socket::socket;
 
@@ -36,4 +36,4 @@ namespace netlib {
 } //namespace netlib
 
 
-#endif //NETLIB_SOCKET_ENDPOINT_HPP
+#endif //NETLIB_SOCKET_MESSAGING_INTERFACE_HPP

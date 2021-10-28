@@ -50,10 +50,9 @@ namespace netlib {
     public:
         /**
          * Declares a message registration for the given message.
-         * @param id message id.
          */
-        message_registration(message_id id) {
-            message_registry::register_message(id, &create_message);
+        message_registration() {
+            message_registry::register_message(T::ID, &create_message);
         }
 
     private:

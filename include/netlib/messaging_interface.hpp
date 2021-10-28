@@ -1,5 +1,5 @@
-#ifndef NETLIB_ENDPOINT_HPP
-#define NETLIB_ENDPOINT_HPP
+#ifndef NETLIB_MESSAGING_INTERFACE_HPP
+#define NETLIB_MESSAGING_INTERFACE_HPP
 
 
 #include "message_deleter.hpp"
@@ -10,9 +10,9 @@ namespace netlib {
 
 
     /**
-     * Base class for endpoints.
+     * Base class for messaging interfaces.
      */
-    class endpoint : public std::enable_shared_from_this<endpoint> {
+    class messaging_interface : public std::enable_shared_from_this<messaging_interface> {
     public:
         /**
          * Maximum size for a packet.
@@ -22,7 +22,7 @@ namespace netlib {
         /**
          * The destructor.
          */
-        virtual ~endpoint() {}
+        virtual ~messaging_interface() {}
 
         /**
          * Sends a message.
@@ -67,4 +67,4 @@ namespace netlib {
 } //namespace netlib
 
 
-#endif //NETLIB_ENDPOINT_HPP
+#endif //NETLIB_MESSAGING_INTERFACE_HPP

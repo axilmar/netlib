@@ -3,12 +3,19 @@
 #include <iostream>
 #include <set>
 #include "netlib/message.hpp"
-#include "netlib/endpoint.hpp"
+#include "netlib/messaging_interface.hpp"
 #include "netlib/message_registry.hpp"
 #include "netlib/socket.hpp"
+#include "netlib/socket_messaging_interface.hpp"
 
 
 using namespace netlib;
+
+
+enum MESSAGE_ID {
+    MSG_TEST_MESSAGE,
+    MSG_TEXT_MESSAGE
+};
 
 
 class my_object {
@@ -20,6 +27,11 @@ public:
 
 class test_message : public message {
 public:
+    static constexpr int ID = MSG_TEST_MESSAGE;
+
+    test_message() : message(ID) {
+    }
+
     field<std::vector<int>> data1;
     field<std::set<int>> data2;
     field<std::pair<int, int>> p1;
@@ -55,7 +67,6 @@ static void test_serialization_traits() {
 static void test_message_() {
     test_message msg1;
 
-    msg1.id = 5000;
     msg1.data1.push_back(10);
     msg1.data2.insert(20);
     msg1.p1.first = 30;
@@ -83,7 +94,7 @@ static void test_message_() {
 static byte_buffer temp_buffer;
 
 
-class test_endpoint : public endpoint {
+class test_messaging_interface : public messaging_interface {
 public:
 
 protected:
@@ -99,14 +110,13 @@ protected:
 };
 
 
-static void test_endpoint_() {
-    test_endpoint te;
+static void test_messaging_interface_() {
+    test_messaging_interface te;
 
-    message_registration<test_message> mr(5000);
+    message_registration<test_message> mr;
 
     test_message msg1;
 
-    msg1.id = 5000;
     msg1.data1.push_back(10);
     msg1.data2.insert(20);
     msg1.p1.first = 30;
@@ -190,11 +200,76 @@ static void test_sockets() {
 }
 
 
+class text_message : public message {
+public:
+    static constexpr int ID = MSG_TEXT_MESSAGE;
+
+    field<std::string> text;
+    
+    text_message() : message(ID) {
+    }
+};
+
+
+static void test_socket_messaging_interface_udp() {
+    message_registration<text_message> mr;
+
+    try {
+        static constexpr int COUNT = 100;
+        int consumer_count = 0;
+
+        socket_address test_addr({ "localhost", socket_address::ADDRESS_FAMILY_IP4 }, 10000);
+        std::cout << "test network_address: " << test_addr.get_address().to_string() << std::endl;
+        socket_messaging_interface test_socket(socket::TYPE::UDP_IP4);
+        test_socket.bind(test_addr);
+        test_socket.connect(test_addr);
+
+        std::thread producer_thread([&]() {
+            try {
+                byte_buffer buffer;
+
+                text_message tm;
+                tm.text = "hello world!!!";
+
+                for (size_t i = 0; i < COUNT; ++i) {
+                    test_socket.send_message(tm/*, test_addr*/);
+                }
+            }
+            catch (const socket_error& err) {
+                std::cout << "producer error: " << err.what() << std::endl;
+            }
+            });
+
+        std::thread consumer_thread([&]() {
+            try {
+                for (consumer_count = 0; consumer_count < COUNT; ++consumer_count) {
+                    message_pointer msg = test_socket.receive_message();
+                    text_message* tm = static_cast<text_message*>(msg.get());
+                    std::cout << consumer_count << ": received message: " << tm->text << std::endl;
+                }
+            }
+            catch (const socket_error& err) {
+                std::cout << "consumer error: " << err.what() << std::endl;
+            }
+            });
+
+        producer_thread.join();
+        consumer_thread.join();
+
+        assert(consumer_count == COUNT);
+    }
+    catch (const socket_error& err) {
+        std::cout << err.what() << std::endl;
+    }
+}
+
+
 int main() {
     //test_serialization_traits();
     //test_message_();
-    test_endpoint_();
+    //test_messaging_interface_();
     //test_sockets();
+    test_socket_messaging_interface_udp();
 
     system("pause");
     return 0;
