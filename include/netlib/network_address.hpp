@@ -18,7 +18,7 @@ namespace netlib {
         /**
          * Creates an empty, non-valid network address.
          */
-        network_address();
+        network_address() {}
 
         /**
          * Creates a network address from a string.
@@ -34,7 +34,8 @@ namespace netlib {
          * @param address_family address family.
          * @exception socket_error thrown if the hostname could not be resolved.
          */
-        network_address(const std::string& addr_string, int address_family = constants::ADDRESS_FAMILY_IP4);
+        network_address(const std::string& addr_string, int address_family = constants::ADDRESS_FAMILY_IP4)
+            : network_address(addr_string.c_str(), address_family) {}
 
         /**
          * Converts the address to a string.

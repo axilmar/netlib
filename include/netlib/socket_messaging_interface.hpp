@@ -15,6 +15,20 @@ namespace netlib {
     class socket_messaging_interface : public messaging_interface, public socket {
     public:
         using socket::socket;
+        using socket::operator =;
+
+        /**
+         * Constructor from socket.
+         * @param src socket.
+         */
+        socket_messaging_interface(socket&& src);
+
+        /**
+         * Assignment from socket.
+         * @param src socket.
+         * @return reference to this.
+         */
+        socket_messaging_interface& operator = (socket&& src);
 
     protected:
         /**

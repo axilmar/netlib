@@ -4,6 +4,17 @@
 namespace netlib {
 
 
+    //constructor from socket.
+    socket_messaging_interface::socket_messaging_interface(socket&& src) : socket(std::move(src)) {}
+
+
+    //assignment from socket.
+    socket_messaging_interface& socket_messaging_interface::operator = (socket&& src) {
+        socket::operator = (std::move(src));
+        return *this;
+    }
+
+
     //Sends the data with the help of this socket.
     bool socket_messaging_interface::send_message_data(const byte_buffer& buffer) {
         //stream data

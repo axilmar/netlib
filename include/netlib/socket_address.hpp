@@ -19,7 +19,7 @@ namespace netlib {
         /**
          * Creates an invalid socket address.
          */
-        socket_address();
+        socket_address() {}
 
         /**
          * Creates a socket address from network address and port.

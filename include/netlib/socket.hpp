@@ -340,7 +340,7 @@ namespace netlib {
         uintptr_t m_handle;
 
         //if it is a streaming socket
-        bool m_streaming_socket{};
+        bool m_streaming_socket;
 
         //internal constructor
         socket(uintptr_t handle) : m_handle(handle) {}

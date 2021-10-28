@@ -264,12 +264,70 @@ static void test_socket_messaging_interface_udp() {
 }
 
 
+static void test_socket_messaging_interface_tcp() {
+    message_registration<text_message> mr;
+
+    try {
+        static constexpr int COUNT = 100;
+        int consumer_count = 0;
+
+        socket_address test_addr({ "localhost", socket_address::ADDRESS_FAMILY_IP4 }, 10000);
+        std::cout << "test network_address: " << test_addr.get_address().to_string() << std::endl;
+
+        std::thread server_thread([&]() {
+            try {
+                socket server_socket(socket::TYPE::TCP_IP4);
+                server_socket.bind(test_addr);
+                server_socket.listen();
+                socket_messaging_interface test_socket = server_socket.accept().first;
+
+                byte_buffer buffer;
+
+                text_message tm;
+                tm.text = "hello world!!!";
+
+                for (size_t i = 0; i < COUNT; ++i) {
+                    test_socket.send_message(tm/*, test_addr*/);
+                }
+            }
+            catch (const socket_error& err) {
+                std::cout << "server error: " << err.what() << std::endl;
+            }
+            });
+
+        std::thread client_thread([&]() {
+            try {
+                socket_messaging_interface test_socket(socket::TYPE::TCP_IP4);
+                test_socket.connect(test_addr);
+                for (consumer_count = 0; consumer_count < COUNT; ++consumer_count) {
+                    message_pointer msg = test_socket.receive_message();
+                    text_message* tm = static_cast<text_message*>(msg.get());
+                    std::cout << consumer_count << ": received message: " << tm->text << std::endl;
+                }
+            }
+            catch (const socket_error& err) {
+                std::cout << "client error: " << err.what() << std::endl;
+            }
+            });
+
+        server_thread.join();
+        client_thread.join();
+
+        assert(consumer_count == COUNT);
+    }
+    catch (const socket_error& err) {
+        std::cout << err.what() << std::endl;
+    }
+}
+
+
 int main() {
     //test_serialization_traits();
     //test_message_();
     //test_messaging_interface_();
     //test_sockets();
-    test_socket_messaging_interface_udp();
+    //test_socket_messaging_interface_udp();
+    test_socket_messaging_interface_tcp();
 
     system("pause");
     return 0;

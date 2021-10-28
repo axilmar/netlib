@@ -104,11 +104,6 @@ namespace netlib {
     static_assert(library::get_address_buffer_size() >= max(sizeof(in_addr), sizeof(in6_addr)));
    
     
-    //invalid network address
-    network_address::network_address() {
-    }
-
-
     //set network address either from ip string or hostname
     network_address::network_address(const char* addr_string, int address_family) {
         
@@ -157,11 +152,6 @@ namespace netlib {
     }
 
 
-    //constructor from std::string.
-    network_address::network_address(const std::string& addr_string, int address_family)
-        : network_address(addr_string.c_str(), address_family) {}
-
-
     //converts the address to a string.
     std::string network_address::to_string() const {
         char buffer[64];
@@ -194,11 +184,6 @@ namespace netlib {
 
     //ensure the socket address has enough space for all socket address types.
     static_assert(sizeof(socket_address) >= sizeof(SOCKADDR_STORAGE));
-
-
-    //invalid socket address constructor.
-    socket_address::socket_address() {        
-    }
 
 
     //constructor from network address and port.
@@ -284,57 +269,6 @@ namespace netlib {
     const int socket::LEVEL_TCP = IPPROTO_TCP;
     const int socket::OPTION_REUSE_ADDRESS = SO_REUSEADDR;
     const int socket::OPTION_DISABLE_TCP_SEND_COALESCING = TCP_NODELAY;
-
-
-    //invalid socket constructor.
-    socket::socket() : m_handle(INVALID_SOCKET) {
-    }
-
-
-    //opens a socket.
-    socket::socket(int af, int type, int protocol) 
-        : socket()
-    {
-        open(af, type, protocol);
-    }
-
-
-    //opens a socket.
-    socket::socket(TYPE type) 
-        : socket()
-    {
-        open(type);
-    }
-
-
-    //moves a socket handle.
-    socket::socket(socket&& src)
-        : m_handle(src.m_handle)
-    {
-        src.m_handle = INVALID_SOCKET;
-    }
-
-
-    //shuts down and closes a socket.
-    socket::~socket() {
-        ::shutdown(m_handle, SD_BOTH);
-        ::closesocket(m_handle);
-    }
-
-
-    //moves the handle to this socket.
-    socket& socket::operator = (socket&& src) {
-        const uintptr_t temp = src.m_handle;
-        src.m_handle = INVALID_SOCKET;
-        m_handle = temp;
-        return *this;
-    }
-
-
-    //checks if the socket is valid.
-    socket::operator bool() const {
-        return m_handle != INVALID_SOCKET;
-    }
 
 
     //opens a socket.
@@ -490,12 +424,6 @@ namespace netlib {
     }
 
 
-    //sends data.
-    size_t socket::send(const byte_buffer& buffer, int flags) {
-        return send(buffer.data(), buffer.size(), flags);
-    }
-
-
     //sends data to specific address.
     size_t socket::send(const byte_buffer& buffer, const socket_address& addr, int flags) {
         const int result = ::sendto(m_handle, reinterpret_cast<const char*>(buffer.data()), static_cast<int>(buffer.size()), flags, reinterpret_cast<const SOCKADDR*>(addr.m_data), sizeof(SOCKADDR_IN)/*sizeof(addr.m_data)*/);
@@ -517,12 +445,6 @@ namespace netlib {
         }
 
         return static_cast<size_t>(result);
-    }
-
-
-    //receives data.
-    size_t socket::receive(byte_buffer& buffer, int flags) {
-        return receive(buffer.data(), buffer.size(), flags);
     }
 
 
