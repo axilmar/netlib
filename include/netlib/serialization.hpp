@@ -110,8 +110,17 @@ namespace netlib {
     std::enable_if_t<has_begin_end_v<T>>
     serialize(const T& container, byte_buffer& buffer) {
         serialize(container.size(), buffer);
-        for (const auto& e : container) {
-            serialize(e, buffer);
+
+        if constexpr ((is_little_endian() || sizeof(typename T::value_type) == 1) && std::is_trivially_copyable_v<typename T::value_type> && has_data_array_v<T>) {
+            const size_t insert_position = buffer.size();
+            const size_t data_size = container.size() * sizeof(typename T::value_type);
+            buffer.resize(buffer.size() + data_size);
+            memcpy(buffer.data() + insert_position, container.data(), data_size);
+        }
+        else {
+            for (const auto& e : container) {
+                serialize(e, buffer);
+            }
         }
     }
 
@@ -131,19 +140,31 @@ namespace netlib {
         deserialize(size, buffer, pos);
 
         //read elements
-        for (; size > 0; --size) {
-            typename T::value_type val;
-            deserialize(val, buffer, pos);
+        if constexpr ((is_little_endian() || sizeof(typename T::value_type) == 1) && std::is_trivially_copyable_v<typename T::value_type> && has_data_array_v<T>) {
+            const size_t data_size = size * sizeof(typename T::value_type);
+            if (pos + data_size > buffer.size()) {
+                throw std::out_of_range("Buffer too small");
+            }
+            const size_t insert_position = container.size();
+            container.resize(container.size() + size);
+            memcpy(container.data() + insert_position, buffer.data() + pos, data_size);
+            pos += data_size;
+        }
+        else {
+            for (; size > 0; --size) {
+                typename T::value_type val;
+                deserialize(val, buffer, pos);
 
-            //add element to collection
-            if constexpr (has_push_back_v<T>) {
-                container.push_back(std::move(val));
-            }
-            else if constexpr (has_insert_v<T>) {
-                container.insert(std::move(val));
-            }
-            else {
-                static_assert(false, "Don't know how to add element to container");
+                //add element to collection
+                if constexpr (has_push_back_v<T>) {
+                    container.push_back(std::move(val));
+                }
+                else if constexpr (has_insert_v<T>) {
+                    container.insert(std::move(val));
+                }
+                else {
+                    static_assert(false, "Don't know how to add element to container");
+                }
             }
         }
     }

@@ -40,6 +40,32 @@ namespace netlib {
 
 
     /**
+     * Trait for recognizing if T is container that its storage is an array;
+     * it checks if T provides the data() function.
+     */
+    template <class T> struct has_data_array {
+    private:
+        struct true_type { char c[1]; };
+        struct false_type { char c[2]; };
+        template <class C> static auto get_func(typename const T* (C::* m)() const) { return m; };
+        template <class C> static true_type test(decltype(get_func<C>(&C::data)));
+        template <class C> static false_type test(...);
+
+    public:
+        /**
+         * True if T is container with data() function, false otherwise.
+         */
+        static constexpr bool value = sizeof(test<T>(nullptr)) == sizeof(true_type);
+    };
+
+
+    /**
+     * Variable for has_data_array<T> template.
+     */
+    template <class T> inline constexpr bool has_data_array_v = has_data_array<T>::value;
+
+
+    /**
      * Trait for recognizing if T is sequence container;
      * it checks if T provides push_back function.
      */
