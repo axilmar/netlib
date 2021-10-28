@@ -47,7 +47,7 @@ namespace netlib {
     private:
         struct true_type { char c[1]; };
         struct false_type { char c[2]; };
-        template <class C> static auto get_func(typename const T* (C::* m)() const) { return m; };
+        template <class C> static auto get_func(typename const typename T::value_type* (C::* m)() const) { return m; };
         template <class C> static true_type test(decltype(get_func<C>(&C::data)));
         template <class C> static false_type test(...);
 
