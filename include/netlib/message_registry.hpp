@@ -44,7 +44,7 @@ namespace netlib {
 
     /**
      * Message registration.
-     * @param T message type.
+     * @param T message type; it must have a static ID member which contains the id of the message.
      */
     template <class T> class message_registration {
     public:
