@@ -342,7 +342,10 @@ namespace netlib {
         if (m_handle != INVALID_SOCKET) {
             throw socket_error("Socket already open");
         }
+
         m_handle = get_library().create_socket(af, type, protocol);
+
+        m_streaming_socket = type == SOCK_STREAM;
     }
 
 
@@ -475,15 +478,21 @@ namespace netlib {
     }
 
 
-    //sends data.
-    size_t socket::send(const byte_buffer& buffer, int flags) {
-        const int result = ::send(m_handle, reinterpret_cast<const char*>(buffer.data()), static_cast<int>(buffer.size()), flags);
-        
+    //sends data from raw buffer.
+    size_t socket::send(const void* buffer, size_t size, int flags) {
+        const int result = ::send(m_handle, reinterpret_cast<const char*>(buffer), static_cast<int>(size), flags);
+
         if (result == SOCKET_ERROR) {
             throw socket_error(get_last_error());
         }
 
         return static_cast<size_t>(result);
+    }
+
+
+    //sends data.
+    size_t socket::send(const byte_buffer& buffer, int flags) {
+        return send(buffer.data(), buffer.size(), flags);
     }
 
 
@@ -499,15 +508,21 @@ namespace netlib {
     }
 
 
-    //receives data.
-    size_t socket::receive(byte_buffer& buffer, int flags) {
-        const int result = ::recv(m_handle, reinterpret_cast<char*>(buffer.data()), static_cast<int>(buffer.size()), flags);
+    //receives data in raw buffer.
+    size_t socket::receive(void* buffer, size_t size, int flags) {
+        const int result = ::recv(m_handle, reinterpret_cast<char*>(buffer), static_cast<int>(size), flags);
 
         if (result == SOCKET_ERROR) {
             throw socket_error(get_last_error());
         }
 
         return static_cast<size_t>(result);
+    }
+
+
+    //receives data.
+    size_t socket::receive(byte_buffer& buffer, int flags) {
+        return receive(buffer.data(), buffer.size(), flags);
     }
 
 

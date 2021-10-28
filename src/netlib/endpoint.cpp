@@ -14,7 +14,7 @@ namespace netlib {
 
 
     //Sends a message.
-    void endpoint::send_message(const message& msg) {
+    bool endpoint::send_message(const message& msg) {
         //clear the temporary buffer
         thread_buffer.clear();
 
@@ -22,7 +22,7 @@ namespace netlib {
         msg.serialize(thread_buffer);
 
         //send the message
-        send_message_data(thread_buffer);
+        return send_message_data(thread_buffer);
     }
 
 
@@ -33,8 +33,10 @@ namespace netlib {
             thread_buffer.resize(max_message_size);
         }
 
-        //receive the data
-        receive_message_data(thread_buffer);
+        //receive the data; if the data could not be received, return a null pointer.
+        if (!receive_message_data(thread_buffer)) {
+            return message_pointer{nullptr, message_deleter(memres, 0)};
+        }
 
         //peek the message id
         message_id id;

@@ -257,6 +257,16 @@ namespace netlib {
         /**
          * Sends data.
          * @param buffer buffer with data to send.
+         * @param size number of bytes in the buffer.
+         * @param flags send flags.
+         * @return number of bytes sent.
+         * @exception socket_error thrown if the operation was invalid.
+         */
+        size_t send(const void* buffer, size_t size, int flags = 0);
+
+        /**
+         * Sends data.
+         * @param buffer buffer with data to send.
          * @param flags send flags.
          * @return number of bytes sent.
          * @exception socket_error thrown if the operation was invalid.
@@ -272,6 +282,16 @@ namespace netlib {
          * @exception socket_error thrown if the operation was invalid.
          */
         size_t send(const byte_buffer& buffer, const socket_address& addr, int flags = 0);
+
+        /**
+         * Receives data.
+         * @param buffer buffer with data to receive.
+         * @param size size of buffer.
+         * @param flags receive flags.
+         * @return number of bytes received.
+         * @exception socket_error thrown if the operation was invalid.
+         */
+        size_t receive(void* buffer, size_t size, int flags = 0);
 
         /**
          * Receives data.
@@ -292,9 +312,35 @@ namespace netlib {
          */
         size_t receive(byte_buffer& buffer, socket_address& addr, int flags = 0);
 
+        /**
+         * Returns true if this socket is a streaming socket, false otherwise. 
+         */
+        bool is_streaming_socket() const { return m_streaming_socket; }
+
+        /**
+         * Does not return until all the data are sent.
+         * @param buffer pointer to data to send.
+         * @param size number of bytes to send.
+         * @param flaga send flags.
+         * @return true if the data were successfully sent, false if the socket was closed.
+         */
+        bool stream_send(const void* buffer, size_t size, int flags = 0);
+
+        /**
+         * Does not return until all the data are received.
+         * @param buffer pointer to data to receive.
+         * @param size number of bytes to receive.
+         * @param flaga send flags.
+         * @return true if the data were successfully received, false if the socket was closed.
+         */
+        bool stream_receive(void* buffer, size_t size, int flags = 0);
+
     private:
         //handle
         uintptr_t m_handle;
+
+        //if it is a streaming socket
+        bool m_streaming_socket{};
 
         //internal constructor
         socket(uintptr_t handle) : m_handle(handle) {}

@@ -21,6 +21,22 @@ namespace netlib {
 
 
     /**
+     * If the current machine is big endian, then it switches bytes.
+     * @param value value to switch bytes.
+     */
+    template <class T> void switch_endianess(T& value) {
+        if constexpr (!is_little_endian()) {
+            std::byte* bytes = reinterpret_cast<std::byte*>(&value);
+            for (size_t i = 0; i < sizeof(T) / 2; ++i) {
+                const std::byte b = bytes[i];
+                bytes[i] = bytes[sizeof(T) - 1 - i];
+                bytes[sizeof(T) - 1 - i] = b;
+            }
+        }
+    }
+
+
+    /**
      * Copies value to buffer, with endianess.
      * @param buffer destination buffer; must already have size.
      * @param value value to write to buffer.

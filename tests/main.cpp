@@ -87,12 +87,14 @@ class test_endpoint : public endpoint {
 public:
 
 protected:
-    void send_message_data(byte_buffer& buffer) final {
+    bool send_message_data(const byte_buffer& buffer) final {
         temp_buffer = buffer;
+        return true;
     }
 
-    void receive_message_data(byte_buffer& buffer) final {
+    bool receive_message_data(byte_buffer& buffer) final {
         buffer = temp_buffer;
+        return true;
     }
 };
 

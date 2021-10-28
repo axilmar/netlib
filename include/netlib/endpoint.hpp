@@ -27,14 +27,15 @@ namespace netlib {
         /**
          * Sends a message.
          * @param msg message to send.
+         * @return true if the message was sent, false if it could not be sent.
          */
-        void send_message(const message& msg);
+        bool send_message(const message& msg);
 
         /**
          * Waits for a message. 
          * @param mesres memory resource to use for allocating memory for the message.
          * @param max_message_size maximum number of bytes to receive.
-         * @return a pointer to received message.
+         * @return a pointer to the received message or null if reception was impossible.
          */
         message_pointer receive_message(std::pmr::memory_resource& memres, size_t max_message_size = PACKET_MAX_SIZE);
 
@@ -42,7 +43,7 @@ namespace netlib {
          * Waits for a message.
          * Memory for the message is allocated from a global synchronized memory resource.
          * @param max_message_size maximum number of bytes to receive.
-         * @return a pointer to received message.
+         * @return a pointer to the received message or null if reception was impossible.
          */
         message_pointer receive_message(size_t max_message_size = PACKET_MAX_SIZE);
 
@@ -50,14 +51,16 @@ namespace netlib {
         /**
          * Interface for trasmitting the data.
          * @param buffer buffer with data to transmit.
+         * @return true if the data were sent successfully, false otherwise.
          */
-        virtual void send_message_data(byte_buffer& buffer) = 0;
+        virtual bool send_message_data(const byte_buffer& buffer) = 0;
 
         /**
          * Interface for receiving the data.
          * @param buffer buffer to put the data to.
+         * @return true if the data were received successfully, false otherwise.
          */
-        virtual void receive_message_data(byte_buffer& buffer) = 0;
+        virtual bool receive_message_data(byte_buffer& buffer) = 0;
     };
 
 
