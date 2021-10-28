@@ -6,6 +6,14 @@
 #include "byte_buffer.hpp"
 
 
+#ifndef NETLIB_MAX_PACKET_SIZE
+/**
+ * defines the size of the biggest packet. 
+ */
+#define NETLIB_MAX_PACKET_SIZE 4096
+#endif
+
+
 namespace netlib {
 
 
@@ -14,11 +22,6 @@ namespace netlib {
      */
     class messaging_interface : public std::enable_shared_from_this<messaging_interface> {
     public:
-        /**
-         * Maximum size for a packet.
-         */
-        static constexpr size_t PACKET_MAX_SIZE = 65536;
-
         /**
          * The destructor.
          */
@@ -37,7 +40,7 @@ namespace netlib {
          * @param max_message_size maximum number of bytes to receive.
          * @return a pointer to the received message or null if reception was impossible.
          */
-        message_pointer receive_message(std::pmr::memory_resource& memres, size_t max_message_size = PACKET_MAX_SIZE);
+        message_pointer receive_message(std::pmr::memory_resource& memres, size_t max_message_size = NETLIB_MAX_PACKET_SIZE);
 
         /**
          * Waits for a message.
@@ -45,7 +48,7 @@ namespace netlib {
          * @param max_message_size maximum number of bytes to receive.
          * @return a pointer to the received message or null if reception was impossible.
          */
-        message_pointer receive_message(size_t max_message_size = PACKET_MAX_SIZE);
+        message_pointer receive_message(size_t max_message_size = NETLIB_MAX_PACKET_SIZE);
 
     protected:
         /**
