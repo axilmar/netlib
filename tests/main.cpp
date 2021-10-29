@@ -2,11 +2,7 @@
 #include <vector>
 #include <iostream>
 #include <set>
-#include "netlib/message.hpp"
-#include "netlib/messaging_interface.hpp"
-#include "netlib/message_registry.hpp"
-#include "netlib/socket.hpp"
-#include "netlib/socket_messaging_interface.hpp"
+#include "netlib.hpp"
 
 
 using namespace netlib;
