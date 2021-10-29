@@ -1,8 +1,8 @@
 #include <WinSock2.h>
 #include <In6addr.h>
 #include <Ws2tcpip.h>
-#include <sstream>
 #include "netlib/socket.hpp"
+#include "netlib/stringstream.hpp"
 
 
 namespace netlib {
@@ -32,10 +32,7 @@ namespace netlib {
             WSADATA wsaData;
             const int error = WSAStartup(MAKEWORD(2, 0), &wsaData);
             if (error != NO_ERROR) {
-                std::stringstream stream;
-                stream << "Window Sockets library could not be initialized; error = ";
-                stream << error;
-                throw socket_error(stream.str());
+                throw socket_error(stringstream() << "Window Sockets library could not be initialized; error = " << error);
             }
         }
 
@@ -79,9 +76,7 @@ namespace netlib {
         LocalFree(buffer);
 
         //create the message
-        std::stringstream stream;
-        stream << '[' << error_id << "] " << msg_str;
-        return stream.str();
+        return stringstream() << '[' << error_id << "] " << msg_str;
     }
 
 

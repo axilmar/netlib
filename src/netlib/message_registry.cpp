@@ -33,7 +33,7 @@ namespace netlib {
 
     //the default message creation function throws message_error on the message id
     static message_pointer invalid_message_creation_function(std::pmr::memory_resource& memres) {
-        throw message_error("id");
+        throw message_error("invalid message creation function");
     }
 
 

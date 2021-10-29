@@ -59,6 +59,7 @@ namespace netlib {
         /**
          * Deserializes this message.
          * @param buffer source buffer.
+         * @exception message_error thrown if the received message id is different than the message id.
          */
         void deserialize(const byte_buffer& buffer);
     };
