@@ -31,7 +31,7 @@ namespace netlib {
          * The constructor.
          * @param id message id.
          */
-        message(message_id id = 0) : id(id) {}
+        message(message_id id) : id(id) {}
 
         /**
          * The destructor.
