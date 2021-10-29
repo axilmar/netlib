@@ -2,7 +2,7 @@
 #define NETLIB_NEXT_INTERNALS_FIELD_BASE_HPP
 
 
-#include "../field_base.hpp"
+#include "field_base.hpp"
 
 
 namespace netlib::internals {

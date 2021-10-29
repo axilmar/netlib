@@ -42,13 +42,13 @@ namespace netlib {
          * Returns a const pointer to the first field, which is the message id.
          * @return pointer to the first field.
          */
-        const field_base* get_first_field() const { return &id; }
+        const internals::field_base* get_first_field() const { return &id; }
 
         /**
          * Returns a pointer to the first field, which is the message id.
          * @return pointer to the first field.
          */
-        field_base* get_first_field() { return &id; }
+        internals::field_base* get_first_field() { return &id; }
 
         /**
          * Serializes this message.

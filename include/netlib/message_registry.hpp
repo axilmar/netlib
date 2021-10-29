@@ -10,6 +10,17 @@ namespace netlib {
 
 
     /**
+     * Helper function for creating a message.
+     * @param memres memory resource to allocate memory for the message.
+     * @return pointer to message.
+     */
+    template <class T> static message_pointer create_message(std::pmr::memory_resource& memres) {
+        void* mem = memres.allocate(sizeof(T));
+        return { new (mem) T(), message_deleter(memres, sizeof(T)) };
+    }
+
+
+    /**
      * Global message registry.
      */
     class message_registry {
@@ -52,14 +63,7 @@ namespace netlib {
          * Declares a message registration for the given message.
          */
         message_registration() {
-            message_registry::register_message(T::ID, &create_message);
-        }
-
-    private:
-        //the message creation function.
-        static message_pointer create_message(std::pmr::memory_resource& memres) {
-            void* mem = memres.allocate(sizeof(T));
-            return { new (mem) T(), message_deleter(memres, sizeof(T)) };
+            message_registry::register_message(T::ID, &create_message<T>);
         }
     };
 

@@ -8,7 +8,7 @@ namespace netlib {
 
     //Serializes this message.
     void message::serialize(byte_buffer& buffer) const {
-        for (const field_base* f = get_first_field(); f; f = f->get_next_field()) {
+        for (const internals::field_base* f = get_first_field(); f; f = f->get_next_field()) {
             f->serialize_this(buffer);
         }
     }
@@ -21,7 +21,7 @@ namespace netlib {
         const message_id current_message_id = id;
 
         //deserialize the id
-        field_base* f = get_first_field();
+        internals::field_base* f = get_first_field();
         f->deserialize_this(buffer, pos);
 
         //check the id; if different, throw exception

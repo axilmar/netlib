@@ -2,7 +2,7 @@
 #define NETLIB_INTERNALS_TOP_FIELD_HPP
 
 
-#include "netlib/field_base.hpp"
+#include "netlib/internals/field_base.hpp"
 
 
 namespace netlib::internals {
