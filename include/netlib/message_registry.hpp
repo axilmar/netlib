@@ -10,22 +10,10 @@ namespace netlib {
 
 
     /**
-     * Helper function for creating a message.
-     * @param memres memory resource to allocate memory for the message.
-     * @return pointer to message.
-     */
-    template <class T> static message_pointer create_message(std::pmr::memory_resource& memres) {
-        void* mem = memres.allocate(sizeof(T));
-        return { new (mem) T(), message_deleter(memres, sizeof(T)) };
-    }
-
-
-    /**
      * Global message registry.
      */
     class message_registry {
     public:
-
         /**
          * Type of message creation function.
          * @param memres memory resource.
@@ -42,6 +30,15 @@ namespace netlib {
         static void register_message(message_id id, message_creation_function&& func);
 
         /**
+         * Registers a message creation function for the specific message type. 
+         * Thread-safe function.
+         * @param id id of message.
+         */
+        template <class T> static void register_message(message_id id) {
+            register_message(id, &create_message<T>);
+        }
+
+        /**
          * Creates the appropriate message object, depending on message id.
          * Thread-safe function.
          * @param id message id.
@@ -50,6 +47,13 @@ namespace netlib {
          * @exception message_error thrown if there was no registration found for the given message id.
          */
         static message_pointer create_message(message_id id, std::pmr::memory_resource& memres);
+
+    private:
+        //Helper function for creating a message.
+        template <class T> static message_pointer create_message(std::pmr::memory_resource& memres) {
+            void* mem = memres.allocate(sizeof(T));
+            return { new (mem) T(), message_deleter(memres, sizeof(T)) };
+        }
     };
 
 
@@ -63,7 +67,7 @@ namespace netlib {
          * Declares a message registration for the given message.
          */
         message_registration() {
-            message_registry::register_message(T::ID, &create_message<T>);
+            message_registry::register_message<T>(T::ID);
         }
     };
 
