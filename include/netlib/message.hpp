@@ -28,15 +28,22 @@ namespace netlib {
         field<message_id, internals::first_field_base> id;
 
         /**
-         * The constructor.
-         * @param id message id.
-         */
-        message(message_id id) : id(id) {}
-
-        /**
          * The destructor.
          */
         virtual ~message() {}
+
+        /**
+         * Serializes this message.
+         * @param buffer destination buffer.
+         */
+        virtual void serialize(byte_buffer& buffer) const;
+
+        /**
+         * Deserializes this message.
+         * @param buffer source buffer.
+         * @exception message_error thrown if the received message id is different than the message id.
+         */
+        virtual void deserialize(const byte_buffer& buffer);
 
         /**
          * Returns a const pointer to the first field, which is the message id.
@@ -50,18 +57,12 @@ namespace netlib {
          */
         internals::field_base* get_first_field() { return &id; }
 
+    protected:
         /**
-         * Serializes this message.
-         * @param buffer destination buffer.
+         * The default constructor.
+         * @param id message id.
          */
-        void serialize(byte_buffer& buffer) const;
-
-        /**
-         * Deserializes this message.
-         * @param buffer source buffer.
-         * @exception message_error thrown if the received message id is different than the message id.
-         */
-        void deserialize(const byte_buffer& buffer);
+        message(message_id id = 0) : id(id) {}
     };
 
 

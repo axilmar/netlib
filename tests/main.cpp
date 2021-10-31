@@ -318,11 +318,11 @@ static void test_socket_messaging_interface_tcp() {
 
 
 int main() {
-    //test_serialization_traits();
-    //test_message_();
-    //test_messaging_interface_();
-    //test_sockets();
-    //test_socket_messaging_interface_udp();
+    test_serialization_traits();
+    test_message_();
+    test_messaging_interface_();
+    test_sockets();
+    test_socket_messaging_interface_udp();
     test_socket_messaging_interface_tcp();
 
     system("pause");
