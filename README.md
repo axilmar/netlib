@@ -129,6 +129,10 @@ Messaging interface with a sockets implementation.
 
 Numeric identifier for a message.
 
+### message_size
+
+Type of message size; by default, it is the type `uint16_t`, meaning the maximum message size = 2^16 = 65536 bytes. It can be changed by the preprocessor definition `NETLIB_MESSAGE_SIZE`.
+
 ### message
 
 Base class for messages.
@@ -215,7 +219,7 @@ The library, by default, uses the type `uint16_t' for message ids; this means th
 
 This can be changed at compile time by defining the type used for the message ids through the preprocessor definition `NETLIB_MESSAGE_ID_STORAGE_TYPE`.
 
-##### Message id breakdown
+##### Message id structure
 
 An automatically created message id is broken down to the following parts:
 

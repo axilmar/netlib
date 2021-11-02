@@ -1,3 +1,5 @@
+#include <cassert>
+#include <limits>
 #include "netlib/socket_messaging_interface.hpp"
 
 
@@ -16,23 +18,18 @@ namespace netlib {
 
 
     //Sends the data with the help of this socket.
-    bool socket_messaging_interface::send_message_data(const byte_buffer& buffer) {
+    bool socket_messaging_interface::send_message_data(byte_buffer& buffer) {
         //stream data
         if (is_streaming_socket()) {
-
-            //send the buffer size
-            size_t size = buffer.size();
-            switch_endianess(size);
-            if (!stream_send(&size, sizeof(size))) {
-                return false;
-            }
-
-            //send the buffer data
             return stream_send(buffer.data(), buffer.size());
         }
 
-        //send datagram
-        return send(buffer) == buffer.size();
+        //send datagram; do not send message size
+        message_size msg_size;
+        copy_value(&msg_size, reinterpret_cast<const message_size&>(buffer[0]));
+        const size_t sent_bytes = send(buffer.data() + sizeof(message_size), msg_size);
+        assert(sent_bytes == msg_size);
+        return sent_bytes == buffer.size() - sizeof(message_size);
     }
 
 
@@ -40,9 +37,8 @@ namespace netlib {
     bool socket_messaging_interface::receive_message_data(byte_buffer& buffer) {
         //receive streamed data
         if (is_streaming_socket()) {
-
             //receive buffer size
-            size_t size;
+            message_size size;
             if (!stream_receive(&size, sizeof(size))) {
                 return false;
             }
@@ -54,14 +50,11 @@ namespace netlib {
         }
 
         //receive datagram
-
         const size_t received_bytes = receive(buffer);
-
         if (received_bytes > 0) {
             buffer.resize(received_bytes);
             return true;
         }
-
         return false;
     }
 

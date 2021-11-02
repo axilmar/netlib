@@ -53,10 +53,10 @@ namespace netlib {
     protected:
         /**
          * Interface for trasmitting the data.
-         * @param buffer buffer with data to transmit.
+         * @param buffer buffer with data to transmit; the first bytes contain the message size.
          * @return true if the data were sent successfully, false otherwise.
          */
-        virtual bool send_message_data(const byte_buffer& buffer) = 0;
+        virtual bool send_message_data(byte_buffer& buffer) = 0;
 
         /**
          * Interface for receiving the data.

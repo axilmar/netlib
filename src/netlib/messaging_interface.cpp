@@ -1,5 +1,7 @@
 #include "netlib/messaging_interface.hpp"
 #include "netlib/message_registry.hpp"
+#include "netlib/message_size.hpp"
+#include "netlib/stringstream.hpp"
 
 
 namespace netlib {
@@ -13,13 +15,33 @@ namespace netlib {
     static std::pmr::synchronized_pool_resource global_message_memory_resource;
 
 
+    //given a buffer, returns the appropriate message size;
+    //throws exception if buffer contains too much data.
+    static message_size get_message_size(const byte_buffer& buffer) {
+        const size_t buffer_size = buffer.size() - sizeof(message_size);
+
+        if (buffer_size <= std::numeric_limits<message_size>::max()) {
+            return static_cast<message_size>(buffer_size);
+        }
+
+        throw std::runtime_error(stringstream() << "Message is too large; message size = " << buffer_size << "; max message size = " << std::numeric_limits<message_size>::max());
+    }
+
+
     //Sends a message.
     bool messaging_interface::send_message(const message& msg) {
         //clear the temporary buffer
         thread_buffer.clear();
 
+        //leave room for message size at the buffer start
+        serialize(message_size{}, thread_buffer);
+
         //serialize the message
         msg.serialize(thread_buffer);
+
+        //set the message size at the buffer start
+        const message_size msg_size = get_message_size(thread_buffer);
+        copy_value(thread_buffer.data(), msg_size);
 
         //send the message
         return send_message_data(thread_buffer);

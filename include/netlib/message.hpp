@@ -2,8 +2,9 @@
 #define NETLIB_MESSAGE_HPP
 
 
-#include "message_id.hpp"
 #include "internals/first_field_base.hpp"
+#include "message_id.hpp"
+#include "message_size.hpp"
 #include "field.hpp"
 
 

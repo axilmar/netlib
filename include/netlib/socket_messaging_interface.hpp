@@ -36,7 +36,7 @@ namespace netlib {
          * @param buffer buffer with data to transmit.
          * @return true if the data were transmitted successfully, false if the socket was closed.
          */
-        bool send_message_data(const byte_buffer& buffer) final;
+        bool send_message_data(byte_buffer& buffer) final;
 
         /**
          * Receives the data with the help of this socket.

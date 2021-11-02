@@ -127,8 +127,9 @@ class test_messaging_interface : public messaging_interface {
 public:
 
 protected:
-    bool send_message_data(const byte_buffer& buffer) final {
-        temp_buffer = buffer;
+    bool send_message_data(byte_buffer& buffer) final {
+        temp_buffer.clear();
+        temp_buffer.insert(temp_buffer.end(), buffer.begin() + sizeof(message_size), buffer.end());
         return true;
     }
 
