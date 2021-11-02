@@ -2,18 +2,12 @@
 #define NETLIB_MESSAGE_HPP
 
 
-#include <cstdint>
+#include "message_id.hpp"
 #include "internals/first_field_base.hpp"
 #include "field.hpp"
 
 
 namespace netlib {
-
-
-    /**
-     * Message id type. 
-     */
-    using message_id = uint16_t;
 
 
     /**

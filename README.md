@@ -11,6 +11,7 @@ C++17 networking/serialization/deserialization library.
 - automatic handling of endianess.
 - provided support for tcp/udp, for ip4/ip6 networking; open API for support of other network types.
 - allows customization of memory allocation for received messages.
+- provides optional automatic message registration/message id creation based on the alphabetical order of message class names.
 
 ## Example
 
@@ -26,14 +27,11 @@ using namespace netlib;
 //custom message declaration
 class my_message : public message {
 public:
-    //id of the message
-    static constexpr message_id ID = 1;
-    
     //content of the message
     field<std::string> content;
     
-    //constructor that sets the message id.
-    my_message() : message(ID) {}
+    //constructor that sets the message id from message id auto-enumeration.
+    my_message() : message(auto_message_id<my_message>::get_message_id()) {}
 };
 
 //server thread
@@ -77,9 +75,6 @@ static void client_thread_proc() {
 }
 
 int main() {
-    //register my_message in order for the receiver to create it
-    message_registration<my_message> my_message_registration;
-    
     //start the threads
 	std::thread server_thread{server_thread_proc}; 
     std::thread client_thread{client_thread_proc};
@@ -135,19 +130,19 @@ Base class for messages.
 
 ### field<T>
 
-Class that allows auto-registering message fields.
+Class that allows auto-registering message fields for type `T`.
 
 ### message_registry
 
 Allows registration of message creation functions, in order to automatically create message instances from the received message id.
 
-### message_registration<T>
+### auto_message_id<T>
 
-Allows automatic registration of a message type.
+Allows automatic registration/creation of message id for message `T`.
 
 ### byte_buffer
 
-Alias for std::vector<std::byte>>; used through out the library for buffers.
+Alias for `std::vector<std::byte>`; used through out the library for buffers.
 
 ### socket_error
 
@@ -159,4 +154,4 @@ Exception thrown when a message constraint is not satisfied (for example, the re
 
 ### stringstream
 
-Derived from std::stringstream, it provides operator std::string which allows creating strings with multiple parameters; for example: `stringstream() << "my error: " << error_number `.
+Derived from std::stringstream, it provides `operator std::string` which allows creating strings with multiple parameters; for example: `stringstream() << "my error: " << error_number `.

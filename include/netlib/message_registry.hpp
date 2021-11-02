@@ -57,21 +57,6 @@ namespace netlib {
     };
 
 
-    /**
-     * Message registration.
-     * @param T message type; it must have a static ID member which contains the id of the message.
-     */
-    template <class T> class message_registration {
-    public:
-        /**
-         * Declares a message registration for the given message.
-         */
-        message_registration() {
-            message_registry::register_message<T>(T::ID);
-        }
-    };
-
-
 } //namespace netlib
 
 

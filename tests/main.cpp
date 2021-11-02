@@ -8,12 +8,6 @@
 using namespace netlib;
 
 
-enum MESSAGE_ID {
-    MSG_TEST_MESSAGE,
-    MSG_TEXT_MESSAGE
-};
-
-
 class my_object {
 public:
     float value{0};
@@ -23,9 +17,7 @@ public:
 
 class test_message : public message {
 public:
-    static constexpr int ID = MSG_TEST_MESSAGE;
-
-    test_message() : message(ID) {
+    test_message() : message(auto_message_id<test_message>::get_message_id()) {
     }
 
     field<std::vector<int>> data1;
@@ -108,9 +100,6 @@ protected:
 
 static void test_messaging_interface_() {
     test_messaging_interface te;
-
-    message_registration<test_message> mr;
-
     test_message msg1;
 
     msg1.data1.push_back(10);
@@ -198,18 +187,13 @@ static void test_sockets() {
 
 class text_message : public message {
 public:
-    static constexpr int ID = MSG_TEXT_MESSAGE;
-
-    field<std::string> text;
-    
-    text_message() : message(ID) {
+    field<std::string> text;    
+    text_message() : message(auto_message_id<text_message>::get_message_id()) {
     }
 };
 
 
 static void test_socket_messaging_interface_udp() {
-    message_registration<text_message> mr;
-
     try {
         static constexpr int COUNT = 100;
         int consumer_count = 0;
@@ -261,8 +245,6 @@ static void test_socket_messaging_interface_udp() {
 
 
 static void test_socket_messaging_interface_tcp() {
-    message_registration<text_message> mr;
-
     try {
         static constexpr int COUNT = 100;
         int consumer_count = 0;

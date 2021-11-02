@@ -5,7 +5,7 @@
 #include "netlib/stringstream.hpp"
 #include "netlib/message_error.hpp"
 #include "netlib/socket_error.hpp"
-#include "netlib/message_registry.hpp"
+#include "netlib/auto_message_id.hpp"
 #include "netlib/socket_messaging_interface.hpp"
 
 
