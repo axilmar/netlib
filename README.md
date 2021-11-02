@@ -38,7 +38,7 @@ public:
 //server thread
 static void server_thread_proc() {
     //socket to listen for connections; tcp on ip4 protocol
-	socket listen_socket{ socket::TCP_IP4 };
+    socket listen_socket{ socket::TCP_IP4 };
     
     //set the address to  listen to
     listen_socket.bind({"localhost", 1000});
