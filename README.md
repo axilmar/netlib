@@ -76,7 +76,7 @@ static void client_thread_proc() {
 
 int main() {
     //start the threads
-	std::thread server_thread{server_thread_proc}; 
+    std::thread server_thread{server_thread_proc}; 
     std::thread client_thread{client_thread_proc};
     
     //wait for threads to terminate
