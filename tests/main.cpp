@@ -3,9 +3,50 @@
 #include <iostream>
 #include <set>
 #include "netlib.hpp"
+#include "netlib/internals/../../../src/netlib/internals/typeinfo.hpp"
 
 
 using namespace netlib;
+
+
+namespace typeinfo_test {
+    struct s1 {
+    };
+
+    class c1 {
+    };
+
+    enum e1 {
+    };
+
+    enum class e2 {
+    };
+
+    union u1 {
+    };
+
+    using proc = void (*)();
+}
+
+
+static void test_typeinfo(const std::string& type, const std::string& ns, const std::string& name) {
+    std::cout << "testing " << type << " -> ";
+    const auto p1 = internals::split_typeinfo_name(type);
+    std::cout << p1.first << "::" << p1.second << std::endl;
+    assert(p1.first == ns);
+    assert(p1.second == name);
+}
+
+
+static void test_typeinfo() {
+    test_typeinfo(typeid(typeinfo_test::s1).name(), "typeinfo_test", "s1");
+    test_typeinfo(typeid(typeinfo_test::c1).name(), "typeinfo_test", "c1");
+    test_typeinfo(typeid(typeinfo_test::e1).name(), "typeinfo_test", "e1");
+    test_typeinfo(typeid(typeinfo_test::e2).name(), "typeinfo_test", "e2");
+    test_typeinfo(typeid(typeinfo_test::u1).name(), "typeinfo_test", "u1");
+    test_typeinfo(typeid(typeinfo_test::proc).name(), "", "void (__cdecl*)(void)");
+    test_typeinfo(typeid(int).name(), "", "int");
+}
 
 
 class my_object {
@@ -300,6 +341,7 @@ static void test_socket_messaging_interface_tcp() {
 
 
 int main() {
+    test_typeinfo();
     test_serialization_traits();
     test_message_();
     test_messaging_interface_();

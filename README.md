@@ -7,11 +7,12 @@ C++17 networking/serialization/deserialization library.
 - sockets wrapper implementation that provides a portable, platform-neutral sockets API.
 - automatic serialization/deserialization of C++ basic types, STL types/containers and trivially-copyable structs.
 - optimized serialization/deserialization for STL containers backed up by contiguous arrays.
-- easiest way to declare messages, with automatic serialization/deserialization.
+- easy way to declare messages, with automatic serialization/deserialization.
 - automatic handling of endianess.
-- provided support for tcp/udp, for ip4/ip6 networking; open API for support of other network types.
-- allows customization of memory allocation for received messages.
-- provides optional automatic message registration/message id creation based on the alphabetical order of message class names.
+- support for tcp/udp, for ip4/ip6 networking, out of the box; open API for support of other network types.
+- customizable memory allocation for received messages.
+- optional automatic message registration/message id creation.
+- separation of messages into namespaces, based on c++ namespaces, in case of automatic message registration.
 
 ## Example
 
@@ -30,7 +31,7 @@ public:
     //content of the message
     field<std::string> content;
     
-    //constructor that sets the message id from message id auto-enumeration.
+    //constructor that creates a message id for this message automatically.
     my_message() : message(auto_message_id<my_message>::get_message_id()) {}
 };
 
@@ -124,11 +125,15 @@ Base class for classes that can send/receive messages.
 
 Messaging interface with a sockets implementation.
 
+### message_id
+
+Numeric identifier for a message.
+
 ### message
 
 Base class for messages.
 
-### field<T>
+### field< T >
 
 Class that allows auto-registering message fields for type `T`.
 
@@ -136,7 +141,7 @@ Class that allows auto-registering message fields for type `T`.
 
 Allows registration of message creation functions, in order to automatically create message instances from the received message id.
 
-### auto_message_id<T>
+### auto_message_id< T >
 
 Allows automatic registration/creation of message id for message `T`.
 
@@ -152,6 +157,83 @@ Exception thrown when there is an error in a socket operation; the error message
 
 Exception thrown when a message constraint is not satisfied (for example, the received message id is different from the id of the message that was created for the received id).
 
-### stringstream
+## Details
 
-Derived from std::stringstream, it provides `operator std::string` which allows creating strings with multiple parameters; for example: `stringstream() << "my error: " << error_number `.
+### Message ids
+
+In order for each message to be recognized when received, each message shall have is own unique id.
+
+There are two ways to define message ids:
+
+1. manual creation of message ids.
+2. automatic creation of message ids.
+
+#### Manual creation of message ids
+
+Ids can be declared manually, using integers or enumerations. Example:
+
+```c++
+enum class MsgId : netlib::message_id {
+    Msg1,
+    Msg2
+};
+
+class Msg1 : public netlib::message {
+public:
+    Msg1() : netlib::message(MsgId::Msg1) {}
+};
+
+class Msg2 : public netlib::message {
+public:
+    Msg2() : netlib::message(MsgId::Msg2) {}
+};
+```
+
+#### Automatic creation of message ids
+
+Manual creation and maintenance of message ids is cumbersome, especially if the number of messages grows too big.
+
+The library provides a way to automatically enumerate messages and create message ids. Example:
+
+```c++
+class Msg1 : public netlib::message {
+public:
+    Msg1() : netlib::message(netlib::auto_message_id<Msg1>::get_message_id()) {}
+};
+
+class Msg2 : public netlib::message {
+public:
+    Msg2() : netlib::message(netlib::auto_message_id<Msg2>::get_message_id()) {}
+};
+```
+
+#### Anatomy of an automatically created message id
+
+##### Message id default type
+
+The library, by default, uses the type `uint16_t' for message ids; this means that, by default, 2^16 = 65536 different messages can co-exist. 
+
+This can be changed at compile time by defining the type used for the message ids through the preprocessor definition `NETLIB_MESSAGE_ID_STORAGE_TYPE`.
+
+##### Message id breakdown
+
+An automatically created message id is broken down to the following parts:
+
+1. bits 10-15: contains the namespace id.
+2. bits 0-9: contains the message id.
+
+The preprocessor definition `NETLIB_MESSAGE_ID_NAMESPACE_BITS` can be used to alter the size, in bits, of the namespace id field. By default, it has the value 6, which means that each message id can accommodate **2^6=64 namespaces and 2^10=1024 messages per namespace**.
+
+##### Message namespaces
+
+The library uses the c++ namespaces to differentiate messages: when a message is registered to the library, its typename is split into namespace name and class name. Messages with the same name but in different namespaces will get a different namespace id and possibly the same message id.
+
+This allows an application to separate messages into logical domains using namespaces.
+
+### Message registration
+
+Messages need to be registered to the library in order to be automatically deserialized from network received data.
+
+- Messages with manually specified ids must be registered with the function `message_registry::register_message<T>(id)`.
+- Messages with automatically specified ids need not be registered manually; the function `auto_message_id<T>::get_message_id()` does that automatically.
+
