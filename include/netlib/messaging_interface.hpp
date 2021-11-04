@@ -58,7 +58,7 @@ namespace netlib {
          * @param buffer buffer with data to transmit.
          * @return true if the data were sent successfully, false otherwise.
          */
-        virtual bool send_data(const byte_buffer& buffer) = 0;
+        virtual bool send_data(byte_buffer& buffer) = 0;
 
         /**
          * Interface for receiving the data.

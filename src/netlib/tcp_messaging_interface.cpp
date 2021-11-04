@@ -56,7 +56,7 @@ namespace netlib {
 
 
     //Sends the data.
-    bool tcp_messaging_interface::send_data(const byte_buffer& buffer) {
+    bool tcp_messaging_interface::send_data(byte_buffer& buffer) {
         //get the message size
         const message_size msg_size = buffer_size_to_message_size(buffer.size());
         switch_endianess(msg_size);

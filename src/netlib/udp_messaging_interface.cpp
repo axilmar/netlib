@@ -43,7 +43,7 @@ namespace netlib {
 
 
     //Sends the data.
-    bool udp_messaging_interface::send_data(const byte_buffer& buffer) {
+    bool udp_messaging_interface::send_data(byte_buffer& buffer) {
         return get_socket().send(buffer) == buffer.size();
     }
 

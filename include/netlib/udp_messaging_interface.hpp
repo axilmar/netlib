@@ -36,7 +36,7 @@ namespace netlib {
          * @param buffer buffer with data to transmit.
          * @return true if the data were sent successfully, false otherwise.
          */
-        bool send_data(const byte_buffer& buffer) override;
+        bool send_data(byte_buffer& buffer) override;
 
         /**
          * Receives the data.
