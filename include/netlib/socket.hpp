@@ -59,6 +59,11 @@ namespace netlib {
         static const int OPTION_DISABLE_TCP_SEND_COALESCING;
 
         /**
+         * socket type option.
+         */
+        static const int OPTION_TYPE;
+
+        /**
          * Socket type.
          */
         enum class TYPE {
@@ -130,7 +135,7 @@ namespace netlib {
          * Checks if the socket has a valid socket handle.
          * @return true if the socket is valid, false otherwise.
          */
-        operator bool() const;
+        explicit operator bool() const;
 
         /**
          * Opens a socket.
@@ -313,11 +318,6 @@ namespace netlib {
         size_t receive(byte_buffer& buffer, socket_address& addr, int flags = 0);
 
         /**
-         * Returns true if this socket is a streaming socket, false otherwise. 
-         */
-        bool is_streaming_socket() const { return m_streaming_socket; }
-
-        /**
          * Does not return until all the data are sent.
          * @param buffer pointer to data to send.
          * @param size number of bytes to send.
@@ -335,12 +335,22 @@ namespace netlib {
          */
         bool stream_receive(void* buffer, size_t size, int flags = 0);
 
+        /**
+         * Returns the socket type.
+         * @return the socket type.
+         */
+        int get_type() const;
+
+        /**
+         * Returns the name of the socket type.
+         * @param type type.
+         * @return name of type; if the type is not supported, the returned value is "unknown".
+         */
+        static std::string get_socket_type_name(int type);
+
     private:
         //handle
         uintptr_t m_handle;
-
-        //if it is a streaming socket
-        bool m_streaming_socket;
 
         //internal constructor
         socket(uintptr_t handle) : m_handle(handle) {}

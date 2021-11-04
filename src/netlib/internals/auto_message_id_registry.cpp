@@ -52,9 +52,9 @@ namespace netlib::internals {
 
         //enumerate ids
         void enumerate_ids() {
-
             //if already enumerated, do nothing
             if (!m_ids.empty()) {
+                return;
             }
 
             netlib::message_id namespace_index = 0;

@@ -20,6 +20,12 @@ namespace netlib {
         using position = std::vector<std::byte>::size_type;
 
         using std::vector<std::byte>::vector;
+
+        /**
+         * Makes sure the buffer has enough size.
+         * @param size size.
+         */
+        void ensure_size(size_t size);
     };
 
 

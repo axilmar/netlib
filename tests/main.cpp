@@ -93,7 +93,7 @@ static void test_serialization_traits() {
 }
 
 
-static void test_message_() {
+static void test_message_serialization() {
     test_message msg1;
 
     msg1.data1.push_back(10);
@@ -127,20 +127,20 @@ class test_messaging_interface : public messaging_interface {
 public:
 
 protected:
-    bool send_message_data(byte_buffer& buffer) final {
+    bool send_data(const byte_buffer& buffer) final {
         temp_buffer.clear();
-        temp_buffer.insert(temp_buffer.end(), buffer.begin() + sizeof(message_size), buffer.end());
+        temp_buffer.insert(temp_buffer.end(), buffer.begin(), buffer.end());
         return true;
     }
 
-    bool receive_message_data(byte_buffer& buffer) final {
+    bool receive_data(byte_buffer& buffer) final {
         buffer = temp_buffer;
         return true;
     }
 };
 
 
-static void test_messaging_interface_() {
+static void test_messaging_interface_class() {
     test_messaging_interface te;
     test_message msg1;
 
@@ -242,9 +242,9 @@ static void test_socket_messaging_interface_udp() {
 
         socket_address test_addr({ "localhost", socket_address::ADDRESS_FAMILY_IP4 }, 10000);
         std::cout << "test network_address: " << test_addr.get_address().to_string() << std::endl;
-        socket_messaging_interface test_socket(socket::TYPE::UDP_IP4);
-        test_socket.bind(test_addr);
-        test_socket.connect(test_addr);
+        udp_messaging_interface test_socket(constants::ADDRESS_FAMILY_IP4);
+        test_socket.bind_socket(test_addr);
+        test_socket.connect_socket(test_addr);
 
         std::thread producer_thread([&]() {
             try {
@@ -299,7 +299,7 @@ static void test_socket_messaging_interface_tcp() {
                 socket server_socket(socket::TYPE::TCP_IP4);
                 server_socket.bind(test_addr);
                 server_socket.listen();
-                socket_messaging_interface test_socket = server_socket.accept().first;
+                tcp_messaging_interface test_socket{ std::move(server_socket.accept().first) };
 
                 byte_buffer buffer;
 
@@ -317,8 +317,8 @@ static void test_socket_messaging_interface_tcp() {
 
         std::thread client_thread([&]() {
             try {
-                socket_messaging_interface test_socket(socket::TYPE::TCP_IP4);
-                test_socket.connect(test_addr);
+                tcp_messaging_interface test_socket(constants::ADDRESS_FAMILY_IP4);
+                test_socket.connect_socket(test_addr);
                 for (consumer_count = 0; consumer_count < COUNT; ++consumer_count) {
                     message_pointer msg = test_socket.receive_message();
                     text_message* tm = static_cast<text_message*>(msg.get());
@@ -344,8 +344,8 @@ static void test_socket_messaging_interface_tcp() {
 int main() {
     test_typeinfo();
     test_serialization_traits();
-    test_message_();
-    test_messaging_interface_();
+    test_message_serialization();
+    test_messaging_interface_class();
     test_sockets();
     test_socket_messaging_interface_udp();
     test_socket_messaging_interface_tcp();

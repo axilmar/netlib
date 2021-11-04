@@ -5,7 +5,7 @@ namespace netlib {
 
 
     //invalid socket constructor.
-    socket::socket() : m_handle(-1), m_streaming_socket(false) {
+    socket::socket() : m_handle(-1) {
     }
 
 
@@ -28,7 +28,6 @@ namespace netlib {
     //moves a socket handle.
     socket::socket(socket&& src)
         : m_handle(src.m_handle)
-        , m_streaming_socket(src.m_streaming_socket)
     {
         src.m_handle = -1;
     }
@@ -46,7 +45,6 @@ namespace netlib {
         const uintptr_t temp = src.m_handle;
         src.m_handle = -1;
         m_handle = temp;
-        m_streaming_socket = src.m_streaming_socket;
         return *this;
     }
 
@@ -120,6 +118,26 @@ namespace netlib {
             //adjust the data pointer by the number of received bytes
             data += received_bytes;
         }
+    }
+
+
+    //Returns the socket type.
+    int socket::get_type() const {
+        return get_option<int>(LEVEL_SOCKET, OPTION_TYPE);
+    }
+
+
+    //Returns the name of the socket type.
+    std::string socket::get_socket_type_name(int type) {
+        if (type == SOCKET_STREAM) {
+            return "tcp";
+        }
+
+        if (type == SOCKET_DATAGRAM) {
+            return "udp";
+        }
+
+        return "unknown";
     }
 
 

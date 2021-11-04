@@ -1,61 +1,115 @@
-#include <cassert>
-#include <limits>
 #include "netlib/socket_messaging_interface.hpp"
+#include "netlib/stringstream.hpp"
+#include "netlib/socket_error.hpp"
 
 
 namespace netlib {
 
 
-    //constructor from socket.
-    socket_messaging_interface::socket_messaging_interface(socket&& src) : socket(std::move(src)) {}
-
-
-    //assignment from socket.
-    socket_messaging_interface& socket_messaging_interface::operator = (socket&& src) {
-        socket::operator = (std::move(src));
-        return *this;
+    //check if open
+    bool socket_messaging_interface::is_socket_open() const {
+        return static_cast<bool>(m_socket);
     }
 
 
-    //Sends the data with the help of this socket.
-    bool socket_messaging_interface::send_message_data(byte_buffer& buffer) {
-        //stream data
-        if (is_streaming_socket()) {
-            return stream_send(buffer.data(), buffer.size());
-        }
-
-        //send datagram; do not send message size
-        message_size msg_size;
-        copy_value(&msg_size, reinterpret_cast<const message_size&>(buffer[0]));
-        const size_t sent_bytes = send(buffer.data() + sizeof(message_size), msg_size);
-        assert(sent_bytes == msg_size);
-        return sent_bytes == buffer.size() - sizeof(message_size);
+    //shutdown socket
+    void socket_messaging_interface::shutdown_socket(bool shutdown_send, bool shutdown_receive) {
+        m_socket.shutdown(shutdown_send, shutdown_receive);
     }
 
 
-    //Receives the data with the help of this socket.
-    bool socket_messaging_interface::receive_message_data(byte_buffer& buffer) {
-        //receive streamed data
-        if (is_streaming_socket()) {
-            //receive buffer size
-            message_size size;
-            if (!stream_receive(&size, sizeof(size))) {
-                return false;
-            }
-            switch_endianess(size);
+    //close socket
+    void socket_messaging_interface::close_socket() {
+        m_socket.close();
+    }
 
-            //receive data
-            buffer.resize(size);
-            return size > 0 ? stream_receive(buffer.data(), buffer.size()) : true;
-        }
 
-        //receive datagram
-        const size_t received_bytes = receive(buffer);
-        if (received_bytes > 0) {
-            buffer.resize(received_bytes);
-            return true;
+    //get socket option
+    void socket_messaging_interface::get_socket_option(int level, int option_id, byte_buffer& option_value) const {
+        m_socket.get_option(level, option_id, option_value);
+    }
+
+
+    //set socket option
+    void socket_messaging_interface::set_socket_option(int level, int option_id, const byte_buffer& option_value) {
+        m_socket.set_option(level, option_id, option_value);
+    }
+
+
+    //get socket reuse
+    bool socket_messaging_interface::get_socket_reuse() const {
+        return m_socket.get_reuse();
+    }
+
+
+    //set socket reuse
+    void socket_messaging_interface::set_socket_reuse(bool v) {
+        m_socket.set_reuse(v);
+    }
+
+
+    //connect the socket
+    void socket_messaging_interface::connect_socket(const socket_address& addr) {
+        m_socket.connect(addr);
+    }
+
+
+    //bind the socket
+    void socket_messaging_interface::bind_socket(const socket_address& addr) {
+        m_socket.bind(addr);
+    }
+
+
+    //closed socket constructor
+    socket_messaging_interface::socket_messaging_interface() {
+    }
+
+
+    //constructor from parameters
+    socket_messaging_interface::socket_messaging_interface(int af, int type, int protocol)
+        : m_socket(af, type, protocol)
+    {
+    }
+
+
+    //constructor from type
+    socket_messaging_interface::socket_messaging_interface(socket::TYPE type)
+        : m_socket(type)
+    {
+    }
+
+
+    //Constructor from socket.
+    socket_messaging_interface::socket_messaging_interface(class socket&& socket)
+        : m_socket(std::move(socket))
+    {
+    }
+
+
+    //Returns the socket.
+    const socket& socket_messaging_interface::get_socket() const {
+        return m_socket;
+    }
+
+
+    //Returns the socket.
+    socket& socket_messaging_interface::get_socket() {
+        return m_socket;
+    }
+
+
+    //Sets the socket.
+    void socket_messaging_interface::set_socket(class socket&& socket) {
+        m_socket = std::move(socket);
+    }
+
+
+    //Moves a socket, and checks it if it is of the given type.
+    socket&& socket_messaging_interface::move_socket(socket& socket, int socket_type) {
+        if (socket.get_type() != socket_type) {
+            throw socket_error(stringstream() << "different socket type; expected socket type = " << socket::get_socket_type_name(socket_type) << "; actual socket type = " << socket::get_socket_type_name(socket.get_type()));
         }
-        return false;
+        return std::move(socket);
     }
 
 

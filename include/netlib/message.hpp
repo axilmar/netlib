@@ -57,7 +57,7 @@ namespace netlib {
          * The default constructor.
          * @param id message id.
          */
-        message(message_id id = 0) : id(id) {}
+        message(message_id id = 0);
     };
 
 

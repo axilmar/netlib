@@ -6,6 +6,16 @@
 namespace netlib {
 
 
+    /**
+     * The default constructor.
+     * @param id message id.
+     */
+    message::message(message_id id)
+        : id(id)
+    {
+    }
+
+
     //Serializes this message.
     void message::serialize(byte_buffer& buffer) const {
         for (const internals::field_base* f = get_first_field(); f; f = f->get_next_field()) {

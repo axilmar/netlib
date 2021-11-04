@@ -264,6 +264,7 @@ namespace netlib {
     const int socket::LEVEL_TCP = IPPROTO_TCP;
     const int socket::OPTION_REUSE_ADDRESS = SO_REUSEADDR;
     const int socket::OPTION_DISABLE_TCP_SEND_COALESCING = TCP_NODELAY;
+    const int socket::OPTION_TYPE = SO_TYPE;
 
 
     //opens a socket.
@@ -273,8 +274,6 @@ namespace netlib {
         }
 
         m_handle = get_library().create_socket(af, type, protocol);
-
-        m_streaming_socket = type == SOCK_STREAM;
     }
 
 
@@ -320,6 +319,7 @@ namespace netlib {
     //closes the socket.
     void socket::close() {
         ::closesocket(m_handle);
+        m_handle = INVALID_SOCKET;
     }
 
 
@@ -383,11 +383,11 @@ namespace netlib {
 
         result.first = ::accept(m_handle, reinterpret_cast<SOCKADDR*>(result.second.m_data), &addr_size);
         
-        if (result.first == INVALID_SOCKET) {
-            throw socket_error(get_last_error());
+        if (result.first) {
+            return result;
         }
 
-        return result;
+        throw socket_error(get_last_error());
     }
 
 

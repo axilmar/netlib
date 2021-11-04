@@ -6,10 +6,10 @@
 #include "byte_buffer.hpp"
 
 
-#ifndef NETLIB_MAX_PACKET_SIZE
 /**
- * defines the size of the biggest packet. 
+ * defines the size of the biggest packet.
  */
+#ifndef NETLIB_MAX_PACKET_SIZE
 #define NETLIB_MAX_PACKET_SIZE 4096
 #endif
 
@@ -29,6 +29,7 @@ namespace netlib {
 
         /**
          * Sends a message.
+         * It deserializes the message in a thread-local buffer, then invokes 'send_data'.
          * @param msg message to send.
          * @return true if the message was sent, false if it could not be sent.
          */
@@ -36,6 +37,7 @@ namespace netlib {
 
         /**
          * Waits for a message. 
+         * It receives data by invoking the function 'receive_data', then it deserializes the data into a message.
          * @param mesres memory resource to use for allocating memory for the message.
          * @param max_message_size maximum number of bytes to receive.
          * @return a pointer to the received message or null if reception was impossible.
@@ -53,17 +55,17 @@ namespace netlib {
     protected:
         /**
          * Interface for trasmitting the data.
-         * @param buffer buffer with data to transmit; the first bytes contain the message size.
+         * @param buffer buffer with data to transmit.
          * @return true if the data were sent successfully, false otherwise.
          */
-        virtual bool send_message_data(byte_buffer& buffer) = 0;
+        virtual bool send_data(const byte_buffer& buffer) = 0;
 
         /**
          * Interface for receiving the data.
          * @param buffer buffer to put the data to.
          * @return true if the data were received successfully, false otherwise.
          */
-        virtual bool receive_message_data(byte_buffer& buffer) = 0;
+        virtual bool receive_data(byte_buffer& buffer) = 0;
     };
 
 
