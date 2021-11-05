@@ -8,6 +8,7 @@
 #include "netlib/auto_message_id.hpp"
 #include "netlib/tcp_messaging_interface.hpp"
 #include "netlib/udp_messaging_interface.hpp"
+#include "netlib/encrypted_messaging_interface.hpp"
 
 
 #endif //NETLIB_HPP

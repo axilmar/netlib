@@ -15,13 +15,9 @@ namespace netlib {
     template <class Base> class encrypted_messaging_interface : public Base {
     public:
         /**
-         * Constructor that initializes Base with the given arguments.
-         * @param args arguments.
+         * The default constructor.
          */
-        template <class... Args> encrypted_messaging_interface(Args&&... args)
-            : Base(std::forward<Args>(args)...)
-        {
-        }
+        encrypted_messaging_interface() {}
 
         /**
          * Constructor that initializes the encryption interface this messaging interface uses,

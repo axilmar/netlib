@@ -341,6 +341,130 @@ static void test_socket_messaging_interface_tcp() {
 }
 
 
+class test_encryption_interface : public encryption_interface {
+public:
+    void encrypt(byte_buffer& buffer) final {
+        for (std::byte& b : buffer) {
+            b ^= std::byte(127);
+        }
+    }
+
+    void decrypt(byte_buffer& buffer) final {
+        for (std::byte& b : buffer) {
+            b ^= std::byte(127);
+        }
+    }
+
+private:
+};
+
+
+static void test_socket_messaging_interface_udp_encrypted() {
+    try {
+        static constexpr int COUNT = 100;
+        int consumer_count = 0;
+
+        socket_address test_addr({ "localhost", socket_address::ADDRESS_FAMILY_IP4 }, 10000);
+        std::cout << "test network_address: " << test_addr.get_address().to_string() << std::endl;
+        encrypted_messaging_interface<udp_messaging_interface> test_socket(std::make_shared<test_encryption_interface>(), constants::ADDRESS_FAMILY_IP4);
+        test_socket.bind_socket(test_addr);
+        test_socket.connect_socket(test_addr);
+
+        std::thread producer_thread([&]() {
+            try {
+                byte_buffer buffer;
+
+                text_message tm;
+                tm.text = "hello world!!!";
+
+                for (size_t i = 0; i < COUNT; ++i) {
+                    test_socket.send_message(tm/*, test_addr*/);
+                }
+            }
+            catch (const socket_error& err) {
+                std::cout << "producer error: " << err.what() << std::endl;
+            }
+            });
+
+        std::thread consumer_thread([&]() {
+            try {
+                for (consumer_count = 0; consumer_count < COUNT; ++consumer_count) {
+                    message_pointer msg = test_socket.receive_message();
+                    text_message* tm = static_cast<text_message*>(msg.get());
+                    std::cout << consumer_count << ": received message: " << tm->text << std::endl;
+                }
+            }
+            catch (const socket_error& err) {
+                std::cout << "consumer error: " << err.what() << std::endl;
+            }
+            });
+
+        producer_thread.join();
+        consumer_thread.join();
+
+        assert(consumer_count == COUNT);
+    }
+    catch (const socket_error& err) {
+        std::cout << err.what() << std::endl;
+    }
+}
+
+
+static void test_socket_messaging_interface_tcp_encrypted() {
+    try {
+        static constexpr int COUNT = 100;
+        int consumer_count = 0;
+
+        socket_address test_addr({ "localhost", socket_address::ADDRESS_FAMILY_IP4 }, 10000);
+        std::cout << "test network_address: " << test_addr.get_address().to_string() << std::endl;
+
+        std::thread server_thread([&]() {
+            try {
+                socket server_socket(socket::TYPE::TCP_IP4);
+                server_socket.bind(test_addr);
+                server_socket.listen();
+                encrypted_messaging_interface<tcp_messaging_interface> test_socket{ std::make_shared<test_encryption_interface>(), std::move(server_socket.accept().first) };
+
+                byte_buffer buffer;
+
+                text_message tm;
+                tm.text = "hello world!!!";
+
+                for (size_t i = 0; i < COUNT; ++i) {
+                    test_socket.send_message(tm/*, test_addr*/);
+                }
+            }
+            catch (const socket_error& err) {
+                std::cout << "server error: " << err.what() << std::endl;
+            }
+            });
+
+        std::thread client_thread([&]() {
+            try {
+                encrypted_messaging_interface<tcp_messaging_interface> test_socket(std::make_shared<test_encryption_interface>(), constants::ADDRESS_FAMILY_IP4);
+                test_socket.connect_socket(test_addr);
+                for (consumer_count = 0; consumer_count < COUNT; ++consumer_count) {
+                    message_pointer msg = test_socket.receive_message();
+                    text_message* tm = static_cast<text_message*>(msg.get());
+                    std::cout << consumer_count << ": received message: " << tm->text << std::endl;
+                }
+            }
+            catch (const socket_error& err) {
+                std::cout << "client error: " << err.what() << std::endl;
+            }
+            });
+
+        server_thread.join();
+        client_thread.join();
+
+        assert(consumer_count == COUNT);
+    }
+    catch (const socket_error& err) {
+        std::cout << err.what() << std::endl;
+    }
+}
+
+
 int main() {
     test_typeinfo();
     test_serialization_traits();
@@ -349,6 +473,8 @@ int main() {
     test_sockets();
     test_socket_messaging_interface_udp();
     test_socket_messaging_interface_tcp();
+    test_socket_messaging_interface_udp_encrypted();
+    test_socket_messaging_interface_tcp_encrypted();
 
     system("pause");
     return 0;
