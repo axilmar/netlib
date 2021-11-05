@@ -21,6 +21,12 @@ namespace netlib {
         network_address() {}
 
         /**
+         * Creates a network address of the given address family.
+         * @param af address family.
+         */
+        network_address(int af);
+
+        /**
          * Creates a network address from a string.
          * @param addr_string IP4/IP6 address string, or hostname.
          * @param address_family address family.

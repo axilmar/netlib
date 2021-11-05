@@ -56,7 +56,7 @@ namespace netlib {
 
 
     //Sends the data.
-    bool tcp_messaging_interface::send_data(byte_buffer& buffer) {
+    bool tcp_messaging_interface::send_data(byte_buffer& buffer, const std::initializer_list<std::any>& send_params) {
         //get the message size
         const message_size msg_size = buffer_size_to_message_size(buffer.size());
         switch_endianess(msg_size);
@@ -72,7 +72,7 @@ namespace netlib {
 
 
     //Receives the data.
-    bool tcp_messaging_interface::receive_data(byte_buffer& buffer) {
+    bool tcp_messaging_interface::receive_data(byte_buffer& buffer, const std::initializer_list<std::any>& receive_params) {
         //receive the message size
         message_size msg_size;
         if (!get_socket().stream_receive(&msg_size, sizeof(msg_size))) {
@@ -82,7 +82,11 @@ namespace netlib {
 
         //receive the data
         buffer.resize(msg_size);
-        return get_socket().stream_receive(buffer.data(), msg_size);
+
+        if (receive_params.size() == 0) {
+            return get_socket().stream_receive(buffer.data(), msg_size);
+        }
+        return get_socket().stream_receive(buffer.data(), msg_size, std::any_cast<std::reference_wrapper<socket_address>>(*receive_params.begin()));
     }
 
 

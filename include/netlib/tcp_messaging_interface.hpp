@@ -10,6 +10,7 @@ namespace netlib {
 
     /**
      * TCP messaging interface.
+     * On receive_message, it supports an optional parameter of type socket_address&, in order to receive the source address.
      */
     class tcp_messaging_interface : public socket_messaging_interface {
     public:
@@ -50,14 +51,14 @@ namespace netlib {
          * @param buffer buffer with data to transmit.
          * @return true if the data were sent successfully, false otherwise.
          */
-        bool send_data(byte_buffer& buffer) override;
+        bool send_data(byte_buffer& buffer, const std::initializer_list<std::any>& send_params) override;
 
         /**
          * Receives the data.
          * @param buffer buffer to put the data to.
          * @return true if the data were received successfully, false otherwise.
          */
-        bool receive_data(byte_buffer& buffer) override;
+        bool receive_data(byte_buffer& buffer, const std::initializer_list<std::any>& send_params) override;
     };
 
 

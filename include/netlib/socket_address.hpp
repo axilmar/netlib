@@ -27,7 +27,7 @@ namespace netlib {
          * @param port port number.
          * @exception socket_error thrown if the network address is invalid.
          */
-        socket_address(const network_address& addr, int port);
+        socket_address(const network_address& addr, int port = 0);
 
         /**
          * Returns the network address.

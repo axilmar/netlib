@@ -10,6 +10,8 @@ namespace netlib {
 
     /**
      * UDP messaging interface.
+     * On send_message, it supports an optional parameter of type const socket_address&, in order to send the data to a specific address;
+     * On receive_message, it supports an optional parameter of type socket_address&, in order to receive the source address.
      */
     class udp_messaging_interface : public socket_messaging_interface {
     public:
@@ -34,16 +36,20 @@ namespace netlib {
         /**
          * Sends the data.
          * @param buffer buffer with data to transmit.
+         * @param send_params accepts a const reference wrapper to a socket address;
+         *  if this argument is specified, then the underlying call is send-to rather than send.
          * @return true if the data were sent successfully, false otherwise.
          */
-        bool send_data(byte_buffer& buffer) override;
+        bool send_data(byte_buffer& buffer, const std::initializer_list<std::any>& send_params) override;
 
         /**
          * Receives the data.
          * @param buffer buffer to put the data to.
+         * @param receive_params accepts a reference wrapper to a socket address;
+         *  if this argument is specified, then the underlying call is receive-from rather than receive.
          * @return true if the data were received successfully, false otherwise.
          */
-        bool receive_data(byte_buffer& buffer) override;
+        bool receive_data(byte_buffer& buffer, const std::initializer_list<std::any>& send_params) override;
     };
 
 

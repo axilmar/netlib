@@ -43,18 +43,30 @@ namespace netlib {
 
 
     //Sends the data.
-    bool udp_messaging_interface::send_data(byte_buffer& buffer) {
-        return get_socket().send(buffer) == buffer.size();
+    bool udp_messaging_interface::send_data(byte_buffer& buffer, const std::initializer_list<std::any>& send_params) {
+        if (send_params.size() == 0) {
+            return get_socket().send(buffer) == buffer.size();
+        }
+        return get_socket().send(buffer, std::any_cast<std::reference_wrapper<const socket_address>>(*send_params.begin())) == buffer.size();
     }
 
 
     //Receives the data.
-    bool udp_messaging_interface::receive_data(byte_buffer& buffer) {
-        const size_t size = get_socket().receive(buffer);
+    bool udp_messaging_interface::receive_data(byte_buffer& buffer, const std::initializer_list<std::any>& receive_params) {
+        size_t size;
+
+        if (receive_params.size() == 0) {
+            size = get_socket().receive(buffer);
+        }
+        else {
+            size = get_socket().receive(buffer, std::any_cast<std::reference_wrapper<socket_address>>(*receive_params.begin()));
+        }
+
         if (size) {
             buffer.resize(size);
             return true;
         }
+
         return false;
     }
 

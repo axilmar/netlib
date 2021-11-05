@@ -99,6 +99,11 @@ namespace netlib {
     static_assert(library::get_address_buffer_size() >= max(sizeof(in_addr), sizeof(in6_addr)));
    
     
+    //Creates a network address of the given address family.
+    network_address::network_address(int af) : m_address_family(af) {
+    }
+
+
     //set network address either from ip string or hostname
     network_address::network_address(const char* addr_string, int address_family) {
         
@@ -446,7 +451,7 @@ namespace netlib {
     //receives data in raw buffer from specific address.
     size_t socket::receive(void* buffer, size_t size, socket_address& addr, int flags) {
         int addr_len = sizeof(addr);
-        const int result = ::recvfrom(m_handle, reinterpret_cast<char*>(buffer), flags, static_cast<int>(size), reinterpret_cast<SOCKADDR*>(&addr), &addr_len);
+        const int result = ::recvfrom(m_handle, reinterpret_cast<char*>(buffer), static_cast<int>(size), flags, reinterpret_cast<SOCKADDR*>(&addr), &addr_len);
 
         if (result == SOCKET_ERROR) {
             throw socket_error(get_last_error());

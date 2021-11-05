@@ -56,20 +56,22 @@ namespace netlib {
         /**
          * Encrypts, then sends the data.
          * @param buffer buffer with data to transmit.
+         * @param send_params send parameters.
          * @return true if the data were sent successfully, false otherwise.
          */
-        bool send_data(byte_buffer& buffer) override {
+        bool send_data(byte_buffer& buffer, const std::initializer_list<std::any>& send_params) override {
             m_encryption_interface->encrypt(buffer);
-            return Base::send_data(buffer);
+            return Base::send_data(buffer, send_params);
         }
 
         /**
          * Receives the data, then decrypts them.
          * @param buffer buffer to put the data to.
+         * @param receive_params receive parameters.
          * @return true if the data were received successfully, false otherwise.
          */
-        bool receive_data(byte_buffer& buffer) override {
-            if (Base::receive_data(buffer)) {
+        bool receive_data(byte_buffer& buffer, const std::initializer_list<std::any>& receive_params) override {
+            if (Base::receive_data(buffer, receive_params)) {
                 m_encryption_interface->decrypt(buffer);
                 return true;
             }
