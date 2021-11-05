@@ -281,6 +281,17 @@ namespace netlib {
         /**
          * Sends data to a specific address.
          * @param buffer buffer with data to send.
+         * @param size number of bytes in the buffer.
+         * @param addr destination address.
+         * @param flags send flags.
+         * @return number of bytes sent.
+         * @exception socket_error thrown if the operation was invalid.
+         */
+        size_t send(const void* buffer, size_t size, const socket_address& addr, int flags = 0);
+
+        /**
+         * Sends data to a specific address.
+         * @param buffer buffer with data to send.
          * @param addr destination address.
          * @param flags send flags.
          * @return number of bytes sent.
@@ -310,6 +321,17 @@ namespace netlib {
         /**
          * Receives data from a specific address.
          * @param buffer buffer with data to receive.
+         * @param size buffer size.
+         * @param addr source address.
+         * @param flags receive flags.
+         * @return number of bytes received.
+         * @exception socket_error thrown if the operation was invalid.
+         */
+        size_t receive(void* buffer, size_t size, socket_address& addr, int flags = 0);
+
+        /**
+         * Receives data from a specific address.
+         * @param buffer buffer with data to receive.
          * @param addr source address.
          * @param flags receive flags.
          * @return number of bytes received.
@@ -327,13 +349,68 @@ namespace netlib {
         bool stream_send(const void* buffer, size_t size, int flags = 0);
 
         /**
+         * Does not return until all the data are sent.
+         * @param buffer pointer to data to send.
+         * @param flaga send flags.
+         * @return true if the data were successfully sent, false if the socket was closed.
+         */
+        bool stream_send(const byte_buffer& buffer, int flags = 0);
+
+        /**
+         * Does not return until all the data are sent.
+         * @param buffer pointer to data to send.
+         * @param size number of bytes to send.
+         * @param addr destination address.
+         * @param flags send flags.
+         * @return true if the data were successfully sent, false if the socket was closed.
+         */
+        bool stream_send(const void* buffer, size_t size, const socket_address& addr, int flags = 0);
+
+        /**
+         * Does not return until all the data are sent.
+         * @param buffer pointer to data to send.
+         * @param size number of bytes to send.
+         * @param addr destination address.
+         * @param flags send flags.
+         * @return true if the data were successfully sent, false if the socket was closed.
+         */
+        bool stream_send(const byte_buffer& buffer, const socket_address& addr, int flags = 0);
+
+        /**
          * Does not return until all the data are received.
          * @param buffer pointer to data to receive.
          * @param size number of bytes to receive.
-         * @param flaga send flags.
+         * @param flags receive flags.
          * @return true if the data were successfully received, false if the socket was closed.
          */
         bool stream_receive(void* buffer, size_t size, int flags = 0);
+
+        /**
+         * Does not return until all the data are received.
+         * @param buffer pointer to data to receive.
+         * @param flags receive flags.
+         * @return true if the data were successfully received, false if the socket was closed.
+         */
+        bool stream_receive(byte_buffer& buffer, int flags = 0);
+
+        /**
+         * Does not return until all the data are received.
+         * @param buffer pointer to data to receive.
+         * @param size number of bytes to receive.
+         * @param addr sender address.
+         * @param flags receive flags.
+         * @return true if the data were successfully received, false if the socket was closed.
+         */
+        bool stream_receive(void* buffer, size_t size, socket_address& addr, int flags = 0);
+
+        /**
+         * Does not return until all the data are received.
+         * @param buffer pointer to data to receive.
+         * @param addr sender address.
+         * @param flags receive flags.
+         * @return true if the data were successfully received, false if the socket was closed.
+         */
+        bool stream_receive(byte_buffer& buffer, socket_address& addr, int flags = 0);
 
         /**
          * Returns the socket type.

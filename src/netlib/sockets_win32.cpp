@@ -419,14 +419,14 @@ namespace netlib {
     }
 
 
-    //sends data to specific address.
-    size_t socket::send(const byte_buffer& buffer, const socket_address& addr, int flags) {
-        const int result = ::sendto(m_handle, reinterpret_cast<const char*>(buffer.data()), static_cast<int>(buffer.size()), flags, reinterpret_cast<const SOCKADDR*>(addr.m_data), sizeof(SOCKADDR_IN)/*sizeof(addr.m_data)*/);
-        
+    //sends data from raw buffer to specific address.
+    size_t socket::send(const void* buffer, size_t size, const socket_address& addr, int flags) {
+        const int result = ::sendto(m_handle, reinterpret_cast<const char*>(buffer), static_cast<int>(size), flags, reinterpret_cast<const SOCKADDR*>(&addr), sizeof(addr));
+
         if (result == SOCKET_ERROR) {
             throw socket_error(get_last_error());
         }
-        
+
         return static_cast<size_t>(result);
     }
 
@@ -443,16 +443,15 @@ namespace netlib {
     }
 
 
-    //receives data and the source address.
-    size_t socket::receive(byte_buffer& buffer, socket_address& addr, int flags) {
-        int addr_size = sizeof(addr.m_data);
+    //receives data in raw buffer from specific address.
+    size_t socket::receive(void* buffer, size_t size, socket_address& addr, int flags) {
+        int addr_len = sizeof(addr);
+        const int result = ::recvfrom(m_handle, reinterpret_cast<char*>(buffer), flags, static_cast<int>(size), reinterpret_cast<SOCKADDR*>(&addr), &addr_len);
 
-        const int result = ::recvfrom(m_handle, reinterpret_cast<char*>(buffer.data()), static_cast<int>(buffer.size()), flags, reinterpret_cast<SOCKADDR*>(addr.m_data), &addr_size);
-        
         if (result == SOCKET_ERROR) {
             throw socket_error(get_last_error());
         }
-        
+
         return static_cast<size_t>(result);
     }
 

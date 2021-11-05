@@ -55,15 +55,27 @@ namespace netlib {
     }
 
 
-    //sends data.
+    //sends data from byte buffer.
     size_t socket::send(const byte_buffer& buffer, int flags) {
         return send(buffer.data(), buffer.size(), flags);
     }
 
 
-    //receives data.
+    //sends data to specific address.
+    size_t socket::send(const byte_buffer& buffer, const socket_address& addr, int flags) {
+        return send(buffer.data(), buffer.size(), addr, flags);
+    }
+
+
+    //receives data in buffer.
     size_t socket::receive(byte_buffer& buffer, int flags) {
         return receive(buffer.data(), buffer.size(), flags);
+    }
+
+
+    //receives data in buffer from specific address.
+    size_t socket::receive(byte_buffer& buffer, socket_address& addr, int flags) {
+        return receive(buffer.data(), buffer.size(), addr, flags);
     }
 
 
@@ -94,6 +106,45 @@ namespace netlib {
     }
 
 
+    //Does not return until all the data are sent.
+    bool socket::stream_send(const byte_buffer& buffer, int flags) {
+        return stream_send(buffer.data(), buffer.size(), flags);
+    }
+
+
+    //Does not return until all the data are sent.
+    bool socket::stream_send(const void* buffer, size_t size, const socket_address& addr, int flags) {
+        const char* data = reinterpret_cast<const char*>(buffer);
+
+        for (;;) {
+            //send the data
+            const size_t sent_bytes = send(data, size, addr, flags);
+
+            //no data could be sent
+            if (sent_bytes == 0) {
+                return false;
+            }
+
+            //calculate remaining amount of data
+            size -= sent_bytes;
+
+            //no remaining amount of data; return true
+            if (size == 0) {
+                return true;
+            }
+
+            //adjust the data pointer by the number of sent bytes
+            data += sent_bytes;
+        }
+    }
+
+
+    //Does not return until all the data are sent.
+    bool socket::stream_send(const byte_buffer& buffer, const socket_address& addr, int flags) {
+        return stream_send(buffer.data(), buffer.size(), addr, flags);
+    }
+
+
     //Does not return until all the data are received.
     bool socket::stream_receive(void* buffer, size_t size, int flags) {
         char* data = reinterpret_cast<char*>(buffer);
@@ -118,6 +169,45 @@ namespace netlib {
             //adjust the data pointer by the number of received bytes
             data += received_bytes;
         }
+    }
+
+
+    //Does not return until all the data are received.
+    bool socket::stream_receive(byte_buffer& buffer, int flags) {
+        return stream_receive(buffer.data(), buffer.size(), flags);
+    }
+
+
+    //Does not return until all the data are received.
+    bool socket::stream_receive(void* buffer, size_t size, socket_address& addr, int flags) {
+        char* data = reinterpret_cast<char*>(buffer);
+
+        for (;;) {
+            //receive the data
+            const size_t received_bytes = receive(data, size, addr, flags);
+
+            //no data could be received
+            if (received_bytes == 0) {
+                return false;
+            }
+
+            //calculate remaining amount of data
+            size -= received_bytes;
+
+            //no remaining amount of data; return true
+            if (size == 0) {
+                return true;
+            }
+
+            //adjust the data pointer by the number of received bytes
+            data += received_bytes;
+        }
+    }
+
+
+    //Does not return until all the data are received.
+    bool socket::stream_receive(byte_buffer& buffer, socket_address& addr, int flags) {
+        return stream_receive(buffer.data(), buffer.size(), addr, flags);
     }
 
 
