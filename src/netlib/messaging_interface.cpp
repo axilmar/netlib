@@ -16,27 +16,22 @@ namespace netlib {
 
 
     //Sends a message.
-    bool messaging_interface::send_message(const message& msg, const std::initializer_list<std::any>& send_params) {
-        //clear the temporary buffer so as that serialized data are written into the buffer from its start
+    bool messaging_interface::send_message(const message& msg) {
         thread_buffer.clear();
-
-        //serialize the message
         msg.serialize(thread_buffer);
-
-        //send the message
-        return send_data(thread_buffer, send_params);
+        return send_data(thread_buffer);
     }
 
 
     //receives a message.
-    message_pointer messaging_interface::receive_message(std::pmr::memory_resource& memres, const std::initializer_list<std::any>& receive_params, size_t max_message_size) {
+    message_pointer messaging_interface::receive_message(std::pmr::memory_resource& memres, size_t max_message_size) {
         //make room in the temporary buffer
         if (thread_buffer.size() < max_message_size) {
             thread_buffer.resize(max_message_size);
         }
 
         //receive the data; if the data could not be received, return a null pointer.
-        if (!receive_data(thread_buffer, receive_params)) {
+        if (!receive_data(thread_buffer)) {
             return message_pointer{nullptr, message_deleter(memres, 0)};
         }
 
@@ -55,14 +50,9 @@ namespace netlib {
     }
 
 
-    /**
-     * Waits for a message.
-     * Memory for the message is allocated from a global synchronized memory resource.
-     * @param max_message_size maximum number of bytes to receive.
-     * @return a pointer to received message.
-     */
-    message_pointer messaging_interface::receive_message(const std::initializer_list<std::any>& receive_params, size_t max_message_size) {
-        return messaging_interface::receive_message(global_message_memory_resource, std::move(receive_params), max_message_size);
+    //receives for a message.
+    message_pointer messaging_interface::receive_message(size_t max_message_size) {
+        return messaging_interface::receive_message(global_message_memory_resource, max_message_size);
     }
 
 

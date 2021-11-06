@@ -127,13 +127,13 @@ class test_messaging_interface : public messaging_interface {
 public:
 
 protected:
-    bool send_data(byte_buffer& buffer, const std::initializer_list<std::any>& send_params) final {
+    bool send_data(byte_buffer& buffer) final {
         temp_buffer.clear();
         temp_buffer.insert(temp_buffer.end(), buffer.begin(), buffer.end());
         return true;
     }
 
-    bool receive_data(byte_buffer& buffer, const std::initializer_list<std::any>& send_params) final {
+    bool receive_data(byte_buffer& buffer) final {
         buffer = temp_buffer;
         return true;
     }
@@ -465,58 +465,6 @@ static void test_socket_messaging_interface_tcp_encrypted() {
 }
 
 
-static void test_socket_messaging_interface_udp_recvfrom() {
-    try {
-        static constexpr int COUNT = 100;
-        int consumer_count = 0;
-
-        socket_address test_addr({ "localhost", socket_address::ADDRESS_FAMILY_IP4 }, 10000);
-        std::cout << "test network_address: " << test_addr.get_address().to_string() << std::endl;
-        udp_messaging_interface test_socket(constants::ADDRESS_FAMILY_IP4);
-        test_socket.bind_socket(test_addr);
-        test_socket.connect_socket(test_addr);
-
-        std::thread producer_thread([&]() {
-            try {
-                byte_buffer buffer;
-
-                text_message tm;
-                tm.text = "hello world!!!";
-
-                for (size_t i = 0; i < COUNT; ++i) {
-                    test_socket.send_message(tm/*, test_addr*/);
-                }
-            }
-            catch (const socket_error& err) {
-                std::cout << "producer error: " << err.what() << std::endl;
-            }
-            });
-
-        std::thread consumer_thread([&]() {
-            try {
-                socket_address addr{socket_address::ADDRESS_FAMILY_IP4};
-                for (consumer_count = 0; consumer_count < COUNT; ++consumer_count) {
-                    message_pointer msg = test_socket.receive_message({std::ref(addr)});
-                    text_message* tm = static_cast<text_message*>(msg.get());
-                    std::cout << consumer_count << ": received message: " << tm->text << " from address " << addr.get_address().to_string() << std::endl;
-                }
-            }
-            catch (const socket_error& err) {
-                std::cout << "consumer error: " << err.what() << std::endl;
-            }
-            });
-
-        producer_thread.join();
-        consumer_thread.join();
-
-        assert(consumer_count == COUNT);
-    }
-    catch (const socket_error& err) {
-        std::cout << err.what() << std::endl;
-    }
-}
-
-
 int main() {
     test_typeinfo();
     test_serialization_traits();
@@ -527,7 +475,6 @@ int main() {
     test_socket_messaging_interface_tcp();
     test_socket_messaging_interface_udp_encrypted();
     test_socket_messaging_interface_tcp_encrypted();
-    test_socket_messaging_interface_udp_recvfrom();
 
     system("pause");
     return 0;
