@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <cstddef>
+#include "byte.hpp"
 
 
 namespace netlib {
@@ -12,14 +13,25 @@ namespace netlib {
     /**
      * Byte buffer.
      */
-    class byte_buffer : public std::vector<std::byte> {
+    class byte_buffer : public std::vector<byte> {
     public:
         /**
          * Byte buffer position.
          */
-        using position = std::vector<std::byte>::size_type;
+        using position = std::vector<byte>::size_type;
 
-        using std::vector<std::byte>::vector;
+        /**
+         * The default constructor.
+         */
+        byte_buffer() {
+        }
+
+        /**
+         * Constructor from size.
+         * @param size size.
+         */
+        byte_buffer(size_t size) : std::vector<byte>(size) {
+        }
 
         /**
          * Makes sure the buffer has enough size.

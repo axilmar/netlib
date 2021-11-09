@@ -3,8 +3,9 @@
 
 
 #include <cstddef>
-#include "constants.hpp"
 #include <string>
+#include "constants.hpp"
+#include "byte.hpp"
 
 
 namespace netlib {
@@ -56,7 +57,7 @@ namespace netlib {
 
         //data
         int m_address_family{};
-        std::byte m_data[BUFFER_SIZE]{};
+        byte m_data[BUFFER_SIZE]{};
         uint32_t m_ip6_flow_info{};
         uint32_t m_ip6_zone_id{};
 

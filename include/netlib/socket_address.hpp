@@ -48,7 +48,7 @@ namespace netlib {
         static constexpr size_t BUFFER_SIZE = 128;
 
         //internal buffer
-        std::byte m_data[BUFFER_SIZE]{};
+        byte m_data[BUFFER_SIZE]{};
 
         friend class socket;
     };

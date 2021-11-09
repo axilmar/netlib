@@ -279,6 +279,10 @@ namespace netlib {
         }
 
         m_handle = get_library().create_socket(af, type, protocol);
+
+        if (m_handle == INVALID_SOCKET) {
+            throw socket_error(get_last_error());
+        }
     }
 
 

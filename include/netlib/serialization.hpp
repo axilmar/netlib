@@ -26,9 +26,9 @@ namespace netlib {
      */
     template <class T> void switch_endianess(T& value) {
         if constexpr (!is_little_endian()) {
-            std::byte* bytes = reinterpret_cast<std::byte*>(&value);
+            byte* bytes = reinterpret_cast<byte*>(&value);
             for (size_t i = 0; i < sizeof(T) / 2; ++i) {
-                const std::byte b = bytes[i];
+                const byte b = bytes[i];
                 bytes[i] = bytes[sizeof(T) - 1 - i];
                 bytes[sizeof(T) - 1 - i] = b;
             }
@@ -49,8 +49,8 @@ namespace netlib {
 
         //else the current platform is big endian; copy bytes at switched positions
         else {
-            std::byte* const dst_bytes = reinterpret_cast<std::byte*>(buffer);
-            const std::byte* const src_bytes = reinterpret_cast<const std::byte*>(&value);
+            byte* const dst_bytes = reinterpret_cast<byte*>(buffer);
+            const byte* const src_bytes = reinterpret_cast<const byte*>(&value);
             for (size_t i = 0; i < sizeof(T) / 2; ++i) {
                 dst_bytes[i] = src_bytes[sizeof(T) - 1 - i];
                 dst_bytes[sizeof(T) - 1 - i] = src_bytes[i];

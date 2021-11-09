@@ -9,6 +9,8 @@
 #include "netlib/tcp_messaging_interface.hpp"
 #include "netlib/udp_messaging_interface.hpp"
 #include "netlib/encrypted_messaging_interface.hpp"
+#include "netlib/xor_cipher.hpp"
+#include "netlib/encryption.hpp"
 
 
 #endif //NETLIB_HPP

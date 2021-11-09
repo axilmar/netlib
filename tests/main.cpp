@@ -2,6 +2,8 @@
 #include <vector>
 #include <iostream>
 #include <set>
+#include <random>
+#include <array>
 #include "netlib.hpp"
 #include "netlib/internals/../../../src/netlib/internals/typeinfo.hpp"
 
@@ -183,7 +185,7 @@ static void test_sockets() {
 
                 std::string msg("hello world!");
                 for (char c : msg) {
-                    buffer.push_back((std::byte)c);
+                    buffer.push_back((byte)c);
                 }
 
                 for (size_t i = 0; i < COUNT; ++i) {
@@ -204,7 +206,7 @@ static void test_sockets() {
                     buffer.resize(received_size);
 
                     std::string str;
-                    for (std::byte b : buffer) {
+                    for (byte b : buffer) {
                         str.push_back((char)b);
                     }
 
@@ -248,13 +250,11 @@ static void test_socket_messaging_interface_udp() {
 
         std::thread producer_thread([&]() {
             try {
-                byte_buffer buffer;
-
                 text_message tm;
                 tm.text = "hello world!!!";
 
                 for (size_t i = 0; i < COUNT; ++i) {
-                    test_socket.send_message(tm/*, test_addr*/);
+                    test_socket.send_message(tm);
                 }
             }
             catch (const socket_error& err) {
@@ -301,13 +301,11 @@ static void test_socket_messaging_interface_tcp() {
                 server_socket.listen();
                 tcp_messaging_interface test_socket{ std::move(server_socket.accept().first) };
 
-                byte_buffer buffer;
-
                 text_message tm;
                 tm.text = "hello world!!!";
 
                 for (size_t i = 0; i < COUNT; ++i) {
-                    test_socket.send_message(tm/*, test_addr*/);
+                    test_socket.send_message(tm);
                 }
             }
             catch (const socket_error& err) {
@@ -341,44 +339,26 @@ static void test_socket_messaging_interface_tcp() {
 }
 
 
-class test_encryption_interface : public encryption_interface {
-public:
-    void encrypt(byte_buffer& buffer) final {
-        for (std::byte& b : buffer) {
-            b ^= std::byte(127);
-        }
-    }
-
-    void decrypt(byte_buffer& buffer) final {
-        for (std::byte& b : buffer) {
-            b ^= std::byte(127);
-        }
-    }
-
-private:
-};
-
-
 static void test_socket_messaging_interface_udp_encrypted() {
     try {
         static constexpr int COUNT = 100;
         int consumer_count = 0;
 
+        const auto test_key = create_random_key();
+
         socket_address test_addr({ "localhost", socket_address::ADDRESS_FAMILY_IP4 }, 10000);
         std::cout << "test network_address: " << test_addr.get_address().to_string() << std::endl;
-        encrypted_messaging_interface<udp_messaging_interface> test_socket(std::make_shared<test_encryption_interface>(), constants::ADDRESS_FAMILY_IP4);
+        encrypted_messaging_interface<udp_messaging_interface> test_socket(std::make_shared<xor_cipher>(test_key), constants::ADDRESS_FAMILY_IP4);
         test_socket.bind_socket(test_addr);
         test_socket.connect_socket(test_addr);
 
         std::thread producer_thread([&]() {
             try {
-                byte_buffer buffer;
-
                 text_message tm;
                 tm.text = "hello world!!!";
 
                 for (size_t i = 0; i < COUNT; ++i) {
-                    test_socket.send_message(tm/*, test_addr*/);
+                    test_socket.send_message(tm);
                 }
             }
             catch (const socket_error& err) {
@@ -418,14 +398,14 @@ static void test_socket_messaging_interface_tcp_encrypted() {
         socket_address test_addr({ "localhost", socket_address::ADDRESS_FAMILY_IP4 }, 10000);
         std::cout << "test network_address: " << test_addr.get_address().to_string() << std::endl;
 
+        const auto test_key = create_random_key();
+
         std::thread server_thread([&]() {
             try {
                 socket server_socket(socket::TYPE::TCP_IP4);
                 server_socket.bind(test_addr);
                 server_socket.listen();
-                encrypted_messaging_interface<tcp_messaging_interface> test_socket{ std::make_shared<test_encryption_interface>(), std::move(server_socket.accept().first) };
-
-                byte_buffer buffer;
+                encrypted_messaging_interface<tcp_messaging_interface> test_socket{ std::make_shared<xor_cipher>(test_key), std::move(server_socket.accept().first) };
 
                 text_message tm;
                 tm.text = "hello world!!!";
@@ -441,7 +421,7 @@ static void test_socket_messaging_interface_tcp_encrypted() {
 
         std::thread client_thread([&]() {
             try {
-                encrypted_messaging_interface<tcp_messaging_interface> test_socket(std::make_shared<test_encryption_interface>(), constants::ADDRESS_FAMILY_IP4);
+                encrypted_messaging_interface<tcp_messaging_interface> test_socket(std::make_shared<xor_cipher>(test_key), constants::ADDRESS_FAMILY_IP4);
                 test_socket.connect_socket(test_addr);
                 for (consumer_count = 0; consumer_count < COUNT; ++consumer_count) {
                     message_pointer msg = test_socket.receive_message();
