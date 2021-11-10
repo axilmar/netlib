@@ -23,15 +23,26 @@ namespace netlib {
         /**
          * The default constructor.
          */
-        byte_buffer() {
-        }
+        byte_buffer();
 
         /**
          * Constructor from size.
          * @param size size.
          */
-        explicit byte_buffer(size_t size) : std::vector<byte>(size) {
-        }
+        byte_buffer(size_t size);
+
+        /**
+         * constructor from bytes.
+         * @param bytes bytes; null terminated string.
+         */
+        byte_buffer(const byte* bytes);
+
+        /**
+         * constructor from bytes and size.
+         * @param bytes bytes.
+         * @param size size.
+         */
+        byte_buffer(const byte* bytes, size_t size);
 
         /**
          * Makes sure the buffer has enough size.

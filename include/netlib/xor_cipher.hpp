@@ -21,7 +21,7 @@ namespace netlib {
 
         /**
          * The default constructor.
-         * It creates a key of the default size, using the function create_random_key().
+         * It creates an empty key, effectively canceling the cipher.
          */
         xor_cipher();
 
