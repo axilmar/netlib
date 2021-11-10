@@ -30,7 +30,7 @@ namespace netlib {
          * Constructor from size.
          * @param size size.
          */
-        byte_buffer(size_t size) : std::vector<byte>(size) {
+        explicit byte_buffer(size_t size) : std::vector<byte>(size) {
         }
 
         /**

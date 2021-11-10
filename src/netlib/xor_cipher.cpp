@@ -1,4 +1,5 @@
 #include "netlib/xor_cipher.hpp"
+#include "netlib/encryption.hpp"
 
 
 namespace netlib {
@@ -12,10 +13,52 @@ namespace netlib {
     }
 
 
+    //The default constructor.
+    xor_cipher::xor_cipher()
+        : m_key(create_random_key())
+    {
+    }
+
+
+    //The copy constructor.
+    xor_cipher::xor_cipher(const xor_cipher& src)
+        : m_key(src.m_key)
+    {
+    }
+
+
+    //The move constructor.
+    xor_cipher::xor_cipher(xor_cipher&& src) 
+        : m_key(std::move(src.m_key))
+    {
+    }
+
+
     //Constructor.
     xor_cipher::xor_cipher(const key_type& key)
         : m_key(key)
     {
+    }
+
+
+    //Constructor.
+    xor_cipher::xor_cipher(key_type&& key)
+        : m_key(std::move(key))
+    {
+    }
+
+
+    //The copy assignment operator.
+    xor_cipher& xor_cipher::operator = (const xor_cipher& src) {
+        m_key = src.m_key;
+        return *this;
+    }
+
+
+    //The move assignment operator.
+    xor_cipher& xor_cipher::operator = (xor_cipher&& src) {
+        m_key = std::move(src.m_key);
+        return *this;
     }
 
 
