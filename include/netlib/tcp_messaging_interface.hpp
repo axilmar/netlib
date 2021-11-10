@@ -10,7 +10,6 @@ namespace netlib {
 
     /**
      * TCP messaging interface.
-     * On receive_message, it supports an optional parameter of type socket_address&, in order to receive the source address.
      */
     class tcp_messaging_interface : public socket_messaging_interface {
     public:

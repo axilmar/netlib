@@ -10,8 +10,7 @@ namespace netlib {
 
     /**
      * UDP messaging interface.
-     * On send_message, it supports an optional parameter of type const socket_address&, in order to send the data to a specific address;
-     * On receive_message, it supports an optional parameter of type socket_address&, in order to receive the source address.
+     * It adds a crc32 on the end of each message.
      */
     class udp_messaging_interface : public socket_messaging_interface {
     public:
@@ -35,6 +34,7 @@ namespace netlib {
     protected:
         /**
          * Sends the data.
+         * It appends a crc32 code of the message at its end.
          * @param buffer buffer with data to transmit.
          * @return true if the data were sent successfully, false otherwise.
          */
@@ -43,7 +43,7 @@ namespace netlib {
         /**
          * Receives the data.
          * @param buffer buffer to put the data to.
-         * @return true if the data were received successfully, false otherwise.
+         * @return true if the data were received successfully and the crc32 was ok, false otherwise.
          */
         bool receive_data(byte_buffer& buffer) override;
     };
