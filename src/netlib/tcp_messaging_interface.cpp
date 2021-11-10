@@ -7,7 +7,7 @@ namespace netlib {
 
 
     //returns the appropriate socket type from address family.
-    static socket::TYPE get_socket_type(int af) {
+    static socket::TYPE get_tcp_socket_type(int af) {
 
         //tcp on ip4
         if (af == constants::ADDRESS_FAMILY_IP4) {
@@ -31,7 +31,7 @@ namespace netlib {
 
     //Constructor from address family.
     tcp_messaging_interface::tcp_messaging_interface(int af)
-        : socket_messaging_interface(get_socket_type(af))
+        : socket_messaging_interface(get_tcp_socket_type(af))
     {
     }
 
@@ -51,7 +51,7 @@ namespace netlib {
 
     //Opens the socket.
     void tcp_messaging_interface::open_socket(int af) {
-        get_socket().open(get_socket_type(af));
+        get_socket().open(get_tcp_socket_type(af));
     }
 
 

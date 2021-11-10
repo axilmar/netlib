@@ -170,13 +170,17 @@ static void test_messaging_interface_class() {
 }
 
 
+static constexpr uint16_t TCP_TEST_PORT = 10000;
+static constexpr uint16_t UDP_TEST_PORT = 10000;
+
+
 static void test_sockets() {
     try {
         static constexpr int COUNT = 100;
         int consumer_count = 0;
 
-        socket_address test_addr({ "localhost", socket_address::ADDRESS_FAMILY_IP4 }, 10000);
-        std::cout << "test network_address: " << test_addr.get_address().to_string() << std::endl;
+        socket_address test_addr({ "localhost", socket_address::ADDRESS_FAMILY_IP4 }, UDP_TEST_PORT);
+
         socket test_socket(socket::TYPE::UDP_IP4);
         test_socket.bind(test_addr);
 
@@ -243,19 +247,19 @@ static void test_socket_messaging_interface_udp() {
         static constexpr int COUNT = 100;
         int consumer_count = 0;
 
-        socket_address test_addr({ "localhost", socket_address::ADDRESS_FAMILY_IP4 }, 10000);
-        std::cout << "test network_address: " << test_addr.get_address().to_string() << std::endl;
         udp_messaging_interface test_socket{ constants::ADDRESS_FAMILY_IP4 };
-        test_socket.bind_socket(test_addr);
-        test_socket.connect_socket(test_addr);
+        test_socket.bind_socket({ {"localhost", socket_address::ADDRESS_FAMILY_IP4}, UDP_TEST_PORT });
+        test_socket.connect_socket({ {"localhost", socket_address::ADDRESS_FAMILY_IP4}, UDP_TEST_PORT });
 
         std::thread producer_thread([&]() {
             try {
+
                 text_message tm;
-                tm.text = "hello world!!!";
 
                 for (size_t i = 0; i < COUNT; ++i) {
+                    tm.text = stringstream() << i << ": hello world!!!";
                     test_socket.send_message(tm);
+                    printf("%i : send message: %s\n", consumer_count, tm.text.c_str());
                 }
             }
             catch (const socket_error& err) {
@@ -268,7 +272,7 @@ static void test_socket_messaging_interface_udp() {
                 for (consumer_count = 0; consumer_count < COUNT; ++consumer_count) {
                     message_pointer msg = test_socket.receive_message();
                     text_message* tm = static_cast<text_message*>(msg.get());
-                    std::cout << consumer_count << ": received message: " << tm->text << std::endl;
+                    printf("%i : received message: %s\n", consumer_count, tm->text.c_str());
                 }
             }
             catch (const socket_error& err) {
@@ -292,8 +296,7 @@ static void test_socket_messaging_interface_tcp() {
         static constexpr int COUNT = 100;
         int consumer_count = 0;
 
-        socket_address test_addr({ "localhost", socket_address::ADDRESS_FAMILY_IP4 }, 10000);
-        std::cout << "test network_address: " << test_addr.get_address().to_string() << std::endl;
+        socket_address test_addr({ "localhost", socket_address::ADDRESS_FAMILY_IP4 }, TCP_TEST_PORT);
 
         std::thread server_thread([&]() {
             try {
@@ -303,9 +306,9 @@ static void test_socket_messaging_interface_tcp() {
                 tcp_messaging_interface test_socket{ std::move(server_socket.accept().first) };
 
                 text_message tm;
-                tm.text = "hello world!!!";
 
                 for (size_t i = 0; i < COUNT; ++i) {
+                    tm.text = stringstream() << i << ": hello world!!!";
                     test_socket.send_message(tm);
                 }
             }
@@ -321,7 +324,7 @@ static void test_socket_messaging_interface_tcp() {
                 for (consumer_count = 0; consumer_count < COUNT; ++consumer_count) {
                     message_pointer msg = test_socket.receive_message();
                     text_message* tm = static_cast<text_message*>(msg.get());
-                    std::cout << consumer_count << ": received message: " << tm->text << std::endl;
+                    printf("%i : received message: %s\n", consumer_count, tm->text.c_str());
                 }
             }
             catch (const socket_error& err) {
@@ -347,18 +350,16 @@ static void test_socket_messaging_interface_udp_encrypted() {
 
         const auto test_key = create_random_key();
 
-        socket_address test_addr({ "localhost", socket_address::ADDRESS_FAMILY_IP4 }, 10000);
-        std::cout << "test network_address: " << test_addr.get_address().to_string() << std::endl;
-        encrypted_messaging_interface<udp_messaging_interface> test_socket{ constants::ADDRESS_FAMILY_IP4 };
-        test_socket.bind_socket(test_addr);
-        test_socket.connect_socket(test_addr);
+        encrypted_messaging_interface<udp_messaging_interface> test_socket{ test_key, constants::ADDRESS_FAMILY_IP4 };
+        test_socket.bind_socket({ {"localhost", socket_address::ADDRESS_FAMILY_IP4}, UDP_TEST_PORT });
+        test_socket.connect_socket({ {"localhost", socket_address::ADDRESS_FAMILY_IP4}, UDP_TEST_PORT });
 
         std::thread producer_thread([&]() {
             try {
                 text_message tm;
-                tm.text = "hello world!!!";
 
                 for (size_t i = 0; i < COUNT; ++i) {
+                    tm.text = stringstream() << i << ": hello world!!!";
                     test_socket.send_message(tm);
                 }
             }
@@ -372,7 +373,7 @@ static void test_socket_messaging_interface_udp_encrypted() {
                 for (consumer_count = 0; consumer_count < COUNT; ++consumer_count) {
                     message_pointer msg = test_socket.receive_message();
                     text_message* tm = static_cast<text_message*>(msg.get());
-                    std::cout << consumer_count << ": received message: " << tm->text << std::endl;
+                    printf("%i : received message: %s\n", consumer_count, tm->text.c_str());
                 }
             }
             catch (const socket_error& err) {
@@ -396,8 +397,7 @@ static void test_socket_messaging_interface_tcp_encrypted() {
         static constexpr int COUNT = 100;
         int consumer_count = 0;
 
-        socket_address test_addr({ "localhost", socket_address::ADDRESS_FAMILY_IP4 }, 10000);
-        std::cout << "test network_address: " << test_addr.get_address().to_string() << std::endl;
+        socket_address test_addr({ "localhost", socket_address::ADDRESS_FAMILY_IP4 }, TCP_TEST_PORT);
 
         const auto test_key = create_random_key();
 
@@ -409,9 +409,9 @@ static void test_socket_messaging_interface_tcp_encrypted() {
                 encrypted_messaging_interface<tcp_messaging_interface> test_socket{ test_key, std::move(server_socket.accept().first) };
 
                 text_message tm;
-                tm.text = "hello world!!!";
 
                 for (size_t i = 0; i < COUNT; ++i) {
+                    tm.text = stringstream() << i << ": hello world!!!";
                     test_socket.send_message(tm);
                 }
             }
@@ -427,7 +427,7 @@ static void test_socket_messaging_interface_tcp_encrypted() {
                 for (consumer_count = 0; consumer_count < COUNT; ++consumer_count) {
                     message_pointer msg = test_socket.receive_message();
                     text_message* tm = static_cast<text_message*>(msg.get());
-                    std::cout << consumer_count << ": received message: " << tm->text << std::endl;
+                    printf("%i : received message: %s\n", consumer_count, tm->text.c_str());
                 }
             }
             catch (const socket_error& err) {
