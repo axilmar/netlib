@@ -13,6 +13,7 @@ C++17 networking/serialization/deserialization library.
 - customizable memory allocation for received messages.
 - optional automatic message registration/message id creation.
 - separation of messages into namespaces, based on c++ namespaces, in case of automatic message registration.
+- crc32 check for udp messages.
 
 ## Example
 
