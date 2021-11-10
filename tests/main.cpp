@@ -4,6 +4,7 @@
 #include <set>
 #include <random>
 #include <array>
+#include <iomanip>
 #include "netlib.hpp"
 #include "netlib/internals/../../../src/netlib/internals/typeinfo.hpp"
 
@@ -455,7 +456,6 @@ int main() {
     test_socket_messaging_interface_tcp();
     test_socket_messaging_interface_udp_encrypted();
     test_socket_messaging_interface_tcp_encrypted();
-
     system("pause");
     return 0;
 }

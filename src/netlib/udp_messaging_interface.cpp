@@ -1,6 +1,7 @@
 #include "netlib/udp_messaging_interface.hpp"
 #include "netlib/socket_error.hpp"
 #include "netlib/stringstream.hpp"
+#include "netlib/crc32.hpp"
 
 
 namespace netlib {
@@ -24,6 +25,14 @@ namespace netlib {
     }
 
 
+    //get crc32 stored in buffer
+    static uint32_t get_crc32(const byte_buffer& buffer) {
+        uint32_t buffer_crc32;
+        copy_value(&buffer_crc32, reinterpret_cast<const uint32_t&>(buffer[buffer.size() - sizeof(uint32_t)]));
+        return buffer_crc32;
+    }
+
+
     //the default constructor.
     udp_messaging_interface::udp_messaging_interface() {
     }
@@ -44,6 +53,8 @@ namespace netlib {
 
     //Sends the data.
     bool udp_messaging_interface::send_data(byte_buffer& buffer) {
+        const uint32_t crc32 = compute_crc32(buffer.data(), buffer.size());
+        serialize(crc32, buffer);
         return get_socket().send(buffer) == buffer.size();
     }
 
@@ -51,10 +62,11 @@ namespace netlib {
     //Receives the data.
     bool udp_messaging_interface::receive_data(byte_buffer& buffer) {
         const size_t size = get_socket().receive(buffer);
-
         if (size) {
             buffer.resize(size);
-            return true;
+            const uint32_t received_crc32 = get_crc32(buffer);
+            const uint32_t computed_crc32 = compute_crc32(buffer.data(), buffer.size() - sizeof(uint32_t));
+            return received_crc32 == computed_crc32;
         }
 
         return false;
