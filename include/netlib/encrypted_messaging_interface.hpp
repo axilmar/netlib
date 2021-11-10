@@ -17,12 +17,6 @@ namespace netlib {
     template <class MessagingInterface, class Cipher = xor_cipher> class encrypted_messaging_interface : public MessagingInterface {
     public:
         /**
-         * The default constructor.
-         */
-        encrypted_messaging_interface() {
-        }
-
-        /**
          * Constructor from MessageInterface arguments.
          * @param args arguments to pass to the MessageInterface constructor.
          */

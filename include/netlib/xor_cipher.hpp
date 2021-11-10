@@ -20,12 +20,6 @@ namespace netlib {
         using key_type = byte_buffer;
 
         /**
-         * The default constructor.
-         * It creates an empty key, effectively canceling the cipher.
-         */
-        xor_cipher();
-
-        /**
          * The copy constructor.
          * @param src source object.
          */

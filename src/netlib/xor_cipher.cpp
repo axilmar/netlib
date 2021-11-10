@@ -5,22 +5,11 @@
 namespace netlib {
 
 
-    //invalid key
-    static const byte invalid_key[] = {byte('\0')};
-
-
     //apply xor
     template <class T> static void apply_xor(T* data, size_t data_size, const T* key, size_t key_size) {
         for (size_t i = 0; i < data_size; ++i) {
             data[i % data_size] ^= key[i % key_size];
         }
-    }
-
-
-    //The default constructor.
-    xor_cipher::xor_cipher()
-        : m_key(invalid_key, sizeof(invalid_key))
-    {
     }
 
 
