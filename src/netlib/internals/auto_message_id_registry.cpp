@@ -3,7 +3,7 @@
 #include <mutex>
 #include <string>
 #include "netlib/internals/auto_message_id_registry.hpp"
-#include "typeinfo.hpp"
+#include "netlib/internals/typeinfo.hpp"
 #include "message_id.hpp"
 
 

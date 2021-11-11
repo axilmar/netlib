@@ -6,7 +6,7 @@
 #include <array>
 #include <iomanip>
 #include "netlib.hpp"
-#include "netlib/internals/../../../src/netlib/internals/typeinfo.hpp"
+#include "netlib/internals/typeinfo.hpp"
 
 
 using namespace netlib;

@@ -1,4 +1,4 @@
-#include "typeinfo.hpp"
+#include "netlib/internals/typeinfo.hpp"
 
 
 #ifdef __GNUG__
