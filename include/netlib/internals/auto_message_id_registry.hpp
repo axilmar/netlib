@@ -8,7 +8,7 @@
 namespace netlib {
 
 
-    template <class T> class auto_message_id;
+    template <class T, class Ref> class auto_message_id;
 
     
     namespace internals {
@@ -18,7 +18,7 @@ namespace netlib {
         private:
             static void add(const char* entry);
             static message_id get(const char* entry);
-            template <class T> friend class auto_message_id;
+            template <class T, class Ref> friend class auto_message_id;
         };
 
 
