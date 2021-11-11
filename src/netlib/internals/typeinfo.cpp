@@ -62,44 +62,48 @@ namespace netlib::internals {
 
     //split typeinfo name
     std::pair<std::string, std::string> split_typeinfo_name(const std::string& type) {
-        size_t last_namespace_separator_index = -1;
+        //find the start index
+        size_t start_index = 0;
+        _skip(type, "class ", start_index);
+        _skip(type, "struct ", start_index);
+        _skip(type, "union ", start_index);
+        _skip(type, "enum ", start_index);
 
-        //skip possible type at the beginning
-        size_t char_index = 0;
-        _skip(type, "class ", char_index);
-        _skip(type, "struct ", char_index);
-        _skip(type, "union ", char_index);
-        _skip(type, "enum ", char_index);
+        //find namespace separator position
+        size_t namespace_separator_position = std::string::npos;
+        size_t template_parenthesis_count = 0;
+        for (size_t offset = type.size(); offset > 0 && namespace_separator_position == std::string::npos; --offset) {
+            switch (type[offset]) {
+                case ':':
+                    if (template_parenthesis_count == 0) {
+                        namespace_separator_position = offset - 1;
+                    }
+                    else {
+                        --offset;
+                    }
+                    break;
 
-        //keep the start index
-        const size_t start_index = char_index;
+                case '>':
+                    ++template_parenthesis_count;
+                    break;
 
-        //find namespace separators
-        for (; char_index < type.size(); ++char_index) {
-
-            //found namespace separator index; 
-            if (type[char_index] == ':' && char_index < type.size() - 1 && type[char_index + 1] == ':') {
-                last_namespace_separator_index = char_index;
-                char_index += 2;
-            }
-
-            //found template arguments start; stop
-            else if (type[char_index] == '<') {
-                break;
+                case '<':
+                    --template_parenthesis_count;
+                    break;
             }
         }
 
         std::pair<std::string, std::string> result;
 
         //if there was a namespace, get it, and then get the name of the type
-        if (last_namespace_separator_index != -1) {
-            result.first = type.substr(start_index, last_namespace_separator_index - start_index);
-            result.second = type.substr(last_namespace_separator_index + 2, char_index - (last_namespace_separator_index + 2));
+        if (namespace_separator_position != std::string::npos) {
+            result.first = type.substr(start_index, namespace_separator_position - start_index);
+            result.second = type.substr(namespace_separator_position + 2, type.size() - (namespace_separator_position + 2));
         }
 
         //else there wasn't a namespace; get the name of the type
         else {
-            result.second = type.substr(start_index, char_index - start_index);
+            result.second = type.substr(start_index, type.size() - start_index);
         }
 
         return result;
