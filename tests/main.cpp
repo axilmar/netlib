@@ -78,15 +78,16 @@ public:
     my_object* object1{ nullptr };
     std::unique_ptr<my_object> object2;
     std::shared_ptr<my_object> object3;
+    std::variant<int, std::string> identity;
 
     void serialize(byte_buffer& buffer) const final {
         message::serialize(buffer);
-        netlib::serialize(buffer, data1, data2, p1, p2, position.x, position.y, position.z, object1, object2, object3);
+        netlib::serialize(buffer, data1, data2, p1, p2, position.x, position.y, position.z, object1, object2, object3, identity);
     }
 
     void deserialize(const byte_buffer& buffer, byte_buffer::position& pos) final {
         message::deserialize(buffer, pos);
-        netlib::deserialize(buffer, pos, data1, data2, p1, p2, position.x, position.y, position.z, object1, object2, object3);
+        netlib::deserialize(buffer, pos, data1, data2, p1, p2, position.x, position.y, position.z, object1, object2, object3, identity);
     }
 };
 
@@ -116,6 +117,7 @@ static void test_message_serialization() {
     msg1.object1 = new my_object(1.0f);
     msg1.object2 = std::make_unique<my_object>(2.0f);
     msg1.object3 = std::make_shared<my_object>(3.0f);
+    msg1.identity = std::string("the quick brown fox");
 
     byte_buffer buffer;
     msg1.serialize(buffer);
@@ -131,6 +133,7 @@ static void test_message_serialization() {
     assert(msg2.object1->value == msg1.object1->value);
     assert(msg2.object2->value == msg1.object2->value);
     assert(msg2.object3->value == msg1.object3->value);
+    assert(msg2.identity       == msg1.identity      );
 }
 
 

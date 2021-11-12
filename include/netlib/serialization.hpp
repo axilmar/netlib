@@ -3,6 +3,7 @@
 
 
 #include <stdexcept>
+#include <variant>
 #include "byte_buffer.hpp"
 #include "serialization_traits.hpp"
 #include "tuple.hpp"
@@ -248,6 +249,42 @@ namespace netlib {
 
         //deserialize object
         deserialize(buffer, pos, object);
+    }
+
+
+    /**
+     * Serializes a variant.
+     * @param buffer destination buffer.
+     * @param var variant.
+     */
+    template <class...T> 
+    void serialize(byte_buffer& buffer, const std::variant<T...>& var) {
+        //serialize the variant index
+        serialize(buffer, var.index());
+
+        //serialize the variant
+        std::visit([&](const auto& val) { serialize(buffer, val); }, var);
+    }
+
+
+    /**
+     * Deserializes a variant.
+     * @param buffer source buffer.
+     * @param pos current position.
+     * @param var destination variant.
+     */
+    template <class... T>
+    void deserialize(const byte_buffer& buffer, byte_buffer::position& pos, std::variant<T...>& var) {
+        //deserialize the variant index
+        size_t index;
+        deserialize(buffer, pos, index);
+
+        //set the variant from index
+        static constexpr auto var_table = std::array{ +[]() { return std::variant<T...>{T{}}; }... };
+        var = var_table[index]();
+
+        //deserialize the variant
+        std::visit([&](auto& val) { deserialize(buffer, pos, val); }, var);
     }
 
 
