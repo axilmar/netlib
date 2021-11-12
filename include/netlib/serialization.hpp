@@ -7,6 +7,7 @@
 #include "byte_buffer.hpp"
 #include "serialization_traits.hpp"
 #include "tuple.hpp"
+#include "max_value.hpp"
 
 
 namespace netlib {
@@ -260,7 +261,7 @@ namespace netlib {
     template <class...T> 
     void serialize(byte_buffer& buffer, const std::variant<T...>& var) {
         //serialize the variant index
-        serialize(buffer, var.index());
+        serialize(buffer, static_cast<max_uint_t<sizeof...(T)>>(var.index()));
 
         //serialize the variant
         std::visit([&](const auto& val) { serialize(buffer, val); }, var);
@@ -276,7 +277,7 @@ namespace netlib {
     template <class... T>
     void deserialize(const byte_buffer& buffer, byte_buffer::position& pos, std::variant<T...>& var) {
         //deserialize the variant index
-        size_t index;
+        max_uint_t<sizeof...(T)> index;
         deserialize(buffer, pos, index);
 
         //set the variant from index
