@@ -61,12 +61,12 @@ namespace netlib {
 
     /**
      * The default serialize function for type T, when T is a trivially copyable type.
-     * @param value value to serialize.
      * @param buffer output buffer.
+     * @param value value to serialize.
      */
     template <class T>
     std::enable_if_t<std::is_trivially_copyable_v<T> && !is_tuple_v<T> && !is_pointer_v<T>>
-    serialize(const T& value, byte_buffer& buffer) {
+    serialize(byte_buffer& buffer, const T& value) {
         //write position
         const auto pos = buffer.size();
 
@@ -80,14 +80,14 @@ namespace netlib {
 
     /**
      * The default deserialize function for type T, when T is a trivially copyable type.
-     * @param value value to deserialize.
      * @param buffer input buffer.
      * @param pos input buffer position; on return, the next available position.
+     * @param value value to deserialize.
      * @exception std::out_of_range thrown if the buffer does not have enough data for the given type.
      */
     template <class T>
     std::enable_if_t<std::is_trivially_copyable_v<T> && !is_tuple_v<T> && !is_pointer_v<T>>
-    deserialize(T& value, const byte_buffer& buffer, byte_buffer::position& pos) {
+    deserialize(const byte_buffer& buffer, byte_buffer::position& pos, T& value) {
         //check buffer
         if (pos + sizeof(T) > buffer.size()) {
             throw std::out_of_range("Buffer too small");
@@ -103,13 +103,13 @@ namespace netlib {
 
     /**
      * The default serialize function for type T, when T is an container type.
-     * @param container container to serialize.
      * @param buffer output buffer.
+     * @param container container to serialize.
      */
     template <class T>
     std::enable_if_t<has_begin_end_v<T>>
-    serialize(const T& container, byte_buffer& buffer) {
-        serialize(container.size(), buffer);
+    serialize(byte_buffer& buffer, const T& container) {
+        serialize(buffer, container.size());
 
         if constexpr ((is_little_endian() || sizeof(typename T::value_type) == 1) && std::is_trivially_copyable_v<typename T::value_type> && has_data_array_v<T>) {
             const size_t insert_position = buffer.size();
@@ -119,7 +119,7 @@ namespace netlib {
         }
         else {
             for (const auto& e : container) {
-                serialize(e, buffer);
+                serialize(buffer, e);
             }
         }
     }
@@ -127,17 +127,17 @@ namespace netlib {
 
     /**
      * The default deserialize function for type T, when T is an container type.
-     * @param cont container to deserialize.
      * @param buffer input buffer.
      * @param pos input buffer position; on return, the next available position.
+     * @param cont container to deserialize.
      * @exception std::out_of_range thrown if the buffer does not have enough data for the given type.
      */
     template <class T>
     std::enable_if_t<has_begin_end_v<T>>
-    deserialize(T& container, const byte_buffer& buffer, byte_buffer::position& pos) {
+    deserialize(const byte_buffer& buffer, byte_buffer::position& pos, T& container) {
         //read size
         typename T::size_type size;
-        deserialize(size, buffer, pos);
+        deserialize(buffer, pos, size);
 
         //read elements
         if constexpr ((is_little_endian() || sizeof(typename T::value_type) == 1) && std::is_trivially_copyable_v<typename T::value_type> && has_data_array_v<T>) {
@@ -153,7 +153,7 @@ namespace netlib {
         else {
             for (; size > 0; --size) {
                 typename T::value_type val;
-                deserialize(val, buffer, pos);
+                deserialize(buffer, pos, val);
 
                 //add element to collection
                 if constexpr (has_push_back_v<T>) {
@@ -172,70 +172,70 @@ namespace netlib {
 
     /**
      * The default serialize function for type T, when T is a tuple type.
-     * @param tpl tuple to serialize.
      * @param buffer output buffer.
+     * @param tpl tuple to serialize.
      */
     template <class T>
     std::enable_if_t<is_tuple_v<T>>
-    serialize(const T& tpl, byte_buffer& buffer) {
-        flatten_tuple(tpl, [&](const auto&... v) { ( serialize(v, buffer), ... ); });
+    serialize(byte_buffer& buffer, const T& tpl) {
+        flatten_tuple(tpl, [&](const auto&... v) { ( serialize(buffer, v), ... ); });
     }
 
 
     /**
      * The default deserialize function for type T, when T is a tuple type.
-     * @param tpl tuple to deserialize.
      * @param buffer input buffer.
      * @param pos input buffer position; on return, the next available position.
+     * @param tpl tuple to deserialize.
      * @exception std::out_of_range thrown if the buffer does not have enough data for the given type.
      */
     template <class T>
     std::enable_if_t<is_tuple_v<T>>
-    deserialize(T& tpl, const byte_buffer& buffer, byte_buffer::position& pos) {
-        flatten_tuple(tpl, [&](auto&... v) { ( deserialize(v, buffer, pos), ... ); });
+    deserialize(const byte_buffer& buffer, byte_buffer::position& pos, T& tpl) {
+        flatten_tuple(tpl, [&](auto&... v) { ( deserialize(buffer, pos, v), ... ); });
     }
 
 
     /**
      * The default serialize function for type T, when T is a pointer type.
      * It serializes the object if the pointer is not null, otherwise it writes '0' to the buffer.
-     * @param ptr ptr to serialize.
      * @param buffer output buffer.
+     * @param ptr ptr to serialize.
      */
     template <class T>
     std::enable_if_t<is_pointer_v<T>>
-    serialize(const T& ptr, byte_buffer& buffer) {
+    serialize(byte_buffer& buffer, const T& ptr) {
         //if the pointer is not null, write the object
         if (ptr) {
             //write true flag for non-null
             const bool v = true;
-            serialize(v, buffer);
+            serialize(buffer, v);
 
             //write object
-            serialize(*ptr, buffer);
+            serialize(buffer, *ptr);
         }
 
         //else the pointer is null, write false
         else {
             const bool v = false;
-            serialize(v, buffer);
+            serialize(buffer, v);
         }
     }
 
 
     /**
      * The default deserialize function for type T, when T is a pointer type.
-     * @param ptr ptr to object to set.
      * @param buffer input buffer.
      * @param pos input buffer position; on return, the next available position.
+     * @param ptr ptr to object to set.
      * @exception std::out_of_range thrown if the buffer does not have enough data for the given type.
      */
     template <class T>
     std::enable_if_t<is_pointer_v<T>>
-    deserialize(T& ptr, const byte_buffer& buffer, byte_buffer::position& pos) {
+    deserialize(const byte_buffer& buffer, byte_buffer::position& pos, T& ptr) {
         //deserialize flag for null
         bool v;
-        deserialize(v, buffer, pos);
+        deserialize(buffer, pos, v);
 
         //if the value was false, then no object was written, so set pointer to null
         if (!v) {
@@ -247,7 +247,38 @@ namespace netlib {
         auto& object = make_object(ptr);
 
         //deserialize object
-        deserialize(object, buffer,pos);
+        deserialize(buffer, pos, object);
+    }
+
+
+    /**
+     * Serializes multiple values.
+     * @param buffer destination buffer.
+     * @param value1 1st value to serialize.
+     * @param value2 2nd value to serialize.
+     * @param values rest of values to serialize.
+     */
+    template <class T1, class T2, class... T> 
+    void serialize(byte_buffer& buffer, const T1& value1, const T2& value2, const T&... values) {
+        serialize(buffer, value1);
+        serialize(buffer, value2);
+        (serialize(buffer, values), ...);
+    }
+
+
+    /**
+     * Deserializes multiple values.
+     * @param buffer source buffer.
+     * @param pos source position.
+     * @param value1 1st value to deserialize.
+     * @param value2 2nd value to deserialize.
+     * @param values rest of values to deserialize.
+     */
+    template <class T1, class T2, class... T>
+    void deserialize(const byte_buffer& buffer, byte_buffer::position& pos, T1& value1, T2& value2, T&... values) {
+        deserialize(buffer, pos, value1);
+        deserialize(buffer, pos, value2);
+        (deserialize(buffer, pos, values), ...);
     }
 
 

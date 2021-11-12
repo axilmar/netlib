@@ -2,6 +2,7 @@
 #include "netlib/message_registry.hpp"
 #include "netlib/message_size.hpp"
 #include "netlib/stringstream.hpp"
+#include "netlib/serialization.hpp"
 
 
 namespace netlib {
@@ -43,7 +44,8 @@ namespace netlib {
         message_pointer result = message_registry::create_message(id, memres);
 
         //deserialize the message
-        result->deserialize(thread_buffer);
+        byte_buffer::position pos{ 0 };
+        result->deserialize(thread_buffer, pos);
 
         //return the message
         return result;

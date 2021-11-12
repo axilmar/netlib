@@ -2,7 +2,7 @@
 #define NETLIB_MESSAGE_REGISTRY_HPP
 
 
-#include "message_deleter.hpp"
+#include "message_pointer.hpp"
 #include "message_error.hpp"
 
 

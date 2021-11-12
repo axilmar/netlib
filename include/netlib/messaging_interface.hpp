@@ -3,7 +3,7 @@
 
 
 #include <any>
-#include "message_deleter.hpp"
+#include "message_pointer.hpp"
 #include "byte_buffer.hpp"
 
 

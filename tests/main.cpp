@@ -61,23 +61,33 @@ public:
 
 class test_message : public message {
 public:
-    test_message() : message(auto_message_id<test_message>::get_message_id()) {
+    test_message() : message(auto_message_id<test_message>::register_message()) {
     }
 
-    field<std::vector<int>> data1;
-    field<std::set<int>> data2;
-    field<std::pair<int, int>> p1;
-    field<std::tuple<float, float, float>> p2;
+    std::vector<int> data1;
+    std::set<int> data2;
+    std::pair<int, int> p1;
+    std::tuple<float, float, float> p2;
 
     struct {
-        field<float> x;
-        field<float> y;
-        field<float> z;
+        float x;
+        float y;
+        float z;
     } position;
 
-    field<my_object*> object1{ nullptr };
-    field<std::unique_ptr<my_object>> object2;
-    field<std::shared_ptr<my_object>> object3;
+    my_object* object1{ nullptr };
+    std::unique_ptr<my_object> object2;
+    std::shared_ptr<my_object> object3;
+
+    void serialize(byte_buffer& buffer) const final {
+        message::serialize(buffer);
+        netlib::serialize(buffer, data1, data2, p1, p2, position.x, position.y, position.z, object1, object2, object3);
+    }
+
+    void deserialize(const byte_buffer& buffer, byte_buffer::position& pos) final {
+        message::deserialize(buffer, pos);
+        netlib::deserialize(buffer, pos, data1, data2, p1, p2, position.x, position.y, position.z, object1, object2, object3);
+    }
 };
 
 
@@ -111,7 +121,8 @@ static void test_message_serialization() {
     msg1.serialize(buffer);
 
     test_message msg2;
-    msg2.deserialize(buffer);
+    byte_buffer::position pos{};
+    msg2.deserialize(buffer, pos);
 
     assert(msg2.id             == msg1.id            );
     assert(msg2.data1          == msg1.data1         );
@@ -236,8 +247,19 @@ static void test_sockets() {
 
 class text_message : public message {
 public:
-    field<std::string> text;    
-    text_message() : message(auto_message_id<text_message>::get_message_id()) {
+    std::string text;    
+
+    text_message() : message(auto_message_id<text_message>::register_message()) {
+    }
+
+    void serialize(byte_buffer& buffer) const final {
+        message::serialize(buffer);
+        netlib::serialize(buffer, text);
+    }
+
+    void deserialize(const byte_buffer& buffer, byte_buffer::position& pos) final {
+        message::deserialize(buffer, pos);
+        netlib::deserialize(buffer, pos, text);
     }
 };
 

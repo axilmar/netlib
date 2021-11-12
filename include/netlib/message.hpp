@@ -2,10 +2,8 @@
 #define NETLIB_MESSAGE_HPP
 
 
-#include "internals/first_field_base.hpp"
 #include "message_id.hpp"
-#include "message_size.hpp"
-#include "field.hpp"
+#include "byte_buffer.hpp"
 
 
 namespace netlib {
@@ -20,7 +18,7 @@ namespace netlib {
          * The first field message is always its id,
          * in order to allow the message to be deserialized on the receiver.
          */
-        field<message_id, internals::first_field_base> id;
+        const message_id id;
 
         /**
          * The destructor.
@@ -29,28 +27,19 @@ namespace netlib {
 
         /**
          * Serializes this message.
+         * The default implementation serializes the id.
          * @param buffer destination buffer.
          */
         virtual void serialize(byte_buffer& buffer) const;
 
         /**
          * Deserializes this message.
+         * The default implementation deserializes the id and compares it to the message id.
          * @param buffer source buffer.
+         * @param pos source position.
          * @exception message_error thrown if the received message id is different than the message id.
          */
-        virtual void deserialize(const byte_buffer& buffer);
-
-        /**
-         * Returns a const pointer to the first field, which is the message id.
-         * @return pointer to the first field.
-         */
-        const internals::field_base* get_first_field() const { return &id; }
-
-        /**
-         * Returns a pointer to the first field, which is the message id.
-         * @return pointer to the first field.
-         */
-        internals::field_base* get_first_field() { return &id; }
+        virtual void deserialize(const byte_buffer& buffer, byte_buffer::position& pos);
 
     protected:
         /**

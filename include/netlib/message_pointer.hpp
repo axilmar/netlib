@@ -1,5 +1,5 @@
-#ifndef NETLIB_MESSAGE_DELETER_HPP
-#define NETLIB_MESSAGE_DELETER_HPP
+#ifndef NETLIB_MESSAGE_POINTER_HPP
+#define NETLIB_MESSAGE_POINTER_HPP
 
 
 #include <memory_resource>
@@ -47,4 +47,4 @@ namespace netlib {
 } //namespace netlib
 
 
-#endif //NETLIB_MESSAGE_DELETER_HPP
+#endif //NETLIB_MESSAGE_POINTER_HPP

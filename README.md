@@ -7,7 +7,6 @@ C++17 networking/serialization/deserialization library.
 - sockets wrapper implementation that provides a portable, platform-neutral sockets API.
 - automatic serialization/deserialization of C++ basic types, STL types/containers and trivially-copyable structs.
 - optimized serialization/deserialization for STL containers backed up by contiguous arrays.
-- easy way to declare messages, with automatic serialization/deserialization.
 - automatic handling of endianess.
 - support for tcp/udp, for ip4/ip6 networking, out of the box; open API for support of other network types.
 - customizable memory allocation for received messages.
@@ -30,10 +29,22 @@ using namespace netlib;
 class my_message : public message {
 public:
     //content of the message
-    field<std::string> content;
+    std::string content;
     
     //constructor that creates a message id for this message automatically.
-    my_message() : message(auto_message_id<my_message>::get_message_id()) {}
+    my_message() : message(auto_message_id<my_message>::register_message()) {}
+    
+    //serialize message
+    void serialize(byte_buffer& buffer) const final {
+        message::serialize(buffer);
+        netlib::serialize(buffer, content);
+    }
+    
+    //deserialize message
+    void deserialize(const byte_buffer& buffer, byte_buffer& pos) final {
+        message::deserialize(buffer);
+        netlib::deserialize(buffer, pos, content);
+    }
 };
 
 //server thread
@@ -138,17 +149,13 @@ Type of message size; by default, it is the type `uint16_t`, meaning the maximum
 
 Base class for messages.
 
-### field< T >
-
-Class that allows auto-registering message fields for type `T`.
-
 ### message_registry
 
 Allows registration of message creation functions, in order to automatically create message instances from the received message id.
 
-### auto_message_id< T >
+### auto_message_id< T, Ref = T>
 
-Allows automatic registration/creation of message id for message `T`.
+Allows automatic registration/creation of message id for message `T`, using `Ref` as the reference type.
 
 ### byte_buffer
 
@@ -203,12 +210,12 @@ The library provides a way to automatically enumerate messages and create messag
 ```c++
 class Msg1 : public netlib::message {
 public:
-    Msg1() : netlib::message(netlib::auto_message_id<Msg1>::get_message_id()) {}
+    Msg1() : netlib::message(netlib::auto_message_id<Msg1>::register_message()) {}
 };
 
 class Msg2 : public netlib::message {
 public:
-    Msg2() : netlib::message(netlib::auto_message_id<Msg2>::get_message_id()) {}
+    Msg2() : netlib::message(netlib::auto_message_id<Msg2>::register_message()) {}
 };
 ```
 
@@ -240,5 +247,6 @@ This allows an application to separate messages into logical domains using names
 Messages need to be registered to the library in order to be automatically deserialized from network received data.
 
 - Messages with manually specified ids must be registered with the function `message_registry::register_message<T>(id)`.
-- Messages with automatically specified ids need not be registered manually; the function `auto_message_id<T>::get_message_id()` does that automatically.
+- Messages with automatically specified ids need not be registered manually; the function `auto_message_id<T>::register_message()` returns the message id and registers the message.
+- The function `auto_message_id<T>::get_message_id()` registers type T and returns its id without registering the message callback.
 

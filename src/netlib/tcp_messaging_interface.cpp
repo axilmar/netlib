@@ -1,6 +1,8 @@
 #include "netlib/tcp_messaging_interface.hpp"
 #include "netlib/socket_error.hpp"
 #include "netlib/stringstream.hpp"
+#include "netlib/serialization.hpp"
+#include "netlib/message_size.hpp"
 
 
 namespace netlib {

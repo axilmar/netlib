@@ -1,5 +1,6 @@
 #include "netlib/udp_messaging_interface.hpp"
 #include "netlib/socket_error.hpp"
+#include "netlib/serialization.hpp"
 #include "netlib/stringstream.hpp"
 #include "netlib/crc32.hpp"
 
@@ -54,7 +55,7 @@ namespace netlib {
     //Sends the data.
     bool udp_messaging_interface::send_data(byte_buffer& buffer) {
         const uint32_t crc32 = compute_crc32(buffer.data(), buffer.size());
-        serialize(crc32, buffer);
+        serialize(buffer, crc32);
         return get_socket().send(buffer) == buffer.size();
     }
 
