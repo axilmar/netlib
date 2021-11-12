@@ -56,12 +56,8 @@ namespace netlib {
         };
 
         //global entry
-        static const entry auto_message_id_entry;
+        static inline const entry auto_message_id_entry;
     };
-
-
-    //global entry
-    template <class T, class Ref> const typename auto_message_id<T, Ref>::entry auto_message_id<T, Ref>::auto_message_id_entry;
 
 
 } //namespace netlib
