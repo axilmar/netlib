@@ -22,7 +22,8 @@ namespace netlib {
          * @return message id.
          */
         static message_id get_message_id() {
-            return auto_message_id_entry.get_message_id();
+            static const message_id id = auto_message_id_entry.get_message_id();
+            return id;
         }
 
         /**
@@ -30,7 +31,8 @@ namespace netlib {
          * @return message id.
          */
         static message_id register_message() {
-            return auto_message_id_entry.register_message();
+            static const message_id id = auto_message_id_entry.register_message();
+            return id;
         }
 
     private:
@@ -43,13 +45,12 @@ namespace netlib {
 
             //get message id
             message_id get_message_id() const {
-                static const message_id id = internals::auto_message_id_registry::get(typeid(Ref).name());
-                return id;
+                return internals::auto_message_id_registry::get(typeid(Ref).name());
             }
 
             //get id and register message
             message_id register_message() const {
-                const message_id id = get_message_id();
+                message_id id = get_message_id();
                 message_registry::register_message<T>(id);
                 return id;
             }
