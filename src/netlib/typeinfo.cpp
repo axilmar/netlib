@@ -1,4 +1,4 @@
-#include "netlib/internals/typeinfo.hpp"
+#include "netlib/typeinfo.hpp"
 
 
 #ifdef __GNUG__
@@ -9,7 +9,7 @@
 #include <cxxabi.h>
 
 
-namespace netlib::internals {
+namespace netlib {
 
 
     std::string demangle_typeinfo_name(const char* name) {
@@ -25,7 +25,7 @@ namespace netlib::internals {
 #else
 
 
-namespace netlib::internals {
+namespace netlib {
 
 
     std::string demangle_typeinfo_name(const char* name) {
@@ -38,7 +38,7 @@ namespace netlib::internals {
 #endif
 
 
-namespace netlib::internals {
+namespace netlib {
 
 
     //skip text
@@ -110,4 +110,4 @@ namespace netlib::internals {
     }
 
 
-} //namespace netlib::internals
+} //namespace netlib

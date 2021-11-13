@@ -6,7 +6,7 @@
 #include <array>
 #include <iomanip>
 #include "netlib.hpp"
-#include "netlib/internals/typeinfo.hpp"
+#include "netlib/typeinfo.hpp"
 
 
 using namespace netlib;
@@ -34,7 +34,7 @@ namespace typeinfo_test {
 
 static void test_typeinfo(const std::string& type, const std::string& ns, const std::string& name) {
     std::cout << "testing " << type << " -> ";
-    const auto p1 = internals::split_typeinfo_name(type);
+    const auto p1 = split_typeinfo_name(type);
     std::cout << p1.first << "::" << p1.second << std::endl;
     assert(p1.first == ns);
     assert(p1.second == name);
