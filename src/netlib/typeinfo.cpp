@@ -60,20 +60,27 @@ namespace netlib {
     }
 
 
-    //split typeinfo name
-    std::pair<std::string, std::string> split_typeinfo_name(const std::string& type) {
-        //find the start index
+    //skips the 'intro' of a type
+    static size_t _skip_type_intro(const std::string& name) {
         size_t start_index = 0;
-        _skip(type, "class ", start_index);
-        _skip(type, "struct ", start_index);
-        _skip(type, "union ", start_index);
-        _skip(type, "enum ", start_index);
+        _skip(name, "class ", start_index);
+        _skip(name, "struct ", start_index);
+        _skip(name, "union ", start_index);
+        _skip(name, "enum ", start_index);
+        return start_index;
+    }
+
+
+    //split typeinfo name to namespace and name.
+    std::pair<std::string, std::string> split_typeinfo_name(const std::string& name) {
+        //find the start index
+        const size_t start_index = _skip_type_intro(name);
 
         //find namespace separator position
         size_t namespace_separator_position = std::string::npos;
         size_t template_parenthesis_count = 0;
-        for (size_t offset = type.size(); offset > 0 && namespace_separator_position == std::string::npos; --offset) {
-            switch (type[offset]) {
+        for (size_t offset = name.size(); offset > 0 && namespace_separator_position == std::string::npos; --offset) {
+            switch (name[offset]) {
                 case ':':
                     if (template_parenthesis_count == 0) {
                         namespace_separator_position = offset - 1;
@@ -97,16 +104,24 @@ namespace netlib {
 
         //if there was a namespace, get it, and then get the name of the type
         if (namespace_separator_position != std::string::npos) {
-            result.first = type.substr(start_index, namespace_separator_position - start_index);
-            result.second = type.substr(namespace_separator_position + 2, type.size() - (namespace_separator_position + 2));
+            result.first = name.substr(start_index, namespace_separator_position - start_index);
+            result.second = name.substr(namespace_separator_position + 2, name.size() - (namespace_separator_position + 2));
         }
 
         //else there wasn't a namespace; get the name of the type
         else {
-            result.second = type.substr(start_index, type.size() - start_index);
+            result.second = name.substr(start_index, name.size() - start_index);
         }
 
         return result;
+    }
+
+
+    //Returns the name from the given typeinfo.
+    std::string get_typeinfo_name(const char* name) {
+        const std::string dm = demangle_typeinfo_name(name);
+        const size_t start_index = _skip_type_intro(dm);
+        return dm.substr(start_index);
     }
 
 
