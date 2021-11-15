@@ -140,7 +140,7 @@ static void test_message_serialization() {
 static byte_buffer temp_buffer;
 
 
-class test_messaging_interface : public messaging_interface {
+class test_messaging_interface : public socket_messaging_interface {
 public:
 
 protected:
