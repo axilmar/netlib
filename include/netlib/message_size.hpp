@@ -6,10 +6,10 @@
 
 
 /**
- * Default message size.
+ * Default message size type.
  */
-#ifndef NETLIB_MESSAGE_SIZE
-#define NETLIB_MESSAGE_SIZE uint16_t
+#ifndef NETLIB_MESSAGE_SIZE_TYPE
+#define NETLIB_MESSAGE_SIZE_TYPE uint16_t
 #endif
 
 
@@ -19,7 +19,7 @@ namespace netlib {
     /**
      * Message size type.
      */
-    using message_size = NETLIB_MESSAGE_SIZE;
+    using message_size = NETLIB_MESSAGE_SIZE_TYPE;
 
     
     /**
