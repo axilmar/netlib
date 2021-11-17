@@ -3,6 +3,7 @@
 
 
 #include <memory_resource>
+#include <any>
 #include "message_pointer.hpp"
 #include "max_packet_size.hpp"
 
@@ -34,6 +35,12 @@ namespace netlib {
          * @return a pointer to the received message or null if reception was impossible.
          */
         message_pointer receive_message(size_t max_message_size = NETLIB_MAX_PACKET_SIZE);
+
+        /**
+         * Optional interface for retrieving the receive parameters (for example, receive address), after the receive_message call.
+         * @return receive parameters.
+         */
+        virtual std::any get_receive_params() const { return {}; }
     };
 
 

@@ -32,16 +32,28 @@ namespace netlib {
         void open_socket(int af = constants::ADDRESS_FAMILY_IP4);
 
         /**
-         * Sets up the target address for the next send_message call.
+         * Sets up the address of the receiver for the next send_message call.
          * @param to_address address to use for the next send_message call.
          */
-        static void set_send_address(socket_address& to_address);
+        static void set_receiver_address(socket_address& to_address);
 
         /**
-         * Sets up the address buffer for the next receive_message call.
-         * @param from_address address buffer to use for receiving data.
+         * Retrieves the sender address of the last receive_message call.
+         * @param from_address address buffer that contains the address of the sender.
          */
-        static void set_receive_address(socket_address& from_address);
+        static void get_sender_address(socket_address& from_address);
+
+        /**
+         * Returns the sender address.
+         * @return receive parameters.
+         */
+        std::any get_receive_params() const override;
+
+        /**
+         * Sends the sender address from the socket address contained into the given object.
+         * @param params send parameters.
+         */
+        void set_send_params(const std::any& params) override;
 
     protected:
         /**

@@ -2,6 +2,7 @@
 #define NETLIB_SENDING_MESSAGING_INTERFACE_HPP
 
 
+#include <any>
 #include "message.hpp"
 
 
@@ -24,6 +25,12 @@ namespace netlib {
          * @return true if the message was sent, false if it could not be sent.
          */
         virtual bool send_message(const message& msg) = 0;
+
+        /**
+         * Optional interface for setting up send parameters before the send message call.
+         * @param params send parameters.
+         */
+        virtual void set_send_params(const std::any& params) {}
     };
 
 

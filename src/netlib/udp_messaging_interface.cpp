@@ -9,8 +9,8 @@ namespace netlib {
 
 
     //internal receive/send address
-    static thread_local socket_address* send_address{};
-    static thread_local socket_address* receive_address{};
+    static thread_local socket_address* receiver_address{};
+    static thread_local socket_address sender_address;
 
 
     //returns the appropriate socket type from address family.
@@ -58,14 +58,30 @@ namespace netlib {
 
 
     //Sets up the target address for the next send_message call.
-    void udp_messaging_interface::set_send_address(socket_address& to_address) {
-        send_address = &to_address;
+    void udp_messaging_interface::set_receiver_address(socket_address& to_address) {
+        receiver_address = &to_address;
     }
 
 
-    //Sets up the address buffer for the next receive_message call.
-    void udp_messaging_interface::set_receive_address(socket_address& from_address) {
-        receive_address = &from_address;
+    //Returns the address of the last receive_message call.
+    void udp_messaging_interface::get_sender_address(socket_address& from_address) {
+        from_address = sender_address;
+    }
+
+
+    //Returns the sender address.
+    std::any udp_messaging_interface::get_receive_params() const {
+        socket_address addr;
+        get_sender_address(addr);
+        return addr;
+    }
+
+
+    //Sends the sender address from the socket address contained into the given object.
+    void udp_messaging_interface::set_send_params(const std::any& params) {
+        static thread_local socket_address addr;
+        addr = std::any_cast<socket_address>(params);
+        set_receiver_address(addr);
     }
 
 
@@ -76,32 +92,21 @@ namespace netlib {
         serialize(buffer, crc32);
 
         //send without send address
-        if (!send_address) {
+        if (!receiver_address) {
             return get_socket().send(buffer) == buffer.size();
         }
 
         //send with send address
-        socket_address* temp = send_address;
-        send_address = nullptr;
+        socket_address* temp = receiver_address;
+        receiver_address = nullptr;
         return get_socket().send(buffer, *temp) == buffer.size();
     }
 
 
     //Receives the data.
     bool udp_messaging_interface::receive_data(byte_buffer& buffer) {
-        size_t size;
-        
-        //receive without receive address
-        if (!receive_address) {
-            size = get_socket().receive(buffer);
-        }
-        
-        //else receive with receive address
-        else {
-            socket_address* temp = receive_address;
-            receive_address = nullptr;
-            size = get_socket().receive(buffer, *temp);
-        }
+        //receive data
+        const size_t size = get_socket().receive(buffer, sender_address);
 
         //if successfully received data, compute crc32 and compare it with the one stored in the message
         if (size) {
