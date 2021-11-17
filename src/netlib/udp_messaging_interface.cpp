@@ -8,6 +8,11 @@
 namespace netlib {
 
 
+    //internal receive/send address
+    static thread_local socket_address* send_address{};
+    static thread_local socket_address* receive_address{};
+
+
     //returns the appropriate socket type from address family.
     static socket::TYPE get_udp_socket_type(int af) {
 
@@ -52,23 +57,60 @@ namespace netlib {
     }
 
 
+    //Sets up the target address for the next send_message call.
+    void udp_messaging_interface::set_send_address(socket_address& to_address) {
+        send_address = &to_address;
+    }
+
+
+    //Sets up the address buffer for the next receive_message call.
+    void udp_messaging_interface::set_receive_address(socket_address& from_address) {
+        receive_address = &from_address;
+    }
+
+
     //Sends the data.
     bool udp_messaging_interface::send_data(byte_buffer& buffer) {
+        //add crc32 to the message
         const uint32_t crc32 = compute_crc32(buffer.data(), buffer.size());
         serialize(buffer, crc32);
-        return get_socket().send(buffer) == buffer.size();
+
+        //send without send address
+        if (!send_address) {
+            return get_socket().send(buffer) == buffer.size();
+        }
+
+        //send with send address
+        socket_address* temp = send_address;
+        send_address = nullptr;
+        return get_socket().send(buffer, *temp) == buffer.size();
     }
 
 
     //Receives the data.
     bool udp_messaging_interface::receive_data(byte_buffer& buffer) {
-        const size_t size = get_socket().receive(buffer);
+        size_t size;
+        
+        //receive without receive address
+        if (!receive_address) {
+            size = get_socket().receive(buffer);
+        }
+        
+        //else receive with receive address
+        else {
+            socket_address* temp = receive_address;
+            receive_address = nullptr;
+            size = get_socket().receive(buffer, *temp);
+        }
+
+        //if successfully received data, compute crc32 and compare it with the one stored in the message
         if (size) {
             buffer.resize(size);
             const uint32_t received_crc32 = get_crc32(buffer);
             const uint32_t computed_crc32 = compute_crc32(buffer.data(), size - sizeof(uint32_t));
             return received_crc32 == computed_crc32;
         }
+
         return false;
     }
 

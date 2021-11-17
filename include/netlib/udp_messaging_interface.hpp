@@ -31,6 +31,18 @@ namespace netlib {
          */
         void open_socket(int af = constants::ADDRESS_FAMILY_IP4);
 
+        /**
+         * Sets up the target address for the next send_message call.
+         * @param to_address address to use for the next send_message call.
+         */
+        static void set_send_address(socket_address& to_address);
+
+        /**
+         * Sets up the address buffer for the next receive_message call.
+         * @param from_address address buffer to use for receiving data.
+         */
+        static void set_receive_address(socket_address& from_address);
+
     protected:
         /**
          * Sends the data.
