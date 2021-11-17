@@ -94,7 +94,7 @@ namespace netlib {
         message_pointer result = message_registry::create_message(id, memres);
 
         //deserialize the message
-        byte_buffer::position pos{ 0 };
+        byte_buffer::position pos{};
         result->deserialize(thread_buffer, pos);
 
         //return the message
