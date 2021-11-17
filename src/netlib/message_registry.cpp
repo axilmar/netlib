@@ -60,7 +60,7 @@ namespace netlib {
         }
 
         //set the function
-        msg_table[id] = std::move(func);
+        msg_table[internal_id.parts.message_index] = std::move(func);
     }
 
 
