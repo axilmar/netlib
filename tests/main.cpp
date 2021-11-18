@@ -114,6 +114,7 @@ static void test_message_serialization() {
     msg1.data2.insert(20);
     msg1.p1.first = 30;
     msg1.p1.second = 40;
+    msg1.p2 = std::make_tuple(1.1f, 2.2f, 3.3f);
     msg1.object1 = new my_object(1.0f);
     msg1.object2 = std::make_unique<my_object>(2.0f);
     msg1.object3 = std::make_shared<my_object>(3.0f);
@@ -130,6 +131,7 @@ static void test_message_serialization() {
     assert(msg2.data1          == msg1.data1         );
     assert(msg2.data2          == msg1.data2         );
     assert(msg2.p1             == msg1.p1            );
+    assert(msg2.p2             == msg1.p2            );
     assert(msg2.object1->value == msg1.object1->value);
     assert(msg2.object2->value == msg1.object2->value);
     assert(msg2.object3->value == msg1.object3->value);

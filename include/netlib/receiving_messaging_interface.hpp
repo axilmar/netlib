@@ -37,10 +37,11 @@ namespace netlib {
         message_pointer receive_message(size_t max_message_size = NETLIB_MAX_PACKET_SIZE);
 
         /**
-         * Optional interface for retrieving the receive parameters (for example, receive address), after the receive_message call.
-         * @return receive parameters.
+         * Interface for retrieving the sender address.
+         * Not all interfaces support this call.
+         * @return the sender address.
          */
-        virtual std::any get_receive_params() const { return {}; }
+        virtual std::any get_sender_address() { return {}; }
     };
 
 

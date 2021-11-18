@@ -27,6 +27,7 @@ namespace netlib {
     //close socket
     void socket_messaging_interface::close_socket() {
         m_socket.close();
+        m_is_socket_connected = false;
     }
 
 
@@ -54,9 +55,16 @@ namespace netlib {
     }
 
 
+    //if socket is connected
+    bool socket_messaging_interface::is_socket_connected() const {
+        return m_is_socket_connected;
+    }
+
+
     //connect the socket
     void socket_messaging_interface::connect_socket(const socket_address& addr) {
         m_socket.connect(addr);
+        m_is_socket_connected = true;
     }
 
 
@@ -103,13 +111,16 @@ namespace netlib {
 
 
     //closed socket constructor
-    socket_messaging_interface::socket_messaging_interface() {
+    socket_messaging_interface::socket_messaging_interface()
+        : m_is_socket_connected(false)
+    {
     }
 
 
     //constructor from parameters
     socket_messaging_interface::socket_messaging_interface(int af, int type, int protocol)
         : m_socket(af, type, protocol)
+        , m_is_socket_connected(false)
     {
     }
 
@@ -117,6 +128,7 @@ namespace netlib {
     //constructor from type
     socket_messaging_interface::socket_messaging_interface(socket::TYPE type)
         : m_socket(type)
+        , m_is_socket_connected(false)
     {
     }
 
@@ -124,6 +136,7 @@ namespace netlib {
     //Constructor from socket.
     socket_messaging_interface::socket_messaging_interface(class socket&& socket)
         : m_socket(std::move(socket))
+        , m_is_socket_connected(false)
     {
     }
 

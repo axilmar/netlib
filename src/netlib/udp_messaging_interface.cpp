@@ -8,9 +8,9 @@
 namespace netlib {
 
 
-    //internal receive/send address
-    static thread_local socket_address* receiver_address{};
+    //internal addresses
     static thread_local socket_address sender_address;
+    static thread_local socket_address receiver_address;
 
 
     //returns the appropriate socket type from address family.
@@ -57,31 +57,15 @@ namespace netlib {
     }
 
 
-    //Sets up the target address for the next send_message call.
-    void udp_messaging_interface::set_receiver_address(socket_address& to_address) {
-        receiver_address = &to_address;
+    //Sets the receiver address for the next send_message call.
+    void udp_messaging_interface::set_receiver_address(const std::any& addr) {
+        receiver_address = std::any_cast<socket_address>(addr);
     }
 
 
-    //Returns the address of the last receive_message call.
-    void udp_messaging_interface::get_sender_address(socket_address& from_address) {
-        from_address = sender_address;
-    }
-
-
-    //Returns the sender address.
-    std::any udp_messaging_interface::get_receive_params() const {
-        socket_address addr;
-        get_sender_address(addr);
-        return addr;
-    }
-
-
-    //Sends the sender address from the socket address contained into the given object.
-    void udp_messaging_interface::set_send_params(const std::any& params) {
-        static thread_local socket_address addr;
-        addr = std::any_cast<socket_address>(params);
-        set_receiver_address(addr);
+    //Returns the sender address from the last receive_message call.
+    std::any udp_messaging_interface::get_sender_address() {
+        return sender_address;
     }
 
 
@@ -91,15 +75,8 @@ namespace netlib {
         const uint32_t crc32 = compute_crc32(buffer.data(), buffer.size());
         serialize(buffer, crc32);
 
-        //send without send address
-        if (!receiver_address) {
-            return get_socket().send(buffer) == buffer.size();
-        }
-
-        //send with send address
-        socket_address* temp = receiver_address;
-        receiver_address = nullptr;
-        return get_socket().send(buffer, *temp) == buffer.size();
+        //send data; if the socket is connected, send it without receiver address, else use the receiver address.
+        return (is_socket_connected() ? get_socket().send(buffer) : get_socket().send(buffer, receiver_address)) == buffer.size();
     }
 
 

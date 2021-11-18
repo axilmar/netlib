@@ -85,6 +85,12 @@ namespace netlib {
         void set_socket_reuse(bool v);
 
         /**
+         * Returns true if the socket is connected to a specific address.
+         * @return  true if the socket is connected to a specific address, false otherwise.
+         */
+        bool is_socket_connected() const;
+
+        /**
          * Connects the socket to the specified address.
          * @param addr address to connect to.
          * @exception socket_error thrown if the operation was invalid.
@@ -188,6 +194,9 @@ namespace netlib {
     private:
         //the socket.
         socket m_socket;
+
+        //if connect() has been run on the socket
+        bool m_is_socket_connected;
     };
 
 

@@ -4,9 +4,9 @@
 
 #include <stdexcept>
 #include <variant>
+#include <tuple>
 #include "byte_buffer.hpp"
 #include "serialization_traits.hpp"
-#include "tuple.hpp"
 #include "max_value.hpp"
 
 
@@ -180,7 +180,7 @@ namespace netlib {
     template <class T>
     std::enable_if_t<is_tuple_v<T>>
     serialize(byte_buffer& buffer, const T& tpl) {
-        flatten_tuple(tpl, [&](const auto&... v) { ( serialize(buffer, v), ... ); });
+        std::apply([&](const auto&... v) { (serialize(buffer, v), ...); }, tpl);
     }
 
 
@@ -194,7 +194,7 @@ namespace netlib {
     template <class T>
     std::enable_if_t<is_tuple_v<T>>
     deserialize(const byte_buffer& buffer, byte_buffer::position& pos, T& tpl) {
-        flatten_tuple(tpl, [&](auto&... v) { ( deserialize(buffer, pos, v), ... ); });
+        std::apply([&](auto&... v) { (deserialize(buffer, pos, v), ...); }, tpl);
     }
 
 
