@@ -4,6 +4,7 @@
 
 #include "message_id.hpp"
 #include "byte_buffer.hpp"
+#include "message_pointer.hpp"
 
 
 namespace netlib {
@@ -40,6 +41,18 @@ namespace netlib {
          * @exception message_error thrown if the received message id is different than the message id.
          */
         virtual void deserialize(const byte_buffer& buffer, byte_buffer::position& pos);
+
+        /**
+         * Interface for moving the object to a specific memory resource.
+         * Usually, messages are created on the stack and passed around as lvalue references,
+         * but a messaging interface implementation might enqueue a message;
+         * this call moves the message to a heap-allocated object,
+         * so as that it can be stored into a queue.
+         * The default implementation throws std::runtime_error because it is not implemented.
+         * @param resource memory resource to allocate the message memory for.
+         * @return pointer to message allocated on the memory resource. 
+         */
+        virtual message_pointer move(std::pmr::memory_resource& resource);
 
     protected:
         /**

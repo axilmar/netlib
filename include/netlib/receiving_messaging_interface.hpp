@@ -2,9 +2,8 @@
 #define NETLIB_RECEIVING_MESSAGING_INTERFACE_HPP
 
 
-#include <memory_resource>
 #include <any>
-#include "message_pointer.hpp"
+#include "message.hpp"
 #include "max_packet_size.hpp"
 
 
