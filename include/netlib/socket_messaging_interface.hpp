@@ -110,7 +110,7 @@ namespace netlib {
          * @param msg message to send.
          * @return true if the message was sent, false if it could not be sent.
          */
-        bool send_message(const message& msg) override;
+        bool send_message(message&& msg) override;
 
         /**
          * Waits for a message.

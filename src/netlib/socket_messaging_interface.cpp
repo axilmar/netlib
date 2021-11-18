@@ -75,7 +75,7 @@ namespace netlib {
 
 
     //Sends a message.
-    bool socket_messaging_interface::send_message(const message& msg) {
+    bool socket_messaging_interface::send_message(message&& msg) {
         thread_buffer.clear();
         msg.serialize(thread_buffer);
         return send_data(thread_buffer);

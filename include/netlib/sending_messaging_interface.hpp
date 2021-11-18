@@ -31,7 +31,7 @@ namespace netlib {
          * @param msg message to send.
          * @return true if the message was sent, false if it could not be sent.
          */
-        virtual bool send_message(const message& msg) = 0;
+        virtual bool send_message(message&& msg) = 0;
     };
 
 

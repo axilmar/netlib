@@ -13,9 +13,9 @@ namespace netlib {
 
 
     //Sends a message to a specific address.
-    bool udp_receiver_messaging_interface::send_message(const message& msg) {
+    bool udp_receiver_messaging_interface::send_message(message&& msg) {
         m_messaging_interface->set_receiver_address(m_receiver_address);
-        return m_messaging_interface->send_message(msg);
+        return m_messaging_interface->send_message(std::move(msg));
     }
 
 

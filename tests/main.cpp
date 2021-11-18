@@ -171,7 +171,7 @@ static void test_messaging_interface_class() {
     msg1.object2 = std::make_unique<my_object>(2.0f);
     msg1.object3 = std::make_shared<my_object>(3.0f);
 
-    te.send_message(msg1);
+    te.send_message(std::move(msg1));
 
     message_pointer received_msg = te.receive_message();
     test_message& msg2 = static_cast<test_message&>(*received_msg.get());
@@ -285,7 +285,7 @@ static void test_socket_messaging_interface_udp() {
 
                 for (size_t i = 0; i < COUNT; ++i) {
                     tm.text = stringstream() << i << ": hello world!!!";
-                    test_socket.send_message(tm);
+                    test_socket.send_message(std::move(tm));
                     printf("%i : send message: %s\n", consumer_count, tm.text.c_str());
                 }
             }
@@ -336,7 +336,7 @@ static void test_socket_messaging_interface_tcp() {
 
                 for (size_t i = 0; i < COUNT; ++i) {
                     tm.text = stringstream() << i << ": hello world!!!";
-                    test_socket.send_message(tm);
+                    test_socket.send_message(std::move(tm));
                 }
             }
             catch (const socket_error& err) {
@@ -387,7 +387,7 @@ static void test_socket_messaging_interface_udp_encrypted() {
 
                 for (size_t i = 0; i < COUNT; ++i) {
                     tm.text = stringstream() << i << ": hello world!!!";
-                    test_socket.send_message(tm);
+                    test_socket.send_message(std::move(tm));
                 }
             }
             catch (const socket_error& err) {
@@ -439,7 +439,7 @@ static void test_socket_messaging_interface_tcp_encrypted() {
 
                 for (size_t i = 0; i < COUNT; ++i) {
                     tm.text = stringstream() << i << ": hello world!!!";
-                    test_socket.send_message(tm);
+                    test_socket.send_message(std::move(tm));
                 }
             }
             catch (const socket_error& err) {
