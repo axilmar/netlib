@@ -96,22 +96,53 @@ namespace netlib {
 
 
     //ensure address buffer size has enough space for the addresses
-    static_assert(library::get_address_buffer_size() >= max(sizeof(in_addr), sizeof(in6_addr)));
+    static_assert(library::get_address_buffer_size() == max(sizeof(in_addr), sizeof(in6_addr)));
    
     
+    //Returns the host name of this machine.
+    std::string network_address::get_host_name() {
+        //temp buffer
+        char buffer[256];
+
+        //get the name
+        if (gethostname(buffer, sizeof(buffer)) == SOCKET_ERROR) {
+            throw socket_error(get_last_error());
+        }
+
+        //find the string length
+        size_t string_length = strlen(buffer);
+
+        //return the string
+        return std::string(buffer, buffer + string_length);
+    }
+
+
     //Creates a network address of the given address family.
-    network_address::network_address(int af) : m_address_family(af) {
+    network_address::network_address(int af) 
+        : m_address_family(af)
+    {
     }
 
 
     //set network address either from ip string or hostname
-    network_address::network_address(const char* addr_string, int address_family) {
-        
+    network_address::network_address(const char* addr_string, int address_family) 
+        : network_address(std::string(addr_string), address_family)
+    {
+    }
+
+
+    //set network address either from ip string or hostname
+    network_address::network_address(std::string addr_string, int address_family) {        
         //requires winsock to be initialized
         get_library();
 
+        //if the string is empty, get the host name
+        if (addr_string.empty()) {
+            addr_string = get_host_name();
+        }
+
         //try ip address
-        if (inet_pton(address_family, addr_string, m_data) == 1) {
+        if (inet_pton(address_family, addr_string.c_str(), m_data) == 1) {
             m_address_family = address_family;
             return;
         }
@@ -119,7 +150,7 @@ namespace netlib {
         addrinfo *ad;
 
         //resolve address
-        int error = getaddrinfo(addr_string, nullptr, nullptr, &ad);
+        int error = getaddrinfo(addr_string.c_str(), nullptr, nullptr, &ad);
 
         //error resolving an address
         if (error) {
@@ -144,11 +175,11 @@ namespace netlib {
                     return;
                 }
 
-                throw socket_error("unsupported network_address family");
+                throw socket_error("unsupported address family");
             }
         }
 
-        throw socket_error("invalid network_address");
+        throw socket_error("invalid address");
     }
 
 
