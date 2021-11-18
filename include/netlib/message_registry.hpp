@@ -3,7 +3,7 @@
 
 
 #include "message_id.hpp"
-#include "message_pointer.hpp"
+#include "message.hpp"
 #include "message_error.hpp"
 
 
@@ -20,7 +20,7 @@ namespace netlib {
          * @param memres memory resource.
          * @return a pointer to message.
          */
-        using message_creation_function = message_pointer (*)(std::pmr::memory_resource& memres);
+        using message_creation_function = message_pointer<> (*)(std::pmr::memory_resource& memres);
 
         /**
          * Registers a message creation function.
@@ -47,11 +47,11 @@ namespace netlib {
          * @return pointer to created message.
          * @exception message_error thrown if there was no registration found for the given message id.
          */
-        static message_pointer create_message(message_id id, std::pmr::memory_resource& memres);
+        static message_pointer<> create_message(message_id id, std::pmr::memory_resource& memres);
 
     private:
         //Helper function for creating a message.
-        template <class T> static message_pointer create_message(std::pmr::memory_resource& memres) {
+        template <class T> static message_pointer<> create_message(std::pmr::memory_resource& memres) {
             void* mem = memres.allocate(sizeof(T));
             return { new (mem) T(), message_deleter(memres, sizeof(T)) };
         }

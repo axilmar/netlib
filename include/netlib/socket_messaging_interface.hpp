@@ -119,7 +119,7 @@ namespace netlib {
          * @param max_message_size maximum number of bytes to receive.
          * @return a pointer to the received message or null if reception was impossible.
          */
-        message_pointer receive_message(std::pmr::memory_resource& memres, size_t max_message_size = NETLIB_MAX_PACKET_SIZE) override;
+        message_pointer<> receive_message(std::pmr::memory_resource& memres, size_t max_message_size = NETLIB_MAX_PACKET_SIZE) override;
 
         using receiving_messaging_interface::receive_message;
 

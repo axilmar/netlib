@@ -39,7 +39,7 @@ namespace netlib {
 
 
     //throws exception
-    message_pointer message::move(std::pmr::memory_resource& resource) {
+    message_pointer<> message::move(std::pmr::memory_resource& resource) {
         throw std::runtime_error(stringstream() << "Move not implemented for class " << get_typeinfo_name(typeid(*this)));
     }
 

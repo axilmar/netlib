@@ -65,7 +65,7 @@ namespace netlib {
 
 
     //create message from id and memory resource.
-    message_pointer message_registry::create_message(message_id id, std::pmr::memory_resource& memres) {
+    message_pointer<> message_registry::create_message(message_id id, std::pmr::memory_resource& memres) {
         //get the internal id
         const netlib::internals::message_id& internal_id = reinterpret_cast<const netlib::internals::message_id&>(id);
 

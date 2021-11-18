@@ -52,7 +52,7 @@ namespace netlib {
          * @param resource memory resource to allocate the message memory for.
          * @return pointer to message allocated on the memory resource. 
          */
-        virtual message_pointer move(std::pmr::memory_resource& resource);
+        virtual message_pointer<> move(std::pmr::memory_resource& resource);
 
     protected:
         /**

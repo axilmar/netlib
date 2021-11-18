@@ -15,7 +15,8 @@ namespace netlib {
     /**
      * message pointer type.
      */
-    using message_pointer = std::unique_ptr<message, message_deleter>;
+    template <class T = message>
+    using message_pointer = std::unique_ptr<T, message_deleter<T>>;
 
 
 } //namespace netlib

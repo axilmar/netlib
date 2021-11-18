@@ -173,7 +173,7 @@ static void test_messaging_interface_class() {
 
     te.send_message(std::move(msg1));
 
-    message_pointer received_msg = te.receive_message();
+    message_pointer<> received_msg = te.receive_message();
     test_message& msg2 = static_cast<test_message&>(*received_msg.get());
 
     assert(msg2.id == msg1.id);
@@ -297,7 +297,7 @@ static void test_socket_messaging_interface_udp() {
         std::thread consumer_thread([&]() {
             try {
                 for (consumer_count = 0; consumer_count < COUNT; ++consumer_count) {
-                    message_pointer msg = test_socket.receive_message();
+                    message_pointer<> msg = test_socket.receive_message();
                     text_message* tm = static_cast<text_message*>(msg.get());
                     printf("%i : received message: %s\n", consumer_count, tm->text.c_str());
                 }
@@ -349,7 +349,7 @@ static void test_socket_messaging_interface_tcp() {
                 tcp_messaging_interface test_socket{ constants::ADDRESS_FAMILY_IP4 };
                 test_socket.connect_socket(test_addr);
                 for (consumer_count = 0; consumer_count < COUNT; ++consumer_count) {
-                    message_pointer msg = test_socket.receive_message();
+                    message_pointer<> msg = test_socket.receive_message();
                     text_message* tm = static_cast<text_message*>(msg.get());
                     printf("%i : received message: %s\n", consumer_count, tm->text.c_str());
                 }
@@ -398,7 +398,7 @@ static void test_socket_messaging_interface_udp_encrypted() {
         std::thread consumer_thread([&]() {
             try {
                 for (consumer_count = 0; consumer_count < COUNT; ++consumer_count) {
-                    message_pointer msg = test_socket.receive_message();
+                    message_pointer<> msg = test_socket.receive_message();
                     text_message* tm = static_cast<text_message*>(msg.get());
                     printf("%i : received message: %s\n", consumer_count, tm->text.c_str());
                 }
@@ -452,7 +452,7 @@ static void test_socket_messaging_interface_tcp_encrypted() {
                 encrypted_messaging_interface<tcp_messaging_interface> test_socket{ test_key, constants::ADDRESS_FAMILY_IP4 };
                 test_socket.connect_socket(test_addr);
                 for (consumer_count = 0; consumer_count < COUNT; ++consumer_count) {
-                    message_pointer msg = test_socket.receive_message();
+                    message_pointer<> msg = test_socket.receive_message();
                     text_message* tm = static_cast<text_message*>(msg.get());
                     printf("%i : received message: %s\n", consumer_count, tm->text.c_str());
                 }

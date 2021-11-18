@@ -83,7 +83,7 @@ namespace netlib {
 
 
     //receives a message.
-    message_pointer socket_messaging_interface::receive_message(std::pmr::memory_resource& memres, size_t max_message_size) {
+    message_pointer<> socket_messaging_interface::receive_message(std::pmr::memory_resource& memres, size_t max_message_size) {
         //make room in the temporary buffer
         if (thread_buffer.size() < max_message_size) {
             thread_buffer.resize(max_message_size);
@@ -91,7 +91,7 @@ namespace netlib {
 
         //receive the data; if the data could not be received, return a null pointer.
         if (!receive_data(thread_buffer)) {
-            return message_pointer{ nullptr, message_deleter(memres, 0) };
+            return message_pointer<>{ nullptr, message_deleter(memres, 0) };
         }
 
         //peek the message id in order to create the appropriate message from the received id
@@ -99,7 +99,7 @@ namespace netlib {
         copy_value(&id, reinterpret_cast<const message_id&>(thread_buffer[0]));
 
         //create a message from the id
-        message_pointer result = message_registry::create_message(id, memres);
+        message_pointer<> result = message_registry::create_message(id, memres);
 
         //deserialize the message
         byte_buffer::position pos{};

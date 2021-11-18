@@ -26,14 +26,14 @@ namespace netlib {
          * @param max_message_size maximum number of bytes that can be possibly received.
          * @return a pointer to the received message or null if reception was impossible.
          */
-        virtual message_pointer receive_message(std::pmr::memory_resource& memres, size_t max_message_size = NETLIB_MAX_PACKET_SIZE) = 0;
+        virtual message_pointer<> receive_message(std::pmr::memory_resource& memres, size_t max_message_size = NETLIB_MAX_PACKET_SIZE) = 0;
 
         /**
          * Receives a message using a global synchronized memory resource.
          * @param max_message_size maximum number of bytes to receive.
          * @return a pointer to the received message or null if reception was impossible.
          */
-        message_pointer receive_message(size_t max_message_size = NETLIB_MAX_PACKET_SIZE);
+        message_pointer<> receive_message(size_t max_message_size = NETLIB_MAX_PACKET_SIZE);
 
         /**
          * Interface for retrieving the sender address of the last receive_message call.
