@@ -9,8 +9,7 @@ namespace netlib {
 
 
     //internal addresses
-    static thread_local socket_address sender_address;
-    static thread_local socket_address receiver_address;
+    static thread_local socket_address temp_address;
 
 
     //returns the appropriate socket type from address family.
@@ -59,13 +58,13 @@ namespace netlib {
 
     //Sets the receiver address for the next send_message call.
     void udp_messaging_interface::set_receiver_address(const std::any& addr) {
-        receiver_address = std::any_cast<socket_address>(addr);
+        temp_address = std::any_cast<socket_address>(addr);
     }
 
 
     //Returns the sender address from the last receive_message call.
     std::any udp_messaging_interface::get_sender_address() {
-        return sender_address;
+        return temp_address;
     }
 
 
@@ -76,14 +75,14 @@ namespace netlib {
         serialize(buffer, crc32);
 
         //send data; if the socket is connected, send it without receiver address, else use the receiver address.
-        return (is_socket_connected() ? get_socket().send(buffer) : get_socket().send(buffer, receiver_address)) == buffer.size();
+        return (is_socket_connected() ? get_socket().send(buffer) : get_socket().send(buffer, temp_address)) == buffer.size();
     }
 
 
     //Receives the data.
     bool udp_messaging_interface::receive_data(byte_buffer& buffer) {
         //receive data
-        const size_t size = get_socket().receive(buffer, sender_address);
+        const size_t size = get_socket().receive(buffer, temp_address);
 
         //if successfully received data, compute crc32 and compare it with the one stored in the message
         if (size) {
