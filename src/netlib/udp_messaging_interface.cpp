@@ -10,6 +10,7 @@ namespace netlib {
 
     //internal addresses
     static thread_local socket_address temp_address;
+    static thread_local socket_address* temp_address_ptr{};
 
 
     //returns the appropriate socket type from address family.
@@ -57,6 +58,12 @@ namespace netlib {
 
 
     //Sets the receiver address for the next send_message call.
+    void udp_messaging_interface::set_receiver_address(socket_address& addr) {
+        temp_address_ptr = &addr;
+    }
+
+
+    //Sets the receiver address for the next send_message call.
     void udp_messaging_interface::set_receiver_address(const std::any& addr) {
         temp_address = std::any_cast<socket_address>(addr);
     }
@@ -74,8 +81,27 @@ namespace netlib {
         const uint32_t crc32 = compute_crc32(buffer.data(), buffer.size());
         serialize(buffer, crc32);
 
-        //send data; if the socket is connected, send it without receiver address, else use the receiver address.
-        return (is_socket_connected() ? get_socket().send(buffer) : get_socket().send(buffer, temp_address)) == buffer.size();
+        size_t sent_size;
+
+        //if socket is connected, ignore any sender address
+        if (is_socket_connected()) {
+            sent_size = get_socket().send(buffer);
+            temp_address_ptr = nullptr;
+        }
+
+        //else if temp address is defined by pointer, use that
+        else if (temp_address_ptr) {
+            sent_size = get_socket().send(buffer, *temp_address_ptr);
+            temp_address_ptr = nullptr;
+        }
+
+        //else use the temp_address instance
+        else {
+            sent_size = get_socket().send(buffer, temp_address);
+        }
+
+        //the call was ok if all the data sent
+        return sent_size == buffer.size();
     }
 
 
