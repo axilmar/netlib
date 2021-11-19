@@ -5,9 +5,9 @@ namespace netlib {
 
 
     //Constructor.
-    udp_receiver_messaging_interface::udp_receiver_messaging_interface(socket_address&& addr, std::shared_ptr<udp_messaging_interface>&& messaging_interface)
-        : m_receiver_address(std::move(addr))
-        , m_messaging_interface(std::move(messaging_interface))
+    udp_receiver_messaging_interface::udp_receiver_messaging_interface(const socket_address& addr, const std::shared_ptr<udp_messaging_interface>& messaging_interface)
+        : m_receiver_address(addr)
+        , m_messaging_interface(messaging_interface)
     {
     }
 

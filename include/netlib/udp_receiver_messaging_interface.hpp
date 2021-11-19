@@ -18,7 +18,7 @@ namespace netlib {
          * @param addr the receiver's address.
          * @param messaging_interface the udp sending interface to use for sending a message.
          */
-        udp_receiver_messaging_interface(socket_address&& addr, std::shared_ptr<udp_messaging_interface>&& messaging_interface);
+        udp_receiver_messaging_interface(const socket_address& addr, const std::shared_ptr<udp_messaging_interface>& messaging_interface);
 
         /**
          * Sends a message to a specific address.
