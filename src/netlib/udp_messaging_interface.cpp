@@ -58,12 +58,6 @@ namespace netlib {
 
 
     //Sets the receiver address for the next send_message call.
-    void udp_messaging_interface::set_receiver_address(socket_address& addr) {
-        temp_address_ptr = &addr;
-    }
-
-
-    //Sets the receiver address for the next send_message call.
     void udp_messaging_interface::set_receiver_address(const std::any& addr) {
         temp_address = std::any_cast<socket_address>(addr);
     }
@@ -72,6 +66,18 @@ namespace netlib {
     //Returns the sender address from the last receive_message call.
     std::any udp_messaging_interface::get_sender_address() {
         return temp_address;
+    }
+
+
+    //Sets the receiver address for the next send_message call.
+    void udp_messaging_interface::set_receiver_address(socket_address& addr) {
+        temp_address_ptr = &addr;
+    }
+
+
+    //Returns the sender address from the last receive_message call of this thread.
+    void udp_messaging_interface::get_sender_address(socket_address& addr) {
+        addr = temp_address;
     }
 
 

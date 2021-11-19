@@ -34,13 +34,6 @@ namespace netlib {
         /**
          * Sets the receiver address for the next send_message call in this thread.
          * The address is used only if the socket is not connected.
-         * @param addr address to send the message to; must be in scope if send_message is invoked from this thread.
-         */
-        void set_receiver_address(socket_address& addr);
-
-        /**
-         * Sets the receiver address for the next send_message call in this thread.
-         * The address is used only if the socket is not connected.
          * otherwise, the address is ignored.
          * @param addr receiver address.
          */
@@ -51,6 +44,19 @@ namespace netlib {
          * @return the sender address.
          */
         std::any get_sender_address() override;
+
+        /**
+         * Sets the receiver address for the next send_message call in this thread.
+         * The address is used only if the socket is not connected.
+         * @param addr address to send the message to; must be in scope if send_message is invoked from this thread.
+         */
+        void set_receiver_address(socket_address& addr);
+
+        /**
+         * Returns the sender address from the last receive_message call of this thread.
+         * @param addr the socket address to store the address of the sender.
+         */
+        void get_sender_address(socket_address& addr);
 
     protected:
         /**
