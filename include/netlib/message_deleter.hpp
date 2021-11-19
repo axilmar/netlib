@@ -19,12 +19,18 @@ namespace netlib {
     class message_deleter {
     public:
         /**
+         * The default constructor.
+         */
+        message_deleter() {
+        }
+
+        /**
          * The constructor.
          * @param memres memory resource.
          * @param size allocation size.
          */
         message_deleter(std::pmr::memory_resource& memres, size_t size)
-            : m_memory_resource(memres)
+            : m_memory_resource(&memres)
             , m_size(size)
         {
         }
@@ -35,12 +41,12 @@ namespace netlib {
          */
         void operator ()(T* msg) const {
             msg->~T();
-            m_memory_resource.deallocate(msg, m_size);
+            m_memory_resource->deallocate(msg, m_size);
         }
 
     private:
-        std::pmr::memory_resource& m_memory_resource;
-        size_t m_size;
+        std::pmr::memory_resource* const m_memory_resource;
+        const size_t m_size;
     };
 
 
