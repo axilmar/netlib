@@ -8,11 +8,6 @@
 namespace netlib {
 
 
-    //internal addresses
-    static thread_local socket_address temp_address;
-    static thread_local socket_address* temp_address_ptr{};
-
-
     //returns the appropriate socket type from address family.
     static socket::TYPE get_udp_socket_type(int af) {
 
@@ -57,27 +52,27 @@ namespace netlib {
     }
 
 
-    //Sets the receiver address for the next send_message call.
+    //Sets the receiver address.
     void udp_messaging_interface::set_receiver_address(const std::any& addr) {
-        temp_address = std::any_cast<socket_address>(addr);
-    }
-
-
-    //Returns the sender address from the last receive_message call.
-    std::any udp_messaging_interface::get_sender_address() {
-        return temp_address;
-    }
-
-
-    //Sets the receiver address for the next send_message call.
-    void udp_messaging_interface::set_receiver_address(socket_address& addr) {
-        temp_address_ptr = &addr;
+        set_receiver_socket_address(std::any_cast<const socket_address &>(addr));
     }
 
 
     //Returns the sender address from the last receive_message call of this thread.
-    void udp_messaging_interface::get_sender_address(socket_address& addr) {
-        addr = temp_address;
+    std::any udp_messaging_interface::get_sender_address() {
+        return get_sender_socket_address();
+    }
+
+
+    //Sets the receiver address.
+    void udp_messaging_interface::set_receiver_socket_address(const socket_address& addr) {
+        m_receiver_address = addr;
+    }
+
+
+    //Returns the sender address from the last receive_message call of this thread.
+    const socket_address& udp_messaging_interface::get_sender_socket_address() {
+        return m_sender_address;
     }
 
 
@@ -87,24 +82,8 @@ namespace netlib {
         const uint32_t crc32 = compute_crc32(buffer.data(), buffer.size());
         serialize(buffer, crc32);
 
-        size_t sent_size;
-
-        //if socket is connected, ignore any sender address
-        if (is_socket_connected()) {
-            sent_size = get_socket().send(buffer);
-            temp_address_ptr = nullptr;
-        }
-
-        //else if temp address is defined by pointer, use that
-        else if (temp_address_ptr) {
-            sent_size = get_socket().send(buffer, *temp_address_ptr);
-            temp_address_ptr = nullptr;
-        }
-
-        //else use the temp_address instance
-        else {
-            sent_size = get_socket().send(buffer, temp_address);
-        }
+        //send the data
+        const size_t sent_size = get_socket().send(buffer, m_receiver_address);
 
         //the call was ok if all the data sent
         return sent_size == buffer.size();
@@ -113,8 +92,8 @@ namespace netlib {
 
     //Receives the data.
     bool udp_messaging_interface::receive_data(byte_buffer& buffer) {
-        //receive data
-        const size_t size = get_socket().receive(buffer, temp_address);
+        //receive the data
+        const size_t size = get_socket().receive(buffer, m_sender_address);
 
         //if successfully received data, compute crc32 and compare it with the one stored in the message
         if (size) {

@@ -32,10 +32,10 @@ namespace netlib {
         void open_socket(int af = constants::ADDRESS_FAMILY_IP4);
 
         /**
-         * Sets the receiver address for the next send_message call in this thread.
-         * The address is used only if the socket is not connected.
-         * otherwise, the address is ignored.
-         * @param addr receiver address.
+         * Sets the receiver address.
+         * If set, then all packets are sent to this address.
+         * @param addr address to send the message to.
+         * @exception std::bad_cast thrown if the given value is not a socket address.
          */
         void set_receiver_address(const std::any& addr) override;
 
@@ -46,17 +46,17 @@ namespace netlib {
         std::any get_sender_address() override;
 
         /**
-         * Sets the receiver address for the next send_message call in this thread.
-         * The address is used only if the socket is not connected.
-         * @param addr address to send the message to; must be in scope if send_message is invoked from this thread.
+         * Sets the receiver address.
+         * If set, then all packets are sent to this address.
+         * @param addr address to send the message to.
          */
-        void set_receiver_address(socket_address& addr);
+        void set_receiver_socket_address(const socket_address& addr);
 
         /**
          * Returns the sender address from the last receive_message call of this thread.
-         * @param addr the socket address to store the address of the sender.
+         * @return the sender address.
          */
-        void get_sender_address(socket_address& addr);
+        const socket_address& get_sender_socket_address();
 
     protected:
         /**
@@ -73,6 +73,10 @@ namespace netlib {
          * @return true if the data were received successfully and the crc32 was ok, false otherwise.
          */
         bool receive_data(byte_buffer& buffer) override;
+
+    private:
+        socket_address m_receiver_address;
+        socket_address m_sender_address;
     };
 
 
