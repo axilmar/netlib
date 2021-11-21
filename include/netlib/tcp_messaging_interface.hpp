@@ -68,7 +68,7 @@ namespace netlib {
          * @param socket_send function to use for sending the data.
          */
         template <class SocketSendFunction>
-        bool send_data(byte_buffer& buffer, SocketSendFunction&& socket_send) {
+        bool send_packet(byte_buffer& buffer, SocketSendFunction&& socket_send) {
             return send_message_size(buffer) && socket_send(buffer);
         }
 
@@ -78,9 +78,23 @@ namespace netlib {
          * @param socket_receive function to use for receiving the data.
          */
         template <class SocketReceiveFunction>
-        bool receive_data(byte_buffer& buffer, SocketReceiveFunction&& socket_receive) {
+        bool receive_packet(byte_buffer& buffer, SocketReceiveFunction&& socket_receive) {
             return receive_message_size(buffer) && socket_receive(buffer);
         }
+
+        /**
+         * Sends the data.
+         * @param buffer buffer of data to send.
+         * @return true if sent, false otherwise.
+         */
+        bool send_data(const byte_buffer& buffer);
+
+        /**
+         * Receives the data.
+         * @param buffer buffer to store the data.
+         * @return true if the data were received, false otherwise.
+         */
+        bool receive_data(byte_buffer& buffer);
 
     private:
         //sends the message size.

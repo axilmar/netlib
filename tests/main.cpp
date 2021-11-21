@@ -332,7 +332,6 @@ static void test_socket_messaging_interface_tcp() {
 }
 
 
-/*
 static void test_socket_messaging_interface_udp_encrypted() {
     try {
         static constexpr int COUNT = 100;
@@ -360,8 +359,9 @@ static void test_socket_messaging_interface_udp_encrypted() {
 
         std::thread consumer_thread([&]() {
             try {
+                socket_address sender_address;
                 for (consumer_count = 0; consumer_count < COUNT; ++consumer_count) {
-                    message_pointer<> msg = test_socket.receive_message();
+                    message_pointer<> msg = test_socket.receive_message(sender_address);
                     text_message* tm = static_cast<text_message*>(msg.get());
                     printf("%i : received message: %s\n", consumer_count, tm->text.c_str());
                 }
@@ -434,7 +434,6 @@ static void test_socket_messaging_interface_tcp_encrypted() {
         std::cout << err.what() << std::endl;
     }
 }
-*/
 
 
 int main() {
@@ -444,8 +443,8 @@ int main() {
     test_sockets();
     test_socket_messaging_interface_udp();
     test_socket_messaging_interface_tcp();
-    //test_socket_messaging_interface_udp_encrypted();
-    //test_socket_messaging_interface_tcp_encrypted();
+    test_socket_messaging_interface_udp_encrypted();
+    test_socket_messaging_interface_tcp_encrypted();
     system("pause");
     return 0;
 }

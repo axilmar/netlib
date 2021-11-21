@@ -2,7 +2,7 @@
 #include "netlib/socket_error.hpp"
 #include "netlib/stringstream.hpp"
 #include "netlib/message_size.hpp"
-#include "internals/send_receive_message.hpp"
+#include "netlib/internals/send_receive_message.hpp"
 
 
 namespace netlib {
@@ -60,8 +60,8 @@ namespace netlib {
     //Sends a message.
     bool tcp_messaging_interface::send_message(message&& msg) {
         return internals::send_message(msg, [&](byte_buffer& buffer) {
-            return send_data(buffer, [&](byte_buffer& buffer) {
-                return get_socket().stream_send(buffer.data(), buffer.size());
+            return send_packet(buffer, [&](byte_buffer& buffer) {
+                return send_data(buffer);
             });
         });
     }
@@ -70,10 +70,22 @@ namespace netlib {
     //Receives a message.
     message_pointer<> tcp_messaging_interface::receive_message(std::pmr::memory_resource& memres, size_t max_message_size) {
         return internals::receive_message(memres, max_message_size, [&](byte_buffer& buffer) {
-            return receive_data(buffer, [&](byte_buffer& buffer) {
-                return get_socket().stream_receive(buffer.data(), buffer.size());
+            return receive_packet(buffer, [&](byte_buffer& buffer) {
+                return receive_data(buffer);
             });
         });
+    }
+
+
+    //Sends the data.
+    bool tcp_messaging_interface::send_data(const byte_buffer& buffer) {
+        return get_socket().stream_send(buffer.data(), buffer.size());
+    }
+
+
+    //Receives the data.
+    bool tcp_messaging_interface::receive_data(byte_buffer& buffer) {
+        return get_socket().stream_receive(buffer.data(), buffer.size());
     }
 
 

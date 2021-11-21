@@ -2,7 +2,7 @@
 #include "netlib/socket_error.hpp"
 #include "netlib/stringstream.hpp"
 #include "netlib/crc32.hpp"
-#include "internals/send_receive_message.hpp"
+#include "netlib/internals/send_receive_message.hpp"
 
 
 namespace netlib {
@@ -58,8 +58,8 @@ namespace netlib {
     //Sends a message.
     bool udp_messaging_interface::send_message(message&& msg) {
         return internals::send_message(msg, [&](byte_buffer& buffer) {
-            return send_data(buffer, [&](const byte_buffer& buffer) {
-                return get_socket().send(buffer);
+            return send_packet(buffer, [&](const byte_buffer& buffer) {
+                return send_data(buffer);
             });
         });
     }
@@ -68,8 +68,8 @@ namespace netlib {
     //Receives a message.
     message_pointer<> udp_messaging_interface::receive_message(std::pmr::memory_resource& memres, size_t max_message_size ) {
         return internals::receive_message(memres, max_message_size, [&](byte_buffer& buffer) {
-            return receive_data(buffer, [&](byte_buffer& buffer) {
-                return get_socket().receive(buffer);
+            return receive_packet(buffer, [&](byte_buffer& buffer) {
+                return receive_data(buffer);
             });
         });
     }
@@ -78,8 +78,8 @@ namespace netlib {
     //Sends a message to a specific address.
     bool udp_messaging_interface::send_message(message&& msg, const socket_address& addr) {
         return internals::send_message(msg, [&](byte_buffer& buffer) {
-            return send_data(buffer, [&](const byte_buffer& buffer) {
-                return get_socket().send(buffer, addr);
+            return send_packet(buffer, [&](const byte_buffer& buffer) {
+                return send_data(buffer, addr);
             });
         });
     }
@@ -88,10 +88,34 @@ namespace netlib {
     //Receives a message.
     message_pointer<> udp_messaging_interface::receive_message(socket_address& addr, std::pmr::memory_resource& memres, size_t max_message_size) {
         return internals::receive_message(memres, max_message_size, [&](byte_buffer& buffer) {
-            return receive_data(buffer, [&](byte_buffer& buffer) {
-                return get_socket().receive(buffer, addr);
+            return receive_packet(buffer, [&](byte_buffer& buffer) {
+                return receive_data(buffer, addr);
             });
         });
+    }
+
+
+    //Sends the data.
+    bool udp_messaging_interface::send_data(const byte_buffer& buffer) {
+        return get_socket().send(buffer);
+    }
+
+
+    //Receives the data.
+    bool udp_messaging_interface::receive_data(byte_buffer& buffer) {
+        return get_socket().receive(buffer);
+    }
+
+
+    //Sends the data.
+    bool udp_messaging_interface::send_data(const byte_buffer& buffer, const socket_address& addr) {
+        return get_socket().send(buffer, addr);
+    }
+
+
+    //Receives the data.
+    bool udp_messaging_interface::receive_data(byte_buffer& buffer, socket_address& addr) {
+        return get_socket().receive(buffer, addr);
     }
 
 

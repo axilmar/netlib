@@ -80,7 +80,7 @@ namespace netlib {
          * @param socket_send function to use for sending the data.
          */
         template <class SocketSendFunction>
-        static bool send_data(byte_buffer& buffer, SocketSendFunction&& socket_send) {
+        static bool send_packet(byte_buffer& buffer, SocketSendFunction&& socket_send) {
             serialize_crc32(buffer);
             const size_t sent_size = socket_send(buffer);
             return sent_size == buffer.size();
@@ -92,10 +92,40 @@ namespace netlib {
          * @param socket_receive function to use for receiving the data.
          */
         template <class SocketReceiveFunction>
-        static bool receive_data(byte_buffer& buffer, SocketReceiveFunction&& socket_receive) {
+        static bool receive_packet(byte_buffer& buffer, SocketReceiveFunction&& socket_receive) {
             const size_t size = socket_receive(buffer);
             return size ? deserialize_crc32(buffer) : false;
         }
+
+        /**
+         * Sends the data.
+         * @param buffer buffer of data to send.
+         * @return true if sent, false otherwise.
+         */
+        bool send_data(const byte_buffer& buffer);
+
+        /**
+         * Receives the data.
+         * @param buffer buffer to store the data.
+         * @return true if the data were received, false otherwise.
+         */
+        bool receive_data(byte_buffer& buffer);
+
+        /**
+         * Sends the data.
+         * @param buffer buffer of data to send.
+         * @param addr address of receiver.
+         * @return true if sent, false otherwise.
+         */
+        bool send_data(const byte_buffer& buffer, const socket_address& addr);
+
+        /**
+         * Receives the data.
+         * @param buffer buffer to store the data.
+         * @param addr address of sender.
+         * @return true if the data were received, false otherwise.
+         */
+        bool receive_data(byte_buffer& buffer, socket_address& addr);
 
     private:
         //serialize crc32
