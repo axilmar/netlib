@@ -1,5 +1,5 @@
-#ifndef NETLIB_NETWORK_ADDRESS_HPP
-#define NETLIB_NETWORK_ADDRESS_HPP
+#ifndef NETLIB_IP_ADDRESS_HPP
+#define NETLIB_IP_ADDRESS_HPP
 
 
 #include <cstddef>
@@ -12,10 +12,15 @@ namespace netlib {
 
 
     /**
-     * Network address.
+     * IP address.
      */
-    class network_address : public constants {
+    class ip_address : public constants {
     public:
+        /** 
+         * buffer size.
+         */ 
+        static constexpr size_t BUFFER_SIZE = 16;
+
         /**
          * Returns the host name of this machine.
          */
@@ -24,13 +29,13 @@ namespace netlib {
         /**
          * Creates an empty, non-valid network address.
          */
-        network_address() {}
+        ip_address() {}
 
         /**
          * Creates an empty network address of the given address family.
          * @param af address family.
          */
-        network_address(int af);
+        ip_address(int af);
 
         /**
          * Creates a network address from a string.
@@ -38,7 +43,7 @@ namespace netlib {
          * @param address_family address family.
          * @exception socket_error thrown if the hostname could not be resolved.
          */
-        network_address(const char* addr_string, int address_family = constants::ADDRESS_FAMILY_IP4);
+        ip_address(const char* addr_string, int address_family = constants::ADDRESS_FAMILY_IP4);
 
         /**
          * Creates a network address from a string.
@@ -46,7 +51,7 @@ namespace netlib {
          * @param address_family address family.
          * @exception socket_error thrown if the hostname could not be resolved.
          */
-        network_address(std::string addr_string, int address_family = constants::ADDRESS_FAMILY_IP4);
+        ip_address(std::string addr_string, int address_family = constants::ADDRESS_FAMILY_IP4);
 
         /**
          * Converts the address to a string.
@@ -55,10 +60,37 @@ namespace netlib {
          */
         std::string to_string() const;
 
-    private:
-        //buffer size
-        static constexpr size_t BUFFER_SIZE = 16;
+        /**
+         * Returns pointer to internal buffer. 
+         */
+        const byte* data() const { return m_data; }
 
+        /**
+         * Returns pointer to internal buffer.
+         */
+        byte* data() { return m_data; }
+
+        /**
+         * Returns size of internal data. 
+         */
+        constexpr size_t size() const { return BUFFER_SIZE; }
+
+        /**
+         * Returns the address family. 
+         */
+        int get_address_family() const { return m_address_family; }
+
+        /**
+         * Returns the ip6 flow info. 
+         */
+        uint32_t get_ip6_flow_info() const { return m_ip6_flow_info; }
+
+        /**
+         * Returns the ip6 zone id. 
+         */
+        uint32_t get_ip6_zone_id() const { return m_ip6_zone_id; }
+
+    private:
         //data
         int m_address_family{};
         byte m_data[BUFFER_SIZE]{};
@@ -73,4 +105,4 @@ namespace netlib {
 } //namespace netlib
 
 
-#endif //NETLIB_NETWORK_ADDRESS_HPP
+#endif //NETLIB_IP_ADDRESS_HPP

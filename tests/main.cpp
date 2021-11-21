@@ -104,6 +104,12 @@ static void test_serialization_traits() {
     assert(!has_insert_v<std::vector<int>>);
     assert(has_insert_v<std::set<int>>);
     assert(!has_insert_v<test_message>);
+
+    assert(has_serialize_v<test_message>);
+    assert(!has_serialize_v<std::vector<int>>);
+
+    assert(has_deserialize_v<test_message>);
+    assert(!has_deserialize_v<std::vector<int>>);
 }
 
 
@@ -140,50 +146,6 @@ static void test_message_serialization() {
 
 
 static byte_buffer temp_buffer;
-
-
-class test_messaging_interface : public socket_messaging_interface {
-public:
-
-protected:
-    bool send_data(byte_buffer& buffer) final {
-        temp_buffer.clear();
-        temp_buffer.insert(temp_buffer.end(), buffer.begin(), buffer.end());
-        return true;
-    }
-
-    bool receive_data(byte_buffer& buffer) final {
-        buffer = temp_buffer;
-        return true;
-    }
-};
-
-
-static void test_messaging_interface_class() {
-    test_messaging_interface te;
-    test_message msg1;
-
-    msg1.data1.push_back(10);
-    msg1.data2.insert(20);
-    msg1.p1.first = 30;
-    msg1.p1.second = 40;
-    msg1.object1 = new my_object(1.0f);
-    msg1.object2 = std::make_unique<my_object>(2.0f);
-    msg1.object3 = std::make_shared<my_object>(3.0f);
-
-    te.send_message(std::move(msg1));
-
-    message_pointer<> received_msg = te.receive_message();
-    test_message& msg2 = static_cast<test_message&>(*received_msg.get());
-
-    assert(msg2.id == msg1.id);
-    assert(msg2.data1 == msg1.data1);
-    assert(msg2.data2 == msg1.data2);
-    assert(msg2.p1 == msg1.p1);
-    assert(msg2.object1->value == msg1.object1->value);
-    assert(msg2.object2->value == msg1.object2->value);
-    assert(msg2.object3->value == msg1.object3->value);
-}
 
 
 static constexpr uint16_t TCP_TEST_PORT = 10000;
@@ -370,6 +332,7 @@ static void test_socket_messaging_interface_tcp() {
 }
 
 
+/*
 static void test_socket_messaging_interface_udp_encrypted() {
     try {
         static constexpr int COUNT = 100;
@@ -471,18 +434,18 @@ static void test_socket_messaging_interface_tcp_encrypted() {
         std::cout << err.what() << std::endl;
     }
 }
+*/
 
 
 int main() {
     test_typeinfo();
     test_serialization_traits();
     test_message_serialization();
-    test_messaging_interface_class();
     test_sockets();
     test_socket_messaging_interface_udp();
     test_socket_messaging_interface_tcp();
-    test_socket_messaging_interface_udp_encrypted();
-    test_socket_messaging_interface_tcp_encrypted();
+    //test_socket_messaging_interface_udp_encrypted();
+    //test_socket_messaging_interface_tcp_encrypted();
     system("pause");
     return 0;
 }

@@ -1,11 +1,14 @@
 #include "netlib/tcp_messaging_interface.hpp"
 #include "netlib/socket_error.hpp"
 #include "netlib/stringstream.hpp"
-#include "netlib/serialization.hpp"
 #include "netlib/message_size.hpp"
+#include "internals/send_receive_message.hpp"
 
 
 namespace netlib {
+
+
+    static thread_local byte_buffer thread_buffer;
 
 
     //returns the appropriate socket type from address family.
@@ -57,34 +60,50 @@ namespace netlib {
     }
 
 
-    //Sends the data.
-    bool tcp_messaging_interface::send_data(byte_buffer& buffer) {
-        //get the message size
-        const message_size msg_size = buffer_size_to_message_size(buffer.size());
-        switch_endianess(msg_size);
-        
-        //send the message size
-        if (!get_socket().stream_send(&msg_size, sizeof(msg_size))) {
-            return false;
-        }
+    //Sends a message.
+    bool tcp_messaging_interface::send_message(message&& msg) {
+        return internals::send_message(thread_buffer, msg, [&](byte_buffer& buffer) {
+            //get the message size
+            const message_size msg_size = buffer_size_to_message_size(buffer.size());
+            switch_endianess(msg_size);
 
-        //send the data
-        return get_socket().stream_send(buffer.data(), buffer.size());
+            //send the message size
+            if (!get_socket().stream_send(&msg_size, sizeof(msg_size))) {
+                return false;
+            }
+
+            //send the data
+            return get_socket().stream_send(buffer.data(), buffer.size());
+        });
     }
 
 
-    //Receives the data.
-    bool tcp_messaging_interface::receive_data(byte_buffer& buffer) {
-        //receive the message size
-        message_size msg_size;
-        if (!get_socket().stream_receive(&msg_size, sizeof(msg_size))) {
-            return false;
-        }
-        switch_endianess(msg_size);
+    //Not used. 
+    bool tcp_messaging_interface::send_message(message&& msg, const address& addr) {
+        throw std::logic_error("invalid socket type for this operation");
+    }
 
-        //receive the data
-        buffer.resize(msg_size);
-        return get_socket().stream_receive(buffer.data(), msg_size);
+
+    //Receives a message.
+    message_pointer<> tcp_messaging_interface::receive_message(std::pmr::memory_resource& memres, size_t max_message_size) {
+        return internals::receive_message(thread_buffer, memres, max_message_size, [&](byte_buffer& buffer) {
+            //receive the message size
+            message_size msg_size;
+            if (!get_socket().stream_receive(&msg_size, sizeof(msg_size))) {
+                return false;
+            }
+            switch_endianess(msg_size);
+
+            //receive the data
+            buffer.resize(msg_size);
+            return get_socket().stream_receive(buffer.data(), msg_size);
+        });
+    }
+
+
+    //Not used.
+    message_pointer<> tcp_messaging_interface::receive_message(address& addr, std::pmr::memory_resource& memres, size_t max_message_size) {
+        throw std::logic_error("invalid socket type for this operation");
     }
 
 

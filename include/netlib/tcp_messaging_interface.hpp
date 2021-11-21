@@ -44,20 +44,34 @@ namespace netlib {
          */
         void open_socket(int af = constants::ADDRESS_FAMILY_IP4);
 
-    protected:
         /**
-         * Sends the data.
-         * @param buffer buffer with data to transmit.
-         * @return true if the data were sent successfully, false otherwise.
+         * Sends a message.
+         * @param msg message to send.
+         * @return true if the message was sent, false if it could not be sent.
          */
-        bool send_data(byte_buffer& buffer) override;
+        bool send_message(message&& msg) override;
 
         /**
-         * Receives the data.
-         * @param buffer buffer to put the data to.
-         * @return true if the data were received successfully, false otherwise.
+         * Not used.
+         * @exception std::logic_error always thrown.
          */
-        bool receive_data(byte_buffer& buffer) override;
+        bool send_message(message&& msg, const address& addr) override;
+
+        /**
+         * Receives a message.
+         * @param mesres memory resource to use for allocating memory for the message.
+         * @param max_message_size maximum number of bytes that can be possibly received.
+         * @return a pointer to the received message or null if reception was impossible.
+         */
+        message_pointer<> receive_message(std::pmr::memory_resource& memres, size_t max_message_size = NETLIB_MAX_PACKET_SIZE) override;
+
+        /**
+         * Not used.
+         * @exception std::logic_error always thrown.
+         */
+        message_pointer<> receive_message(address& addr, std::pmr::memory_resource& memres, size_t max_message_size = NETLIB_MAX_PACKET_SIZE) override;
+
+        using socket_messaging_interface::receive_message;
     };
 
 

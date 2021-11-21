@@ -32,37 +32,40 @@ namespace netlib {
         void open_socket(int af = constants::ADDRESS_FAMILY_IP4);
 
         /**
-         * Sets the receiver address.
-         * If set, then all packets are sent to this address.
-         * @param addr address to send the message to.
+         * Sends a message.
+         * @param msg message to send.
+         * @return true if the message was sent, false if it could not be sent.
          */
-        void set_receiver_address(const socket_address& addr);
+        bool send_message(message&& msg) override;
 
         /**
-         * Returns the sender address from the last receive_message call of this thread.
-         * @return the sender address.
+         * Sends a message.
+         * @param msg message to send.
+         * @param addr sender address; must be instance of socket_address.
+         * @return true if the message was sent, false if it could not be sent.
+         * @exception std::bad_cast thrown if the address is not a socket address.
          */
-        const socket_address& get_sender_address();
-
-    protected:
-        /**
-         * Sends the data.
-         * It appends a crc32 code of the message at its end.
-         * @param buffer buffer with data to transmit.
-         * @return true if the data were sent successfully, false otherwise.
-         */
-        bool send_data(byte_buffer& buffer) override;
+        bool send_message(message&& msg, const address& addr) override;
 
         /**
-         * Receives the data.
-         * @param buffer buffer to put the data to.
-         * @return true if the data were received successfully and the crc32 was ok, false otherwise.
+         * Receives a message.
+         * @param mesres memory resource to use for allocating memory for the message.
+         * @param max_message_size maximum number of bytes that can be possibly received.
+         * @return a pointer to the received message or null if reception was impossible.
          */
-        bool receive_data(byte_buffer& buffer) override;
+        message_pointer<> receive_message(std::pmr::memory_resource& memres, size_t max_message_size = NETLIB_MAX_PACKET_SIZE) override;
 
-    private:
-        socket_address m_receiver_address;
-        socket_address m_sender_address;
+        /**
+         * Receives a message.
+         * @param addr address variable to receive the sender address.
+         * @param mesres memory resource to use for allocating memory for the message.
+         * @param max_message_size maximum number of bytes that can be possibly received.
+         * @return a pointer to the received message or null if reception was impossible.
+         * @exception std::bad_cast thrown if the address is not a socket address.
+         */
+        message_pointer<> receive_message(address& addr, std::pmr::memory_resource& memres, size_t max_message_size = NETLIB_MAX_PACKET_SIZE) override;
+
+        using socket_messaging_interface::receive_message;
     };
 
 

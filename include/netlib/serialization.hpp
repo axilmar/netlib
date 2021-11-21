@@ -320,6 +320,26 @@ namespace netlib {
     }
 
 
+    /**
+     * Serialize function for types that have a member 'serialize' function.
+     */
+    template <class T>
+    std::enable_if_t<has_serialize_v<T>>
+    serialize(byte_buffer& buffer, const T& obj) {
+        obj.serialize(buffer);
+    }
+
+
+    /**
+     * Deserialize function for types that have a member 'deserialize' function. 
+     */
+    template <class T>
+    std::enable_if_t<has_deserialize_v<T>> 
+    deserialize(const byte_buffer& buffer, byte_buffer::position& pos, T& obj) {
+        obj.deserialize(buffer, pos);
+    }
+
+
 } //namespace netlib
 
 

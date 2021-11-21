@@ -21,11 +21,19 @@ namespace netlib {
         udp_client_messaging_interface(const socket_address& addr, const std::shared_ptr<udp_messaging_interface>& messaging_interface);
 
         /**
-         * Sends a message to a specific address.
-         * @param msg message to send.
-         * @return true if the message was sent, false if it could not be sent.
+         * Not used.
+         * @exception std::logic_error always thrown.
          */
         bool send_message(message&& msg) override;
+
+        /**
+         * Sends a message.
+         * @param msg message to send.
+         * @param addr sender address; must be instance of socket_address.
+         * @return true if the message was sent, false if it could not be sent.
+         * @exception std::bad_cast thrown if the address is not a socket address.
+         */
+        bool send_message(message&& msg, const address& addr) override;
 
     private:
         socket_address m_receiver_address;

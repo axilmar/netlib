@@ -12,10 +12,15 @@ namespace netlib {
     }
 
 
-    //Sends a message to a specific address.
+    //Not used.
     bool udp_client_messaging_interface::send_message(message&& msg) {
-        m_messaging_interface->set_receiver_address(m_receiver_address);
-        return m_messaging_interface->send_message(std::move(msg));
+        throw std::logic_error("invalid socket type for this operation");
+    }
+
+
+    //Sends a message.
+    bool udp_client_messaging_interface::send_message(message&& msg, const address& addr) {
+        return m_messaging_interface->send_message(std::move(msg), addr);
     }
 
 

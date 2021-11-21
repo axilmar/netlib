@@ -21,9 +21,9 @@ namespace netlib {
             return ::socket(af, type, protocol);
         }
 
-        //return size of network_address buffer
+        //return size of ip_address buffer
         static constexpr size_t get_address_buffer_size() {
-            return sizeof(network_address::m_data);
+            return ip_address::BUFFER_SIZE;
         }
 
     private:
@@ -91,7 +91,7 @@ namespace netlib {
 
 
     /**************************************************************************
-        class network_address
+        class ip_address
      **************************************************************************/
 
 
@@ -100,7 +100,7 @@ namespace netlib {
    
     
     //Returns the host name of this machine.
-    std::string network_address::get_host_name() {
+    std::string ip_address::get_host_name() {
         //temp buffer
         char buffer[256];
 
@@ -118,21 +118,21 @@ namespace netlib {
 
 
     //Creates a network address of the given address family.
-    network_address::network_address(int af) 
+    ip_address::ip_address(int af) 
         : m_address_family(af)
     {
     }
 
 
     //set network address either from ip string or hostname
-    network_address::network_address(const char* addr_string, int address_family) 
-        : network_address(std::string(addr_string), address_family)
+    ip_address::ip_address(const char* addr_string, int address_family) 
+        : ip_address(std::string(addr_string), address_family)
     {
     }
 
 
     //set network address either from ip string or hostname
-    network_address::network_address(std::string addr_string, int address_family) {        
+    ip_address::ip_address(std::string addr_string, int address_family) {        
         //requires winsock to be initialized
         get_library();
 
@@ -184,7 +184,7 @@ namespace netlib {
 
 
     //converts the address to a string.
-    std::string network_address::to_string() const {
+    std::string ip_address::to_string() const {
         char buffer[64];
         const char* result = nullptr;
 
@@ -214,11 +214,11 @@ namespace netlib {
 
 
     //ensure the socket address has enough space for all socket address types.
-    static_assert(sizeof(socket_address) >= sizeof(SOCKADDR_STORAGE));
+    static_assert(socket_address::BUFFER_SIZE >= sizeof(SOCKADDR_STORAGE));
 
 
     //constructor from network address and port.
-    socket_address::socket_address(const network_address& addr, int port) {
+    socket_address::socket_address(const ip_address& addr, int port) {
 
         if (addr.m_address_family == AF_INET) {
             SOCKADDR_IN* sa = reinterpret_cast<SOCKADDR_IN*>(m_data);
@@ -243,10 +243,10 @@ namespace netlib {
 
 
     //returns the network address part.
-    network_address socket_address::get_address() const {
+    ip_address socket_address::get_address() const {
         const SOCKADDR* sockaddr_base = reinterpret_cast<const SOCKADDR*>(m_data);
 
-        network_address addr;
+        ip_address addr;
 
         if (sockaddr_base->sa_family == AF_INET) {
             const SOCKADDR_IN* sa = reinterpret_cast<const SOCKADDR_IN*>(sockaddr_base);
@@ -419,9 +419,9 @@ namespace netlib {
     std::pair<socket, socket_address> socket::accept() {
         std::pair<socket, socket_address> result{ socket{}, socket_address{} };
 
-        int addr_size = sizeof(result.second.m_data);
+        int addr_size = static_cast<int>(result.second.size());
 
-        result.first = ::accept(m_handle, reinterpret_cast<SOCKADDR*>(result.second.m_data), &addr_size);
+        result.first = ::accept(m_handle, reinterpret_cast<SOCKADDR*>(result.second.data()), &addr_size);
         
         if (result.first) {
             return result;
@@ -433,7 +433,7 @@ namespace netlib {
 
     //connects to a remote socket.
     void socket::connect(const socket_address& addr) {
-        if (::connect(m_handle, reinterpret_cast<const SOCKADDR*>(addr.m_data), sizeof(addr.m_data)) == SOCKET_ERROR) {
+        if (::connect(m_handle, reinterpret_cast<const SOCKADDR*>(addr.data()), static_cast<int>(addr.size())) == SOCKET_ERROR) {
             throw socket_error(get_last_error());
         }
     }
@@ -441,7 +441,7 @@ namespace netlib {
 
     //binds a socket.
     void socket::bind(const socket_address& addr) {
-        if (::bind(m_handle, reinterpret_cast<const SOCKADDR*>(addr.m_data), sizeof(addr.m_data)) == SOCKET_ERROR) {
+        if (::bind(m_handle, reinterpret_cast<const SOCKADDR*>(addr.data()), static_cast<int>(addr.size())) == SOCKET_ERROR) {
             throw socket_error(get_last_error());
         }
     }
@@ -461,7 +461,7 @@ namespace netlib {
 
     //sends data from raw buffer to specific address.
     size_t socket::send(const void* buffer, size_t size, const socket_address& addr, int flags) {
-        const int result = ::sendto(m_handle, reinterpret_cast<const char*>(buffer), static_cast<int>(size), flags, reinterpret_cast<const SOCKADDR*>(&addr), sizeof(addr));
+        const int result = ::sendto(m_handle, reinterpret_cast<const char*>(buffer), static_cast<int>(size), flags, reinterpret_cast<const SOCKADDR*>(addr.data()), static_cast<int>(addr.size()));
 
         if (result == SOCKET_ERROR) {
             throw socket_error(get_last_error());
@@ -485,8 +485,8 @@ namespace netlib {
 
     //receives data in raw buffer from specific address.
     size_t socket::receive(void* buffer, size_t size, socket_address& addr, int flags) {
-        int addr_len = sizeof(addr);
-        const int result = ::recvfrom(m_handle, reinterpret_cast<char*>(buffer), static_cast<int>(size), flags, reinterpret_cast<SOCKADDR*>(&addr), &addr_len);
+        int addr_len = static_cast<int>(addr.size());
+        const int result = ::recvfrom(m_handle, reinterpret_cast<char*>(buffer), static_cast<int>(size), flags, reinterpret_cast<SOCKADDR*>(addr.data()), &addr_len);
 
         if (result == SOCKET_ERROR) {
             throw socket_error(get_last_error());

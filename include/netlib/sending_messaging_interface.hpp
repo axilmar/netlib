@@ -4,6 +4,7 @@
 
 #include <any>
 #include "message.hpp"
+#include "address.hpp"
 
 
 namespace netlib {
@@ -25,6 +26,14 @@ namespace netlib {
          * @return true if the message was sent, false if it could not be sent.
          */
         virtual bool send_message(message&& msg) = 0;
+
+        /**
+         * Interface for sending a message.
+         * @param msg message to send.
+         * @param addr address to send the message to.
+         * @return true if the message was sent, false if it could not be sent.
+         */
+        virtual bool send_message(message&& msg, const address& addr) = 0;
     };
 
 

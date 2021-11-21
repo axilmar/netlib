@@ -6,6 +6,7 @@
 #include <utility>
 #include <tuple>
 #include <memory>
+#include "byte_buffer.hpp"
 
 
 namespace netlib {
@@ -216,6 +217,58 @@ namespace netlib {
         ptr = std::make_shared<T>();
         return *ptr.get();
     }
+
+
+    /**
+     * Trait for recognizing if T has a member function serialize(byte_buffer&) const;
+     * it checks if T provides the relevant function.
+     */
+    template <class T> struct has_serialize {
+    private:
+        struct true_type { char c[1]; };
+        struct false_type { char c[2]; };
+        template <class C> static auto get_func(void (C::* m)(byte_buffer&) const) { return m; };
+        template <class C> static true_type test_func(decltype(get_func<C>(&C::serialize)));
+        template <class C> static false_type test_func(...);
+
+    public:
+        /**
+         * True if T contains the relevant function, false otherwise.
+         */
+        static constexpr bool value = sizeof(test_func<T>(nullptr)) == sizeof(true_type);
+    };
+
+
+    /**
+     * Variable for has_serialize<T> template.
+     */
+    template <class T> inline constexpr bool has_serialize_v = has_serialize<T>::value;
+
+
+    /**
+     * Trait for recognizing if T has a member function deserialize(const byte_buffer&, byte_buffer::position&);
+     * it checks if T provides the relevant function.
+     */
+    template <class T> struct has_deserialize {
+    private:
+        struct true_type { char c[1]; };
+        struct false_type { char c[2]; };
+        template <class C> static auto get_func(void (C::* m)(const byte_buffer&, byte_buffer::position&)) { return m; };
+        template <class C> static true_type test_func(decltype(get_func<C>(&C::deserialize)));
+        template <class C> static false_type test_func(...);
+
+    public:
+        /**
+         * True if T contains the relevant function, false otherwise.
+         */
+        static constexpr bool value = sizeof(test_func<T>(nullptr)) == sizeof(true_type);
+    };
+
+
+    /**
+     * Variable for has_deserialize<T> template.
+     */
+    template <class T> inline constexpr bool has_deserialize_v = has_deserialize<T>::value;
 
 
 } //namespace netlib
