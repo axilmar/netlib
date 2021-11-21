@@ -14,10 +14,4 @@ namespace netlib {
     }
 
 
-    //Receives a message using a global synchronized memory resource.
-    message_pointer<> receiving_messaging_interface::receive_message(address& addr, size_t max_message_size) {
-        return receive_message(addr, global_synchronized_memory_resource, max_message_size);
-    }
-
-
 } //namespace netlib

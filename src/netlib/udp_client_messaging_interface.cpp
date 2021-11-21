@@ -4,6 +4,9 @@
 namespace netlib {
 
 
+    static thread_local byte_buffer thread_buffer;
+
+
     //Constructor.
     udp_client_messaging_interface::udp_client_messaging_interface(const socket_address& addr, const std::shared_ptr<udp_messaging_interface>& messaging_interface)
         : m_receiver_address(addr)
@@ -12,15 +15,9 @@ namespace netlib {
     }
 
 
-    //Not used.
-    bool udp_client_messaging_interface::send_message(message&& msg) {
-        throw std::logic_error("invalid socket type for this operation");
-    }
-
-
     //Sends a message.
-    bool udp_client_messaging_interface::send_message(message&& msg, const address& addr) {
-        return m_messaging_interface->send_message(std::move(msg), addr);
+    bool udp_client_messaging_interface::send_message(message&& msg) {
+        return m_messaging_interface->send_message(std::move(msg), m_receiver_address);
     }
 
 

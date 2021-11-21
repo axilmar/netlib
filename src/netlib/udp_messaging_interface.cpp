@@ -8,7 +8,7 @@
 namespace netlib {
 
 
-    static thread_local byte_buffer thread_buffer;
+    static std::pmr::synchronized_pool_resource global_memory_pool;
 
 
     //returns the appropriate socket type from address family.
@@ -57,7 +57,7 @@ namespace netlib {
 
     //Sends a message.
     bool udp_messaging_interface::send_message(message&& msg) {
-        return internals::send_message(thread_buffer, msg, [&](byte_buffer& buffer) {
+        return internals::send_message(msg, [&](byte_buffer& buffer) {
             //add crc32 to the message
             const uint32_t crc32 = compute_crc32(buffer.data(), buffer.size());
             serialize(buffer, crc32);
@@ -71,25 +71,9 @@ namespace netlib {
     }
 
 
-    //Sends a message to address.
-    bool udp_messaging_interface::send_message(message&& msg, const address& addr) {
-        return internals::send_message(thread_buffer, msg, [&](byte_buffer& buffer) {
-            //add crc32 to the message
-            const uint32_t crc32 = compute_crc32(buffer.data(), buffer.size());
-            serialize(buffer, crc32);
-
-            //send the data
-            const size_t sent_size = get_socket().send(buffer, dynamic_cast<const socket_address&>(addr));
-
-            //the call was ok if all the data sent
-            return sent_size == buffer.size();
-        });
-    }
-
-
     //Receives a message.
     message_pointer<> udp_messaging_interface::receive_message(std::pmr::memory_resource& memres, size_t max_message_size ) {
-        return internals::receive_message(thread_buffer, memres, max_message_size, [&](byte_buffer& buffer) {
+        return internals::receive_message(memres, max_message_size, [&](byte_buffer& buffer) {
             //receive the data
             const size_t size = get_socket().receive(buffer);
 
@@ -106,11 +90,27 @@ namespace netlib {
     }
 
 
-    //Receives a message from specific address.
-    message_pointer<> udp_messaging_interface::receive_message(address& addr, std::pmr::memory_resource& memres, size_t max_message_size) {
-        return internals::receive_message(thread_buffer, memres, max_message_size, [&](byte_buffer& buffer) {
+    //Sends a message to a specific address.
+    bool udp_messaging_interface::send_message(message&& msg, const socket_address& addr) {
+        return internals::send_message(msg, [&](byte_buffer& buffer) {
+            //add crc32 to the message
+            const uint32_t crc32 = compute_crc32(buffer.data(), buffer.size());
+            serialize(buffer, crc32);
+
+            //send the data
+            const size_t sent_size = get_socket().send(buffer, addr);
+
+            //the call was ok if all the data sent
+            return sent_size == buffer.size();
+        });
+    }
+
+
+    //Receives a message.
+    message_pointer<> udp_messaging_interface::receive_message(socket_address& addr, std::pmr::memory_resource& memres, size_t max_message_size) {
+        return internals::receive_message(memres, max_message_size, [&](byte_buffer& buffer) {
             //receive the data
-            const size_t size = get_socket().receive(buffer, dynamic_cast<socket_address&>(addr));
+            const size_t size = get_socket().receive(buffer, addr);
 
             //if successfully received data, compute crc32 and compare it with the one stored in the message
             if (size) {
@@ -121,7 +121,13 @@ namespace netlib {
             }
 
             return false;
-        });
+            });
+    }
+
+
+    //Receives a message.
+    message_pointer<> udp_messaging_interface::receive_message(socket_address& addr, size_t max_message_size) {
+        return receive_message(addr, global_memory_pool, max_message_size);
     }
 
 

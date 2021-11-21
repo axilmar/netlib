@@ -8,9 +8,6 @@
 namespace netlib {
 
 
-    static thread_local byte_buffer thread_buffer;
-
-
     //returns the appropriate socket type from address family.
     static socket::TYPE get_tcp_socket_type(int af) {
 
@@ -62,7 +59,7 @@ namespace netlib {
 
     //Sends a message.
     bool tcp_messaging_interface::send_message(message&& msg) {
-        return internals::send_message(thread_buffer, msg, [&](byte_buffer& buffer) {
+        return internals::send_message(msg, [&](byte_buffer& buffer) {
             //get the message size
             const message_size msg_size = buffer_size_to_message_size(buffer.size());
             switch_endianess(msg_size);
@@ -78,15 +75,9 @@ namespace netlib {
     }
 
 
-    //Not used. 
-    bool tcp_messaging_interface::send_message(message&& msg, const address& addr) {
-        throw std::logic_error("invalid socket type for this operation");
-    }
-
-
     //Receives a message.
     message_pointer<> tcp_messaging_interface::receive_message(std::pmr::memory_resource& memres, size_t max_message_size) {
-        return internals::receive_message(thread_buffer, memres, max_message_size, [&](byte_buffer& buffer) {
+        return internals::receive_message(memres, max_message_size, [&](byte_buffer& buffer) {
             //receive the message size
             message_size msg_size;
             if (!get_socket().stream_receive(&msg_size, sizeof(msg_size))) {
@@ -98,12 +89,6 @@ namespace netlib {
             buffer.resize(msg_size);
             return get_socket().stream_receive(buffer.data(), msg_size);
         });
-    }
-
-
-    //Not used.
-    message_pointer<> tcp_messaging_interface::receive_message(address& addr, std::pmr::memory_resource& memres, size_t max_message_size) {
-        throw std::logic_error("invalid socket type for this operation");
     }
 
 

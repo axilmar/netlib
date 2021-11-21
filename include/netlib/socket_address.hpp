@@ -3,7 +3,6 @@
 
 
 #include "ip_address.hpp"
-#include "address.hpp"
 
 
 namespace netlib {
@@ -15,7 +14,7 @@ namespace netlib {
     /**
      * A socket address is a network address with a port.
      */
-    class socket_address : public address, public constants {
+    class socket_address : public constants {
     public:
         /**
          * buffer size.
