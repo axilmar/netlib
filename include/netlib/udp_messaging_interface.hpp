@@ -77,23 +77,23 @@ namespace netlib {
         /**
          * Internal function that can be customized on the socket function used to send data.
          * @param buffer buffer with data to send.
-         * @param socketSend function to use for sending the data.
+         * @param socket_send function to use for sending the data.
          */
         template <class SocketSendFunction>
-        static bool send_data(byte_buffer& buffer, SocketSendFunction&& socketSend) {
+        static bool send_data(byte_buffer& buffer, SocketSendFunction&& socket_send) {
             serialize_crc32(buffer);
-            const size_t sent_size = socketSend(buffer);
+            const size_t sent_size = socket_send(buffer);
             return sent_size == buffer.size();
         }
 
         /**
          * Internal function that can be customized on the socket function used to receive data.
          * @param buffer buffer with data to receive.
-         * @param socketReceive function to use for receiving the data.
+         * @param socket_receive function to use for receiving the data.
          */
         template <class SocketReceiveFunction>
-        static bool receive_data(byte_buffer& buffer, SocketReceiveFunction&& socketReceive) {
-            const size_t size = socketReceive(buffer);
+        static bool receive_data(byte_buffer& buffer, SocketReceiveFunction&& socket_receive) {
+            const size_t size = socket_receive(buffer);
             return size ? deserialize_crc32(buffer) : false;
         }
 

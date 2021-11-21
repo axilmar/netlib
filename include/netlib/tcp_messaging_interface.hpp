@@ -60,6 +60,34 @@ namespace netlib {
         message_pointer<> receive_message(std::pmr::memory_resource& memres, size_t max_message_size = NETLIB_MAX_PACKET_SIZE) override;
 
         using socket_messaging_interface::receive_message;
+
+    protected:
+        /**
+         * Internal function that can be customized on the socket function used to send data.
+         * @param buffer buffer with data to send.
+         * @param socket_send function to use for sending the data.
+         */
+        template <class SocketSendFunction>
+        bool send_data(byte_buffer& buffer, SocketSendFunction&& socket_send) {
+            return send_message_size(buffer) && socket_send(buffer);
+        }
+
+        /**
+         * Internal function that can be customized on the socket function used to receive data.
+         * @param buffer buffer with data to receive.
+         * @param socket_receive function to use for receiving the data.
+         */
+        template <class SocketReceiveFunction>
+        bool receive_data(byte_buffer& buffer, SocketReceiveFunction&& socket_receive) {
+            return receive_message_size(buffer) && socket_receive(buffer);
+        }
+
+    private:
+        //sends the message size.
+        bool send_message_size(const byte_buffer& buffer);
+
+        //receives the message size and resizes the buffer accordingly
+        bool receive_message_size(byte_buffer& buffer);
     };
 
 
