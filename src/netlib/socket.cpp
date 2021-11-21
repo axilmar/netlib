@@ -69,13 +69,17 @@ namespace netlib {
 
     //receives data in buffer.
     size_t socket::receive(byte_buffer& buffer, int flags) {
-        return receive(buffer.data(), buffer.size(), flags);
+        const size_t result = receive(buffer.data(), buffer.size(), flags);
+        buffer.resize(result);
+        return result;
     }
 
 
     //receives data in buffer from specific address.
     size_t socket::receive(byte_buffer& buffer, socket_address& addr, int flags) {
-        return receive(buffer.data(), buffer.size(), addr, flags);
+        const size_t result = receive(buffer.data(), buffer.size(), addr, flags);
+        buffer.resize(result);
+        return result;
     }
 
 

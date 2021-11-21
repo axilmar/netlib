@@ -58,15 +58,9 @@ namespace netlib {
     //Sends a message.
     bool udp_messaging_interface::send_message(message&& msg) {
         return internals::send_message(msg, [&](byte_buffer& buffer) {
-            //add crc32 to the message
-            const uint32_t crc32 = compute_crc32(buffer.data(), buffer.size());
-            serialize(buffer, crc32);
-
-            //send the data
-            const size_t sent_size = get_socket().send(buffer);
-
-            //the call was ok if all the data sent
-            return sent_size == buffer.size();
+            return send_data(buffer, [&](const byte_buffer& buffer) {
+                return get_socket().send(buffer);
+            });
         });
     }
 
@@ -74,18 +68,9 @@ namespace netlib {
     //Receives a message.
     message_pointer<> udp_messaging_interface::receive_message(std::pmr::memory_resource& memres, size_t max_message_size ) {
         return internals::receive_message(memres, max_message_size, [&](byte_buffer& buffer) {
-            //receive the data
-            const size_t size = get_socket().receive(buffer);
-
-            //if successfully received data, compute crc32 and compare it with the one stored in the message
-            if (size) {
-                buffer.resize(size);
-                const uint32_t received_crc32 = get_crc32(buffer);
-                const uint32_t computed_crc32 = compute_crc32(buffer.data(), size - sizeof(uint32_t));
-                return received_crc32 == computed_crc32;
-            }
-
-            return false;
+            return receive_data(buffer, [&](byte_buffer& buffer) {
+                return get_socket().receive(buffer);
+            });
         });
     }
 
@@ -93,15 +78,9 @@ namespace netlib {
     //Sends a message to a specific address.
     bool udp_messaging_interface::send_message(message&& msg, const socket_address& addr) {
         return internals::send_message(msg, [&](byte_buffer& buffer) {
-            //add crc32 to the message
-            const uint32_t crc32 = compute_crc32(buffer.data(), buffer.size());
-            serialize(buffer, crc32);
-
-            //send the data
-            const size_t sent_size = get_socket().send(buffer, addr);
-
-            //the call was ok if all the data sent
-            return sent_size == buffer.size();
+            return send_data(buffer, [&](const byte_buffer& buffer) {
+                return get_socket().send(buffer, addr);
+            });
         });
     }
 
@@ -109,25 +88,31 @@ namespace netlib {
     //Receives a message.
     message_pointer<> udp_messaging_interface::receive_message(socket_address& addr, std::pmr::memory_resource& memres, size_t max_message_size) {
         return internals::receive_message(memres, max_message_size, [&](byte_buffer& buffer) {
-            //receive the data
-            const size_t size = get_socket().receive(buffer, addr);
-
-            //if successfully received data, compute crc32 and compare it with the one stored in the message
-            if (size) {
-                buffer.resize(size);
-                const uint32_t received_crc32 = get_crc32(buffer);
-                const uint32_t computed_crc32 = compute_crc32(buffer.data(), size - sizeof(uint32_t));
-                return received_crc32 == computed_crc32;
-            }
-
-            return false;
+            return receive_data(buffer, [&](byte_buffer& buffer) {
+                return get_socket().receive(buffer, addr);
             });
+        });
     }
 
 
     //Receives a message.
     message_pointer<> udp_messaging_interface::receive_message(socket_address& addr, size_t max_message_size) {
         return receive_message(addr, global_memory_pool, max_message_size);
+    }
+
+
+    //serialize crc32
+    void udp_messaging_interface::serialize_crc32(byte_buffer& buffer) {
+        const uint32_t crc32 = compute_crc32(buffer.data(), buffer.size());
+        serialize(buffer, crc32);
+    }
+
+
+    //deserialize crc32 and compare it to the one stored in the data
+    bool udp_messaging_interface::deserialize_crc32(byte_buffer& buffer) {
+        const uint32_t received_crc32 = get_crc32(buffer);
+        const uint32_t computed_crc32 = compute_crc32(buffer.data(), buffer.size() - sizeof(uint32_t));
+        return received_crc32 == computed_crc32;
     }
 
 
