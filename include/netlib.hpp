@@ -9,7 +9,7 @@
 #include "netlib/serialization.hpp"
 #include "netlib/tcp_messaging_interface.hpp"
 #include "netlib/udp_messaging_interface.hpp"
-#include "netlib/udp_receiver_messaging_interface.hpp"
+#include "netlib/udp_client_messaging_interface.hpp"
 #include "netlib/encrypted_messaging_interface.hpp"
 #include "netlib/xor_cipher.hpp"
 #include "netlib/encryption.hpp"

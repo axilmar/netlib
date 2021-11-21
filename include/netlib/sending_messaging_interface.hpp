@@ -20,13 +20,6 @@ namespace netlib {
         virtual ~sending_messaging_interface() {}
 
         /**
-         * Interface for setting the receiver address for the next send_message call.
-         * Not all interfaces support this call.
-         * @param addr address 
-         */
-        virtual void set_receiver_address(const std::any& addr) {}
-
-        /**
          * Interface for sending a message.
          * @param msg message to send.
          * @return true if the message was sent, false if it could not be sent.

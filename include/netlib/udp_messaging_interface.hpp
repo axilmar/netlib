@@ -35,28 +35,14 @@ namespace netlib {
          * Sets the receiver address.
          * If set, then all packets are sent to this address.
          * @param addr address to send the message to.
-         * @exception std::bad_cast thrown if the given value is not a socket address.
          */
-        void set_receiver_address(const std::any& addr) override;
+        void set_receiver_address(const socket_address& addr);
 
         /**
          * Returns the sender address from the last receive_message call of this thread.
          * @return the sender address.
          */
-        std::any get_sender_address() override;
-
-        /**
-         * Sets the receiver address.
-         * If set, then all packets are sent to this address.
-         * @param addr address to send the message to.
-         */
-        void set_receiver_socket_address(const socket_address& addr);
-
-        /**
-         * Returns the sender address from the last receive_message call of this thread.
-         * @return the sender address.
-         */
-        const socket_address& get_sender_socket_address();
+        const socket_address& get_sender_address();
 
     protected:
         /**

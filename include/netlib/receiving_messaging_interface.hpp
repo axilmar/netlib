@@ -34,13 +34,6 @@ namespace netlib {
          * @return a pointer to the received message or null if reception was impossible.
          */
         message_pointer<> receive_message(size_t max_message_size = NETLIB_MAX_PACKET_SIZE);
-
-        /**
-         * Interface for retrieving the sender address of the last receive_message call.
-         * Not all interfaces support this call.
-         * @return the sender address.
-         */
-        virtual std::any get_sender_address() { return {}; }
     };
 
 

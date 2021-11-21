@@ -53,25 +53,13 @@ namespace netlib {
 
 
     //Sets the receiver address.
-    void udp_messaging_interface::set_receiver_address(const std::any& addr) {
-        set_receiver_socket_address(std::any_cast<const socket_address &>(addr));
-    }
-
-
-    //Returns the sender address from the last receive_message call of this thread.
-    std::any udp_messaging_interface::get_sender_address() {
-        return get_sender_socket_address();
-    }
-
-
-    //Sets the receiver address.
-    void udp_messaging_interface::set_receiver_socket_address(const socket_address& addr) {
+    void udp_messaging_interface::set_receiver_address(const socket_address& addr) {
         m_receiver_address = addr;
     }
 
 
     //Returns the sender address from the last receive_message call of this thread.
-    const socket_address& udp_messaging_interface::get_sender_socket_address() {
+    const socket_address& udp_messaging_interface::get_sender_address() {
         return m_sender_address;
     }
 
