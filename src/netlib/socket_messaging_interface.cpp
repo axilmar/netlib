@@ -83,18 +83,6 @@ namespace netlib {
     }
 
 
-    //Returns the socket.
-    const socket& socket_messaging_interface::get_socket() const {
-        return m_socket;
-    }
-
-
-    //Returns the socket.
-    socket& socket_messaging_interface::get_socket() {
-        return m_socket;
-    }
-
-
     //Sets the socket.
     void socket_messaging_interface::set_socket(class socket&& socket) {
         m_socket = std::move(socket);

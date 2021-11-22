@@ -4,6 +4,7 @@
 
 #include "messaging_interface.hpp"
 #include "socket.hpp"
+#include "socket_selector.hpp"
 
 
 namespace netlib {
@@ -100,6 +101,54 @@ namespace netlib {
 
         using receiving_messaging_interface::receive_message;
 
+        /**
+         * Adds the socket of this interface to the given socket set.
+         * @param set socket set to add this to.
+         */
+        void add_to_socket_set(socket_set& set) { set.add(m_socket); }
+
+        /**
+         * Removes the socket of this interface from the given socket set.
+         * @param set socket set to remove this from.
+         */
+        void remove_from_socket_set(socket_set& set) { set.remove(m_socket); }
+
+        /**
+         * Adds the socket of this interface to the given socket selector for reading.
+         * @param selector selector to add this to.
+         */
+        void add_to_socket_selector_for_reading(socket_selector& selector) { selector.add_socket_for_writing(m_socket); }
+
+        /**
+         * Removes the socket of this interface to the given socket selector for reading.
+         * @param selector selector to add this to.
+         */
+        void remove_from_socket_selector_for_reading(socket_selector& selector) { selector.remove_socket_for_reading(m_socket); }
+
+        /**
+         * Adds the socket of this interface to the given socket selector for writing.
+         * @param selector selector to add this to.
+         */
+        void add_to_socket_selector_for_writing(socket_selector& selector) { selector.add_socket_for_writing(m_socket); }
+
+        /**
+         * Removes the socket of this interface to the given socket selector for writing.
+         * @param selector selector to add this to.
+         */
+        void remove_from_socket_selector_for_writing(socket_selector& selector) { selector.remove_socket_for_writing(m_socket); }
+
+        /**
+         * Adds the socket of this interface to the given socket selector for error_checking.
+         * @param selector selector to add this to.
+         */
+        void add_to_socket_selector_for_error_checking(socket_selector& selector) { selector.add_socket_for_error_checking(m_socket); }
+
+        /**
+         * Removes the socket of this interface to the given socket selector for error_checking.
+         * @param selector selector to add this to.
+         */
+        void remove_from_socket_selector_for_error_checking(socket_selector& selector) { selector.remove_socket_for_error_checking(m_socket); }
+
     protected:
         /**
          * The default constructor.
@@ -132,13 +181,13 @@ namespace netlib {
          * Returns the socket.
          * @return the socket.
          */
-        const socket& get_socket() const;
+        const socket& get_socket() const { return m_socket; }
 
         /**
          * Returns the socket.
          * @return the socket.
          */
-        socket& get_socket();
+        socket& get_socket() { return m_socket; }
 
         /**
          * Sets the socket.
