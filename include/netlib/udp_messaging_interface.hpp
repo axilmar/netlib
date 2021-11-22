@@ -54,7 +54,7 @@ namespace netlib {
          * @param addr address to send the message to.
          * @return true if the message was sent, false if it could not be sent.
          */
-        bool send_message(message&& msg, const socket_address& addr);
+        virtual bool send_message(message&& msg, const socket_address& addr);
 
         /**
          * Receives a message.
@@ -63,7 +63,7 @@ namespace netlib {
          * @param max_message_size maximum number of bytes that can be possibly received.
          * @return a pointer to the received message or null if reception was impossible.
          */
-        message_pointer<> receive_message(socket_address& addr, std::pmr::memory_resource& memres, size_t max_message_size = NETLIB_MAX_PACKET_SIZE);
+        virtual message_pointer<> receive_message(socket_address& addr, std::pmr::memory_resource& memres, size_t max_message_size = NETLIB_MAX_PACKET_SIZE);
 
         /**
          * Receives a message.
