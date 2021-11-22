@@ -110,7 +110,7 @@ namespace netlib {
                 msg_table.resize(internal_id.parts.message_index + 1, nullptr);
             }
 
-            //copy the function
+            //copy the function from the global to the thread table
             msg_table[internal_id.parts.message_index] = mrd.message_creation_functions[internal_id.parts.namespace_index][internal_id.parts.message_index];
         }
 
