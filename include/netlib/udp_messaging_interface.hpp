@@ -26,6 +26,20 @@ namespace netlib {
         udp_messaging_interface(int af = constants::ADDRESS_FAMILY_IP4);
 
         /**
+         * Constructor from udp socket.
+         * @aram udp_socket socket.
+         * @exception socket_error thrown if the socket is not udp.
+         */
+        udp_messaging_interface(socket&& udp_socket);
+
+        /**
+         * Assignment from udp socket.
+         * @param udp_socket socket.
+         * @exception socket_error thrown if the socket is not udp.
+         */
+        void set_socket(socket&& udp_socket);
+
+        /**
          * Opens the socket.
          * @param af address family.
          */

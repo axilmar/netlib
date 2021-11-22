@@ -49,6 +49,19 @@ namespace netlib {
     }
 
 
+    //Constructor from udp socket.
+    udp_messaging_interface::udp_messaging_interface(socket&& udp_socket)
+        : socket_messaging_interface(move_socket(udp_socket, socket::SOCKET_DATAGRAM))
+    {
+    }
+
+
+    //Assignment from udp socket.
+    void udp_messaging_interface::set_socket(socket&& udp_socket) {
+        socket_messaging_interface::set_socket(move_socket(udp_socket, socket::SOCKET_DATAGRAM));
+    }
+
+
     //Opens the socket.
     void udp_messaging_interface::open_socket(int af) {
         get_socket().open(get_udp_socket_type(af));
