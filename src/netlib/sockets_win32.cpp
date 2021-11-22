@@ -1,6 +1,7 @@
 #include <WinSock2.h>
 #include <In6addr.h>
 #include <Ws2tcpip.h>
+#include <type_traits>
 #include "netlib/socket.hpp"
 #include "netlib/stringstream.hpp"
 
@@ -180,6 +181,38 @@ namespace netlib {
         }
 
         throw socket_error("invalid address");
+    }
+
+
+    //Creates a network address for any address.
+    ip_address::ip_address(any_address_type address, int address_family) {
+        if (address_family == constants::ADDRESS_FAMILY_IP4) {
+            m_address_family = constants::ADDRESS_FAMILY_IP4;
+            *reinterpret_cast<decltype(INADDR_ANY)*>(m_data) = INADDR_ANY;
+        }
+        else if (address_family == constants::ADDRESS_FAMILY_IP6) {
+            m_address_family = constants::ADDRESS_FAMILY_IP6;
+            *reinterpret_cast<std::decay_t<decltype(in6addr_any)>*>(m_data) = in6addr_any;
+        }
+        else {
+            throw socket_error("unsupported address family");
+        }
+    }
+
+
+    //Creates a network address for the loopback address.
+    ip_address::ip_address(loopback_address_type address, int address_family) {
+        if (address_family == constants::ADDRESS_FAMILY_IP4) {
+            m_address_family = constants::ADDRESS_FAMILY_IP4;
+            *reinterpret_cast<decltype(INADDR_ANY)*>(m_data) = INADDR_LOOPBACK;
+        }
+        else if (address_family == constants::ADDRESS_FAMILY_IP6) {
+            m_address_family = constants::ADDRESS_FAMILY_IP6;
+            *reinterpret_cast<std::decay_t<decltype(in6addr_loopback)>*>(m_data) = in6addr_loopback;
+        }
+        else {
+            throw socket_error("unsupported address family");
+        }
     }
 
 

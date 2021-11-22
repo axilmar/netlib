@@ -22,6 +22,36 @@ namespace netlib {
         static constexpr size_t BUFFER_SIZE = 16;
 
         /**
+         * any address tag. 
+         */
+        struct any_address_type {};
+
+        /**
+         * loopback address tag.
+         */
+        struct loopback_address_type {};
+
+        /**
+         * ip4 any address.
+         */
+        static const ip_address ip4_any_address;
+
+        /**
+         * ip4 loopback address.
+         */
+        static const ip_address ip4_loopback_address;
+
+        /**
+         * ip6 any address.
+         */
+        static const ip_address ip6_any_address;
+
+        /**
+         * ip6 loopback address.
+         */
+        static const ip_address ip6_loopback_address;
+
+        /**
          * Returns the host name of this machine.
          */
         static std::string get_host_name();
@@ -52,6 +82,22 @@ namespace netlib {
          * @exception socket_error thrown if the hostname could not be resolved.
          */
         ip_address(std::string addr_string, int address_family = constants::ADDRESS_FAMILY_IP4);
+
+        /**
+         * Creates a network address for any address.
+         * @param any_address constant.
+         * @param address_family address family.
+         * @exception socket_error thrown if any of the parameters are not supported.
+         */
+        ip_address(any_address_type address, int address_family = constants::ADDRESS_FAMILY_IP4);
+
+        /**
+         * Creates a network address for the loopback address.
+         * @param any_address constant.
+         * @param address_family address family.
+         * @exception socket_error thrown if any of the parameters are not supported.
+         */
+        ip_address(loopback_address_type address, int address_family = constants::ADDRESS_FAMILY_IP4);
 
         /**
          * Converts the address to a string.
