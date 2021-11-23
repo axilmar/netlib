@@ -538,7 +538,7 @@ namespace netlib {
 
     //apply select; it invokes the given receive functions.
     template <class F>
-    static bool apply_select(std::mutex& mutex, const std::map<uintptr_t, socket_multi_receiver::receive_function>& functions, const fd_set* socket_set, F&& func) {
+    static bool apply_select(std::mutex& mutex, const std::map<uintptr_t, std::pair<socket*, socket_multi_receiver::receive_function>>& functions, const fd_set* socket_set, F&& func) {
         fd_set read_set;
 
         //copy data to a local fd_set
@@ -558,7 +558,7 @@ namespace netlib {
             for (size_t i = 0; i < read_set.fd_count; ++i) {
                 auto it = functions.find(read_set.fd_array[i]);
                 if (it != functions.end()) {
-                    it->second();
+                    it->second.second(*it->second.first);
                 }
             }
         }
@@ -576,10 +576,10 @@ namespace netlib {
 
 
     //adds a receive function.
-    void socket_multi_receiver::add(const socket& s, receive_function&& f) {
+    void socket_multi_receiver::add(socket& s, receive_function&& f) {
         std::lock_guard lock(m_mutex);
 
-        auto [it, ok] = m_receive_functions.emplace(s.m_handle, f);
+        auto [it, ok] = m_receive_functions.emplace(s.m_handle, std::make_pair(&s, std::move(f)));
 
         if (!ok) {
             throw std::invalid_argument("A receive function as already been added for the given socket.");
@@ -590,7 +590,7 @@ namespace netlib {
 
 
     //removes a receive function.
-    void socket_multi_receiver::remove(const socket& s) {
+    void socket_multi_receiver::remove(socket& s) {
         std::lock_guard lock(m_mutex);
 
         //remove handle

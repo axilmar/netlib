@@ -458,13 +458,15 @@ static void test_socket_multi_receiver() {
 
             size_t count{};
 
-            receiver.add(socket1, [&]() {
+            receiver.add(socket1, [&](socket& s) {
+                assert(&s == &socket1);
                 socket1.receive(buffer);
                 std::cout << "socket 1 : " << std::string(buffer.begin(), buffer.end()) << std::endl;
                 ++count;
             });
 
-            receiver.add(socket2, [&]() {
+            receiver.add(socket2, [&](socket& s) {
+                assert(&s == &socket2);
                 socket2.receive(buffer);
                 std::cout << "socket 2 : " << std::string(buffer.begin(), buffer.end()) << std::endl;
                 ++count;
@@ -516,17 +518,17 @@ static void test_socket_multi_receiver_with_timeout() {
 
             size_t count{};
 
-            receiver.add(socket1, [&]() {
-                socket1.receive(buffer);
+            receiver.add(socket1, [&buffer, &count](socket& s) {
+                s.receive(buffer);
                 std::cout << "socket 1 : " << std::string(buffer.begin(), buffer.end()) << std::endl;
                 ++count;
-                });
+            });
 
-            receiver.add(socket2, [&]() {
-                socket2.receive(buffer);
+            receiver.add(socket2, [&buffer, &count](socket& s) {
+                s.receive(buffer);
                 std::cout << "socket 2 : " << std::string(buffer.begin(), buffer.end()) << std::endl;
                 ++count;
-                });
+            });
 
             while (count < MAX_COUNT) {
                 if (!receiver.receive(std::chrono::milliseconds(100))) {
