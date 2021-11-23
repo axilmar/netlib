@@ -100,6 +100,12 @@ namespace netlib {
 
         using receiving_messaging_interface::receive_message;
 
+        /**
+         * Returns the socket.
+         * @return the socket.
+         */
+        const socket& get_socket() const { return m_socket; }
+
     protected:
         /**
          * The default constructor.
@@ -127,12 +133,6 @@ namespace netlib {
          * @param socket socket.
          */
         socket_messaging_interface(class socket&& socket);
-
-        /**
-         * Returns the socket.
-         * @return the socket.
-         */
-        const socket& get_socket() const { return m_socket; }
 
         /**
          * Returns the socket.

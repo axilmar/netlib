@@ -432,7 +432,7 @@ namespace netlib {
         //internal constructor
         socket(uintptr_t handle) : m_handle(handle) {}
 
-        friend class socket_set;
+        friend class socket_multi_receiver;
     };
 
 

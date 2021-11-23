@@ -1,3 +1,5 @@
+#include "netlib/socket_multi_receiver.hpp"
+#define FD_SETSIZE netlib::socket_multi_receiver::MAX_SOCKETS
 #include <WinSock2.h>
 #include <In6addr.h>
 #include <Ws2tcpip.h>
@@ -188,7 +190,7 @@ namespace netlib {
     ip_address::ip_address(any_address_type address, int address_family) {
         if (address_family == constants::ADDRESS_FAMILY_IP4) {
             m_address_family = constants::ADDRESS_FAMILY_IP4;
-            *reinterpret_cast<decltype(INADDR_ANY)*>(m_data) = INADDR_ANY;
+            *reinterpret_cast<decltype(INADDR_ANY)*>(m_data) = ntohl(INADDR_ANY);
         }
         else if (address_family == constants::ADDRESS_FAMILY_IP6) {
             m_address_family = constants::ADDRESS_FAMILY_IP6;
@@ -204,7 +206,7 @@ namespace netlib {
     ip_address::ip_address(loopback_address_type address, int address_family) {
         if (address_family == constants::ADDRESS_FAMILY_IP4) {
             m_address_family = constants::ADDRESS_FAMILY_IP4;
-            *reinterpret_cast<decltype(INADDR_ANY)*>(m_data) = INADDR_LOOPBACK;
+            *reinterpret_cast<decltype(INADDR_ANY)*>(m_data) = ntohl(INADDR_LOOPBACK);
         }
         else if (address_family == constants::ADDRESS_FAMILY_IP6) {
             m_address_family = constants::ADDRESS_FAMILY_IP6;
@@ -526,6 +528,121 @@ namespace netlib {
         }
 
         return static_cast<size_t>(result);
+    }
+
+
+    /**************************************************************************
+        class socket_multi_receiver
+     **************************************************************************/
+
+
+    //apply select; it invokes the given receive functions.
+    template <class F>
+    static bool apply_select(std::mutex& mutex, const std::map<uintptr_t, socket_multi_receiver::receive_function>& functions, const fd_set* socket_set, F&& func) {
+        fd_set read_set;
+
+        //copy data to a local fd_set
+        {
+            std::lock_guard lock(mutex);
+            memcpy(&read_set, socket_set, reinterpret_cast<const char*>(socket_set->fd_array + socket_set->fd_count) - reinterpret_cast<const char*>(socket_set));
+        }
+
+        //wait for data
+        if (!func(read_set)) {
+            return false;
+        }
+
+        //invoke the functions for the sockets that have data
+        {
+            std::lock_guard lock(mutex);
+            for (size_t i = 0; i < read_set.fd_count; ++i) {
+                auto it = functions.find(read_set.fd_array[i]);
+                if (it != functions.end()) {
+                    it->second();
+                }
+            }
+        }
+
+        return true;
+    }
+
+
+    //the default constructor.
+    socket_multi_receiver::socket_multi_receiver()
+        : m_fd_set(sizeof(fd_set))
+    {
+        FD_ZERO(m_fd_set.data());
+    }
+
+
+    //adds a receive function.
+    void socket_multi_receiver::add(const socket& s, receive_function&& f) {
+        std::lock_guard lock(m_mutex);
+
+        auto [it, ok] = m_receive_functions.emplace(s.m_handle, f);
+
+        if (!ok) {
+            throw std::invalid_argument("A receive function as already been added for the given socket.");
+        }
+
+        FD_SET(s.m_handle, m_fd_set.data());
+    }
+
+
+    //removes a receive function.
+    void socket_multi_receiver::remove(const socket& s) {
+        std::lock_guard lock(m_mutex);
+
+        //remove handle
+        if (m_receive_functions.erase(s.m_handle) == 0) {
+            throw std::invalid_argument("The given socket does not exist in this socket_multi_receiver instance.");
+        }
+
+        //clear the entry
+        FD_CLR(s.m_handle, m_fd_set.data());
+    }
+
+
+    //receives data.
+    void socket_multi_receiver::receive() {
+        apply_select(m_mutex, m_receive_functions, reinterpret_cast<fd_set*>(m_fd_set.data()), [](fd_set& read_set) {
+            //select
+            int result = select(0, &read_set, nullptr, nullptr, nullptr);
+
+            //error
+            if (result == SOCKET_ERROR) {
+                throw socket_error(get_last_error());
+            }
+
+            //ok
+            return true;
+        });
+    }
+
+
+    //receives data with a timeout.
+    bool socket_multi_receiver::receive(const std::chrono::microseconds& timeout) {
+        //convert microseconds to timeval
+        const TIMEVAL tv{ static_cast<long>(timeout.count() / 1'000'000ll), static_cast<long>(timeout.count() % 1'000'000ll) };
+
+        //apply select
+        return apply_select(m_mutex, m_receive_functions, reinterpret_cast<fd_set*>(m_fd_set.data()), [tv](fd_set& read_set) {
+            //select
+            int result = select(0, &read_set, nullptr, nullptr, &tv);
+
+            //timeout
+            if (result == 0) {
+                return false;
+            }
+
+            //error
+            if (result == SOCKET_ERROR) {
+                throw socket_error(get_last_error());
+            }
+
+            //ok
+            return true;
+        });
     }
 
 

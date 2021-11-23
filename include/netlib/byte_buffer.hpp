@@ -45,6 +45,14 @@ namespace netlib {
         byte_buffer(const byte* bytes, size_t size);
 
         /**
+         * Constructor from iterator range.
+         * @param begin iterator to beginning of range.
+         * @param end iterator to end of range.
+         */
+        template <class It>
+        byte_buffer(const It& begin, const It& end) : std::vector<byte>(begin, end) {}
+
+        /**
          * Makes sure the buffer has enough size.
          * @param size size.
          */
