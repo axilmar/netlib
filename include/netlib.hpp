@@ -13,7 +13,7 @@
 #include "netlib/encrypted_messaging_interface.hpp"
 #include "netlib/xor_cipher.hpp"
 #include "netlib/encryption.hpp"
-#include "netlib/socket_multi_receiver.hpp"
+#include "netlib/typeinfo.hpp"
 
 
 #endif //NETLIB_HPP

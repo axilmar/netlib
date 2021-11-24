@@ -5,8 +5,9 @@
 #include <random>
 #include <array>
 #include <iomanip>
+#include <algorithm>
+#include "execlib.hpp"
 #include "netlib.hpp"
-#include "netlib/typeinfo.hpp"
 
 
 using namespace netlib;
@@ -439,131 +440,6 @@ static void test_socket_messaging_interface_tcp_encrypted() {
 }
 
 
-static void test_socket_multi_receiver() {    
-    socket socket1(socket::TYPE::UDP_IP4);
-    socket1.bind({ ip_address::ip4_loopback_address, UDP_TEST_PORT });
-    socket1.connect({ ip_address::ip4_loopback_address, UDP_TEST_PORT });
-
-    socket socket2(socket::TYPE::UDP_IP4);
-    socket2.bind({ ip_address::ip4_loopback_address, UDP_TEST_PORT + 1});
-    socket2.connect({ ip_address::ip4_loopback_address, UDP_TEST_PORT + 1});
-
-    static constexpr size_t MAX_COUNT = 100;
-
-    std::thread consumer_thread([&]() {
-        try {
-            socket_multi_receiver receiver;
-
-            byte_buffer buffer(1024);
-
-            size_t count{};
-
-            receiver.add(socket1, [&](socket& s) {
-                assert(&s == &socket1);
-                socket1.receive(buffer);
-                std::cout << "socket 1 : " << std::string(buffer.begin(), buffer.end()) << std::endl;
-                ++count;
-            });
-
-            receiver.add(socket2, [&](socket& s) {
-                assert(&s == &socket2);
-                socket2.receive(buffer);
-                std::cout << "socket 2 : " << std::string(buffer.begin(), buffer.end()) << std::endl;
-                ++count;
-            });
-
-            while (count < MAX_COUNT) {
-                receiver.receive();
-            }
-        }
-        catch (const std::exception& ex) {
-            std::cout << "socket_multi_receiver test consumer thread exception: " << ex.what() << std::endl;
-        }
-    });
-
-    std::thread producer_thread([&]() {
-        for (size_t i = 0; i < MAX_COUNT; ++i) {
-            if ((i % 2) == 0) {
-                std::string str("hello world from socket 1");
-                socket1.send(byte_buffer(str.begin(), str.end()));
-            }
-            else {
-                std::string str("hello world from socket 2");
-                socket2.send(byte_buffer(str.begin(), str.end()));
-            }
-        }
-    });
-
-    producer_thread.join();
-    consumer_thread.join();
-}
-
-
-static void test_socket_multi_receiver_with_timeout() {
-    socket socket1(socket::TYPE::UDP_IP4);
-    socket1.bind({ ip_address::ip4_loopback_address, UDP_TEST_PORT });
-    socket1.connect({ ip_address::ip4_loopback_address, UDP_TEST_PORT });
-
-    socket socket2(socket::TYPE::UDP_IP4);
-    socket2.bind({ ip_address::ip4_loopback_address, UDP_TEST_PORT + 1 });
-    socket2.connect({ ip_address::ip4_loopback_address, UDP_TEST_PORT + 1 });
-
-    static constexpr size_t MAX_COUNT = 100;
-
-    std::thread consumer_thread([&]() {
-        try {
-            socket_multi_receiver receiver;
-
-            byte_buffer buffer(1024);
-
-            size_t count{};
-
-            receiver.add(socket1, [&buffer, &count](socket& s) {
-                s.receive(buffer);
-                std::cout << "socket 1 : " << std::string(buffer.begin(), buffer.end()) << std::endl;
-                ++count;
-            });
-
-            receiver.add(socket2, [&buffer, &count](socket& s) {
-                s.receive(buffer);
-                std::cout << "socket 2 : " << std::string(buffer.begin(), buffer.end()) << std::endl;
-                ++count;
-            });
-
-            while (count < MAX_COUNT) {
-                if (!receiver.receive(std::chrono::milliseconds(100))) {
-                    std::cout << "timeout\n";
-                }
-            }
-        }
-        catch (const std::exception& ex) {
-            std::cout << "socket_multi_receiver test consumer thread exception: " << ex.what() << std::endl;
-        }
-        });
-
-    std::thread producer_thread([&]() {
-        std::random_device rd;
-        std::default_random_engine re(rd());
-        std::uniform_int_distribution<size_t> dist(0, 200);
-
-        for (size_t i = 0; i < MAX_COUNT; ++i) {
-            if ((i % 2) == 0) {
-                std::string str("hello world from socket 1");
-                socket1.send(byte_buffer(str.begin(), str.end()));
-            }
-            else {
-                std::string str("hello world from socket 2");
-                socket2.send(byte_buffer(str.begin(), str.end()));
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(dist(re)));
-        }
-    });
-
-    producer_thread.join();
-    consumer_thread.join();
-}
-
-
 int main() {
     try {
         test_typeinfo();
@@ -574,8 +450,6 @@ int main() {
         test_socket_messaging_interface_tcp();
         test_socket_messaging_interface_udp_encrypted();
         test_socket_messaging_interface_tcp_encrypted();
-        test_socket_multi_receiver();
-        test_socket_multi_receiver_with_timeout();
     }
     catch (const std::exception& ex) {
         std::cout << "EXCEPTION: " << ex.what() << std::endl;
