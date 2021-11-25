@@ -11,11 +11,11 @@ namespace netlib {
 
 
     //constant addresses
-    static const auto inaddr_any      = ntohl(INADDR_ANY     );
+    static const auto inaddr_any = ntohl(INADDR_ANY);
     static const auto inaddr_loopback = ntohl(INADDR_LOOPBACK);
-    const internet_address internet_address::ipv4_any     (&inaddr_any      , AF_INET );
-    const internet_address internet_address::ipv4_loopback(&inaddr_loopback , AF_INET );
-    const internet_address internet_address::ipv6_any     (&in6addr_any     , AF_INET6);
+    const internet_address internet_address::ipv4_any(&inaddr_any, AF_INET);
+    const internet_address internet_address::ipv4_loopback(&inaddr_loopback, AF_INET);
+    const internet_address internet_address::ipv6_any(&in6addr_any, AF_INET6);
     const internet_address internet_address::ipv6_loopback(&in6addr_loopback, AF_INET6);
 
 
@@ -57,7 +57,9 @@ namespace netlib {
 
 
     //constructor
-    internet_address::internet_address(const char* address, int af) {
+    internet_address::internet_address(const char* address, int af) 
+        : m_data{}
+    {
 
         //if address is given
         if (address && strlen(address) > 0) {
@@ -94,7 +96,7 @@ namespace netlib {
         //in case of truncation, the returned string is not-null terminated,
         //so provide one extra slot for null-termination.
         char buf[257];
-        buf[256] = '\0'; 
+        buf[256] = '\0';
 
         //get the host name
         const int result = gethostname(buf, sizeof(buf) - 1);
@@ -108,7 +110,7 @@ namespace netlib {
 
 
     //internal constructor
-    internet_address::internet_address(const void* data, int af) 
+    internet_address::internet_address(const void* data, int af)
         : m_address_family(af)
     {
         if (af == AF_INET) {
@@ -140,14 +142,98 @@ namespace netlib {
     //converts the internet address to a string.
     std::string internet_address::to_string() const {
         char buf[256];
-        
+
         const char* str = inet_ntop(m_address_family, m_data, buf, sizeof(buf));
-        
+
         if (str) {
             return str;
         }
 
         throw std::runtime_error(get_last_error());
+    }
+
+
+    //Checks if this address matches the given address.
+    bool internet_address::operator == (const internet_address& other) const {
+        if (other.m_address_family != m_address_family) {
+            return false;
+        }
+
+        if (m_address_family == AF_INET) {
+            return memcmp(m_data, other.m_data, sizeof(in_addr)) == 0;
+        }
+
+        return memcmp(m_data, other.m_data, data_size) == 0;
+    }
+
+
+    //Checks if this address matches the given address.
+    bool internet_address::operator != (const internet_address& other) const {
+        if (other.m_address_family != m_address_family) {
+            return true;
+        }
+
+        if (m_address_family == AF_INET) {
+            return memcmp(m_data, other.m_data, sizeof(in_addr)) != 0;
+        }
+
+        return memcmp(m_data, other.m_data, data_size) != 0;
+    }
+
+
+    //Checks if this address comes before the given address.
+    bool internet_address::operator < (const internet_address& other) const {
+        if (other.m_address_family != m_address_family) {
+            throw std::invalid_argument("Address families do not match.");
+        }
+
+        if (m_address_family == AF_INET) {
+            return memcmp(m_data, other.m_data, sizeof(in_addr)) < 0;
+        }
+
+        return memcmp(m_data, other.m_data, data_size) < 0;
+    }
+
+
+    //Checks if this address comes after the given address.
+    bool internet_address::operator > (const internet_address& other) const {
+        if (other.m_address_family != m_address_family) {
+            throw std::invalid_argument("Address families do not match.");
+        }
+
+        if (m_address_family == AF_INET) {
+            return memcmp(m_data, other.m_data, sizeof(in_addr)) > 0;
+        }
+
+        return memcmp(m_data, other.m_data, data_size) > 0;
+    }
+
+
+    //Checks if this address comes before the given address or they are equal.
+    bool internet_address::operator <= (const internet_address& other) const {
+        if (other.m_address_family != m_address_family) {
+            throw std::invalid_argument("Address families do not match.");
+        }
+
+        if (m_address_family == AF_INET) {
+            return memcmp(m_data, other.m_data, sizeof(in_addr)) <= 0;
+        }
+
+        return memcmp(m_data, other.m_data, data_size) <= 0;
+    }
+
+
+    //Checks if this address comes after the given address or they are equal.
+    bool internet_address::operator >= (const internet_address& other) const {
+        if (other.m_address_family != m_address_family) {
+            throw std::invalid_argument("Address families do not match.");
+        }
+
+        if (m_address_family == AF_INET) {
+            return memcmp(m_data, other.m_data, sizeof(in_addr)) >= 0;
+        }
+
+        return memcmp(m_data, other.m_data, data_size) >= 0;
     }
 
 

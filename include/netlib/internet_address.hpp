@@ -92,12 +92,66 @@ namespace netlib {
          */
         std::string to_string() const;
 
+        /**
+         * Checks if this address matches the given address.
+         * The comparison is done on the binary data of the addresses.
+         * @param other the other address to compare this to.
+         * @return true if the operation succeeded, false otherwise.
+         */
+        bool operator == (const internet_address& other) const;
+
+        /**
+         * Checks if this address does not match the given address.
+         * The comparison is done on the binary data of the addresses.
+         * @param other the other address to compare this to.
+         * @return true if the operation succeeded, false otherwise.
+         */
+        bool operator != (const internet_address& other) const;
+
+        /**
+         * Checks if this address comes before the given address.
+         * The comparison is done on the binary data of the addresses.
+         * @param other the other address to compare this to.
+         * @return true if the operation succeeded, false otherwise.
+         * @exception std::invalid_argument thrown if the given address is of different address family.
+         */
+        bool operator < (const internet_address& other) const;
+
+        /**
+         * Checks if this address comes after the given address.
+         * The comparison is done on the binary data of the addresses.
+         * @param other the other address to compare this to.
+         * @return true if the operation succeeded, false otherwise.
+         * @exception std::invalid_argument thrown if the given address is of different address family.
+         */
+        bool operator > (const internet_address& other) const;
+
+        /**
+         * Checks if this address comes before the given address or they are equal.
+         * The comparison is done on the binary data of the addresses.
+         * @param other the other address to compare this to.
+         * @return true if the operation succeeded, false otherwise.
+         * @exception std::invalid_argument thrown if the given address is of different address family.
+         */
+        bool operator <= (const internet_address& other) const;
+
+        /**
+         * Checks if this address comes after the given address or they are equal.
+         * The comparison is done on the binary data of the addresses.
+         * @param other the other address to compare this to.
+         * @return true if the operation succeeded, false otherwise.
+         * @exception std::invalid_argument thrown if the given address is of different address family.
+         */
+        bool operator >= (const internet_address& other) const;
+
     private:
         int m_address_family;
         char m_data[data_size];
 
         //internal constructor
         internet_address(const void* data, int af);
+
+        friend class utility;
     };
 
 

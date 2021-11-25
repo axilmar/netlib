@@ -11,6 +11,7 @@
 #include "netlib/socket_type.hpp"
 #include "netlib/protocol.hpp"
 #include "netlib/internet_address.hpp"
+#include "netlib/utility.hpp"
 
 
 using namespace netlib;
@@ -205,10 +206,38 @@ public:
             check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C").to_string() == "fe80:cd00:0:cde:1257:0:211e:729c");
             check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C").address_family() == AF_INET6);
             check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C").size() == sizeof(in6_addr));
+
+            //comparison operators
+            check(internet_address("192.168.1.2") == internet_address("192.168.1.2"));
+            check(internet_address("192.168.1.2") != internet_address("192.168.1.3"));
+            check(internet_address("192.168.1.2") < internet_address("192.168.1.3"));
+            check(internet_address("192.168.1.3") > internet_address("192.168.1.2"));
+            check(internet_address("192.168.1.2") <= internet_address("192.168.1.3"));
+            check(internet_address("192.168.1.3") <= internet_address("192.168.1.3"));
+            check(internet_address("192.168.1.3") >= internet_address("192.168.1.2"));
+            check(internet_address("192.168.1.3") >= internet_address("192.168.1.3"));
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C") == internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C"));
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C") != internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D"));
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C") < internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D"));
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D") > internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C"));
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C") <= internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D"));
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D") <= internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D"));
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D") >= internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C"));
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D") >= internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D"));
+            check(!(internet_address("192.168.1.2") == internet_address("192.168.1.3")));
+            check(!(internet_address("192.168.1.2") == internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D")));
+            check(!(internet_address("192.168.1.2") != internet_address("192.168.1.2")));
+            check(!(internet_address("192.168.1.2") > internet_address("192.168.1.3")));
+            check(!(internet_address("192.168.1.2") >= internet_address("192.168.1.3")));
+            check(!(internet_address("192.168.1.3") < internet_address("192.168.1.2")));
+            check(!(internet_address("192.168.1.3") <= internet_address("192.168.1.2")));
+            check_exception(internet_address("192.168.1.2") < internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C"), std::invalid_argument);
+            check_exception(internet_address("192.168.1.2") <= internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C"), std::invalid_argument);
+            check_exception(internet_address("192.168.1.2") > internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C"), std::invalid_argument);
+            check_exception(internet_address("192.168.1.2") >= internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C"), std::invalid_argument);
             });
     }
 
-private:
     static std::string get_host_name() {
         char buf[256];
         gethostname(buf, sizeof(buf));
@@ -246,12 +275,28 @@ private:
 };
 
 
+class utility_test {
+public:
+    utility_test() {
+        test("get_host_name", []() { check(netlib::get_host_name() == internet_address_test::get_host_name()); });
+
+        test("get_addresses", []() { 
+            std::string hostname = get_host_name();
+            std::vector<internet_address> addresses = get_addresses(hostname);
+            check(std::find(addresses.begin(), addresses.end(), internet_address(hostname.c_str(), AF_INET)) != addresses.end());
+            check(std::find(addresses.begin(), addresses.end(), internet_address(hostname.c_str(), AF_INET6)) != addresses.end());
+            });
+    }
+};
+
+
 int main() {
     init();
     address_family_test();
     socket_type_test();
     protocol_test();
     internet_address_test();
+    //utility_test();
     cleanup();
     system("pause");
     return static_cast<int>(test_error_count);
