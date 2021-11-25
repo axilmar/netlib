@@ -159,6 +159,7 @@ namespace netlib {
         internet_address(const void* data, int af);
 
         friend class utility;
+        friend class socket_address;
     };
 
 

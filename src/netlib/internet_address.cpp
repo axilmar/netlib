@@ -123,12 +123,8 @@ namespace netlib {
         if (af == AF_INET) {
             memcpy(m_data, data, sizeof(in_addr));
         }
-        else if (af == AF_INET6) {
-            memcpy(m_data, data, sizeof(in6_addr));
-        }
-        else {
-            throw std::invalid_argument("unsupported address family");
-        }
+
+        memcpy(m_data, data, data_size);
     }
 
 
