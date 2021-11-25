@@ -165,6 +165,7 @@ public:
     internet_address_test() {
         test("internet_address", []() {
             //constants
+            check(internet_address::data_size >= std::max(sizeof(in_addr), sizeof(in6_addr)));
             check(internet_address::ipv4_any.to_string() == "0.0.0.0");
             check(internet_address::ipv4_loopback.to_string() == "127.0.0.1");
             check(internet_address::ipv6_any.to_string() == "::");
@@ -172,7 +173,11 @@ public:
 
             //valid addresses/address families/hostnames
             check(internet_address("192.168.1.2", AF_INET).to_string() == "192.168.1.2");
+            check(internet_address("192.168.1.2", AF_INET).address_family() == AF_INET);
+            check(internet_address("192.168.1.2", AF_INET).size() == sizeof(in_addr));
             check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C", AF_INET6).to_string() == "fe80:cd00:0:cde:1257:0:211e:729c");
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C", AF_INET6).address_family() == AF_INET6);
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C", AF_INET6).size() == sizeof(in6_addr));
             check(check_host_ip(internet_address(get_host_name().c_str(), AF_INET)));
             check(check_host_ip(internet_address(get_host_name().c_str(), AF_INET6)));
 
