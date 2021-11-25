@@ -296,7 +296,7 @@ int main() {
     socket_type_test();
     protocol_test();
     internet_address_test();
-    //utility_test();
+    utility_test();
     cleanup();
     system("pause");
     return static_cast<int>(test_error_count);

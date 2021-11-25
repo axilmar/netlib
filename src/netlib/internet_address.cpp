@@ -24,33 +24,39 @@ namespace netlib {
     static int get_address_from_hostname(const char* address, int af, void* addr) {
 
         //get address info
-        addrinfo* ad;
-        int error = getaddrinfo(address, nullptr, nullptr, &ad);
+        addrinfo* ai;
+        int error = getaddrinfo(address, nullptr, nullptr, &ai);
 
         //throw for error
         if (error) {
             throw std::invalid_argument(get_last_error(error));
         }
 
+        addrinfo* start_ai = ai;
+
         //find address to return
-        for (; ad; ad = ad->ai_next) {
+        for (; ai; ai = ai->ai_next) {
             //skip the current entry if the address family is not requested
-            if (af && ad->ai_family != af) {
+            if (af && ai->ai_family != af) {
                 continue;
             }
 
             //get ipv4 address
             if (af == AF_INET) {
-                memcpy(addr, &reinterpret_cast<const SOCKADDR_IN*>(ad->ai_addr)->sin_addr, sizeof(in_addr));
+                memcpy(addr, &reinterpret_cast<const SOCKADDR_IN*>(ai->ai_addr)->sin_addr, sizeof(in_addr));
+                freeaddrinfo(start_ai);
                 return AF_INET;
             }
 
             //get ipv6 address
             if (af == AF_INET6) {
-                memcpy(addr, &reinterpret_cast<const SOCKADDR_IN6*>(ad->ai_addr)->sin6_addr, sizeof(in6_addr));
+                memcpy(addr, &reinterpret_cast<const SOCKADDR_IN6*>(ai->ai_addr)->sin6_addr, sizeof(in6_addr));
+                freeaddrinfo(start_ai);
                 return AF_INET6;
             }
         }
+
+        freeaddrinfo(start_ai);
 
         //invalid address
         throw std::invalid_argument(std::string("invalid internet address: ") + address);
