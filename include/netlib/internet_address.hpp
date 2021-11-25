@@ -2,6 +2,7 @@
 #define NETLIB_INTERNET_ADDRESS_HPP
 
 
+#include <functional>
 #include "address_family.hpp"
 
 
@@ -144,6 +145,12 @@ namespace netlib {
          */
         bool operator >= (const internet_address& other) const;
 
+        /**
+         * Returns the hash value of this address.
+         * @return the hash value of this address.
+         */
+        size_t hash() const noexcept;
+
     private:
         int m_address_family;
         char m_data[data_size];
@@ -174,6 +181,25 @@ namespace netlib {
 
 
 } //namespace netlib
+
+
+namespace std {
+
+
+    /**
+     * Get hash value for netlib::internet_address.
+     */
+    template <> struct hash<netlib::internet_address> {
+        /**
+         * Returns addr.hash().
+         */
+        size_t operator ()(const netlib::internet_address& addr) const noexcept {
+            return addr.hash();
+        }
+    };
+
+
+} //namespace std
 
 
 #endif //NETLIB_INTERNET_ADDRESS_HPP

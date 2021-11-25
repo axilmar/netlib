@@ -1,6 +1,7 @@
 #include "netlib/platform.hpp"
 #include <stdexcept>
 #include <algorithm>
+#include <string_view>
 #include "netlib/internet_address.hpp"
 
 
@@ -234,6 +235,12 @@ namespace netlib {
         }
 
         return memcmp(m_data, other.m_data, data_size) >= 0;
+    }
+
+
+    //get hash value
+    size_t internet_address::hash() const noexcept {
+        return std::hash<std::string_view>()(std::string_view(m_data, m_address_family == AF_INET ? sizeof(in_addr) : data_size));
     }
 
 
