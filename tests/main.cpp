@@ -201,8 +201,10 @@ public:
             //autodetect addresses
             check(internet_address("192.168.1.2").to_string() == "192.168.1.2");
             check(internet_address("192.168.1.2").address_family() == AF_INET);
+            check(internet_address("192.168.1.2").size() == sizeof(in_addr));
             check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C").to_string() == "fe80:cd00:0:cde:1257:0:211e:729c");
             check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C").address_family() == AF_INET6);
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C").size() == sizeof(in6_addr));
             });
     }
 
