@@ -34,4 +34,32 @@ namespace netlib {
     }
 
 
+    //Converts the protocol to a string.
+    std::string protocol_to_string(protocol p) {
+        switch (p) {
+        case protocol::tcp:
+            return "tcp";
+
+        case protocol::udp:
+            return "udp";
+        }
+
+        throw std::invalid_argument("Invalid protocol.");
+    }
+
+
+    //Converts a string to an protocol.
+    protocol protocol_from_string(const std::string& str) {
+        if (str == "tcp") {
+            return protocol::tcp;
+        }
+
+        if (str == "udp") {
+            return protocol::udp;
+        }
+
+        throw std::invalid_argument("Unsupported protocol value.");
+    }
+
+
 } //namespace netlib

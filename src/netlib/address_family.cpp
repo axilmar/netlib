@@ -34,4 +34,32 @@ namespace netlib {
     }
 
 
+    //Converts the address family to a string.
+    std::string address_family_to_string(address_family af) {
+        switch (af) {
+        case address_family::ipv4:
+            return "ipv4";
+
+        case address_family::ipv6:
+            return "ipv6";
+        }
+
+        throw std::invalid_argument("Invalid address family.");
+    }
+
+
+    //Converts a string to an address family.
+    address_family address_family_from_string(const std::string& str) {
+        if (str == "ipv4") {
+            return address_family::ipv4;
+        }
+
+        if (str == "ipv6") {
+            return address_family::ipv6;
+        }
+
+        throw std::invalid_argument("Unsupported address family value.");
+    }
+
+
 } //namespace netlib

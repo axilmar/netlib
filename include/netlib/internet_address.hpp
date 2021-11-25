@@ -21,22 +21,22 @@ namespace netlib {
         /**
          * Any address for ipv4.
          */
-        static const internet_address ipv4_any_address;
+        static const internet_address ipv4_any;
 
         /**
          * Loopback address for ipv4.
          */
-        static const internet_address ipv4_loopback_address;
+        static const internet_address ipv4_loopback;
 
         /**
          * Any address for ipv4.
          */
-        static const internet_address ipv6_any_address;
+        static const internet_address ipv6_any;
 
         /**
          * Loopback address for ipv6.
          */
-        static const internet_address ipv6_loopback_address;
+        static const internet_address ipv6_loopback;
 
         /**
          * Non-initializing constructor.
@@ -46,19 +46,21 @@ namespace netlib {
         /**
          * Constructs an internet address.
          * @param address address string: hostname or ipv4/ipv6 address; 
-         *  if null or empty or invalid, then the address is set to the address of the localhost.
+         *  if null or empty, then the address is set to the address of the localhost.
          * @param af address family; if 0, then the appropriate address family is autodetected
          *  from the address string.
-         * @exception std::runtime_error if the address and address family does not represent an internet address.
+         * @exception std::invalid_argument if the address or the address family is invalid.
+         * @exception std::runtime_error thrown if the hostname cannot be retrieved.
          */
         internet_address(const char* address, int af = 0);
 
         /**
          * Constructs an internet address.
          * @param address address string: hostname or ipv4/ipv6 address;
-         *  if null or empty or invalid, then the address is set to the address of the localhost.
+         *  if null or empty, then the address is set to the address of the localhost.
          * @param af address family.
-         * @exception std::runtime_error if the address and address family does not represent an internet address.
+         * @exception std::invalid_argument if the address or the address family is invalid.
+         * @exception std::runtime_error thrown if the hostname cannot be retrieved.
          */
         internet_address(const char* address, address_family af) 
             : internet_address(address, address_family_to_system_value(af)) {}
@@ -80,13 +82,41 @@ namespace netlib {
 
         /**
          * Returns the size of the data.
+         * @exception std::runtime_error thrown if the address family is unsupported.
          */
-        constexpr size_t size() const noexcept { return data_size; }
+        size_t size() const;
+
+        /**
+         * converts the internet address to a string.
+         * @exception std::runtime_error thrown if the address family is invalid.
+         */
+        std::string to_string() const;
 
     private:
         int m_address_family;
         char m_data[data_size];
+
+        //internal constructor
+        internet_address(const void* data, int af);
     };
+
+
+    /**
+     * Converts an internet address to a string.
+     * @param addr address.
+     * @return string.
+     * @exception std::invalid_argument thrown if the conversion to string cannot be done.
+     */
+    std::string internet_address_to_string(const internet_address& addr);
+
+
+    /**
+     * Converts a string to an internet address.
+     * @param str string.
+     * @return internet address.
+     * @exception std::invalid_argument thrown if the conversion from string cannot be done.
+     */
+    internet_address internet_address_from_string(const std::string& str);
 
 
 } //namespace netlib

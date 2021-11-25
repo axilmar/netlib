@@ -39,6 +39,24 @@ namespace netlib {
     socket_type system_value_to_socket_type(int st);
 
 
+    /**
+     * Converts the socket type to a string.
+     * @param st socket type.
+     * @return string.
+     * @exception std::invalid_argument thrown if the input value is invalid.
+     */
+    std::string socket_type_to_string(socket_type st);
+
+
+    /**
+     * Converts a string to an socket type.
+     * @param str string.
+     * @return socket type.
+     * @exception std::invalid_argument thrown if the input value is invalid.
+     */
+    socket_type socket_type_from_string(const std::string& str);
+
+
 } //namespace netlib
 
 

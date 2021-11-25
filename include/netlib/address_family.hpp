@@ -2,6 +2,9 @@
 #define NETLIB_ADDRESS_FAMILY_HPP
 
 
+#include <string>
+
+
 namespace netlib {
 
 
@@ -37,6 +40,24 @@ namespace netlib {
      * @exception std::invalid_argument thrown if the given value is not supported.
      */
     address_family system_value_to_address_family(int af);
+
+
+    /**
+     * Converts the address family to a string.
+     * @param af address family.
+     * @return string.
+     * @exception std::invalid_argument thrown if the input value is invalid.
+     */
+    std::string address_family_to_string(address_family af);
+
+
+    /**
+     * Converts a string to an address family.
+     * @param str string.
+     * @return address family.
+     * @exception std::invalid_argument thrown if the input value is invalid.
+     */
+    address_family address_family_from_string(const std::string& str);
 
 
 } //namespace netlib

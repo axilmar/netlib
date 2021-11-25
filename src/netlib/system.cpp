@@ -1,7 +1,24 @@
 #include "system.hpp"
+#include <stdexcept>
 
 
 #ifdef _WIN32
+
+
+//winsock requires initialization
+static const struct winsock_initializer {
+    winsock_initializer() {
+        WSADATA wsaData;
+        const int result = WSAStartup(MAKEWORD(2, 0), &wsaData);
+        if (result != 0) {
+            throw std::runtime_error("Failed to initialize winsock; error number = " + std::to_string(result));
+        }
+    }
+
+    ~winsock_initializer() {
+        WSACleanup();
+    }
+} winsock_initializer;
 
 
 //make error message

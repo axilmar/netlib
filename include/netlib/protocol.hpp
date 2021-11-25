@@ -39,6 +39,24 @@ namespace netlib {
     protocol system_value_to_protocol(int p);
 
 
+    /**
+     * Converts the protocol to a string.
+     * @param p protocol.
+     * @return string.
+     * @exception std::invalid_argument thrown if the input value is invalid.
+     */
+    std::string protocol_to_string(protocol p);
+
+
+    /**
+     * Converts a string to an protocol.
+     * @param str string.
+     * @return protocol.
+     * @exception std::invalid_argument thrown if the input value is invalid.
+     */
+    protocol protocol_from_string(const std::string& str);
+
+
 } //namespace netlib
 
 
