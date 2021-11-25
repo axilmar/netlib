@@ -179,7 +179,11 @@ public:
             check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C", AF_INET6).address_family() == AF_INET6);
             check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C", AF_INET6).size() == sizeof(in6_addr));
             check(check_host_ip(internet_address(get_host_name().c_str(), AF_INET)));
+            check(internet_address(get_host_name().c_str(), AF_INET).address_family() == AF_INET);
+            check(internet_address(get_host_name().c_str(), AF_INET).size() == sizeof(in_addr));
             check(check_host_ip(internet_address(get_host_name().c_str(), AF_INET6)));
+            check(internet_address(get_host_name().c_str(), AF_INET6).address_family() == AF_INET6);
+            check(internet_address(get_host_name().c_str(), AF_INET6).size() == sizeof(in6_addr));
 
             //null/empty addresses
             check(check_host_ip(internet_address(static_cast<const char*>(nullptr), AF_INET)));
