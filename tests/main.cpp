@@ -1,4 +1,4 @@
-#include "../src/netlib/system.hpp"
+#include "netlib/platform.hpp"
 #include <vector>
 #include <iostream>
 #include <set>
