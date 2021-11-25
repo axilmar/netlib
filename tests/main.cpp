@@ -119,7 +119,7 @@ template <class F> void test(const char* name, F&& proc) {
 class address_family_test {
 public:
     address_family_test() {
-        test("address_family", []() {
+        test("enum address_family", []() {
             check(address_family_to_system_value(address_family::ipv4) == AF_INET);
             check(address_family_to_system_value(address_family::ipv6) == AF_INET6);
             check(system_value_to_address_family(AF_INET) == address_family::ipv4);
@@ -134,7 +134,7 @@ public:
 class socket_type_test {
 public:
     socket_type_test() {
-        test("socket_type", []() {
+        test("enum socket_type", []() {
             check(socket_type_to_system_value(socket_type::stream) == SOCK_STREAM);
             check(socket_type_to_system_value(socket_type::datagram) == SOCK_DGRAM);
             check(system_value_to_socket_type(SOCK_STREAM) == socket_type::stream);
@@ -149,7 +149,7 @@ public:
 class protocol_test {
 public:
     protocol_test() {
-        test("protocol", []() {
+        test("enum protocol", []() {
             check(protocol_to_system_value(protocol::tcp) == IPPROTO_TCP);
             check(protocol_to_system_value(protocol::udp) == IPPROTO_UDP);
             check(system_value_to_protocol(IPPROTO_TCP) == protocol::tcp);
@@ -164,7 +164,7 @@ public:
 class internet_address_test {
 public:
     internet_address_test() {
-        test("internet_address", []() {
+        test("class internet_address", []() {
             //constants
             check(internet_address::data_size >= std::max(sizeof(in_addr), sizeof(in6_addr)));
             check(internet_address::ipv4_any.to_string() == "0.0.0.0");
@@ -278,13 +278,25 @@ public:
 class utility_test {
 public:
     utility_test() {
-        test("get_host_name", []() { check(netlib::get_host_name() == internet_address_test::get_host_name()); });
+        test("function get_host_name", []() { 
+            check(netlib::get_host_name() == internet_address_test::get_host_name()); 
+            });
 
-        test("get_addresses", []() { 
+        test("function get_addresses", []() { 
+            //addresses from hostname
             std::string hostname = get_host_name();
-            std::vector<internet_address> addresses = get_addresses(hostname);
-            check(std::find(addresses.begin(), addresses.end(), internet_address(hostname.c_str(), AF_INET)) != addresses.end());
-            check(std::find(addresses.begin(), addresses.end(), internet_address(hostname.c_str(), AF_INET6)) != addresses.end());
+            std::vector<internet_address> addresses1 = get_addresses(hostname.c_str());
+            check(std::find(addresses1.begin(), addresses1.end(), internet_address(hostname.c_str(), AF_INET)) != addresses1.end());
+            check(std::find(addresses1.begin(), addresses1.end(), internet_address(hostname.c_str(), AF_INET6)) != addresses1.end());
+
+            //addresses from ""
+            std::vector<internet_address> addresses2 = get_addresses("");
+            check(std::find(addresses2.begin(), addresses2.end(), internet_address("", AF_INET)) != addresses2.end());
+            check(std::find(addresses2.begin(), addresses2.end(), internet_address("", AF_INET6)) != addresses2.end());
+
+            //invalid addresses
+            check_exception(get_addresses("foobar"), std::invalid_argument);
+            check_exception(get_addresses(nullptr), std::invalid_argument);
             });
     }
 };

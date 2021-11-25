@@ -31,9 +31,9 @@ namespace netlib {
 
 
     //returns the internet addresses of the given host.
-    std::vector<internet_address> get_addresses(const std::string& addr) {
+    std::vector<internet_address> get_addresses(const char* addr) {
         addrinfo* ai;
-        int error = getaddrinfo(addr.c_str(), nullptr, nullptr, &ai);
+        int error = getaddrinfo(addr, nullptr, nullptr, &ai);
 
         if (error) {
             throw std::invalid_argument(get_last_error(error));

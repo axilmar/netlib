@@ -23,7 +23,7 @@ namespace netlib {
      * @return internet addresses of the given host.
      * @exception std::invalid_argument thrown if the hostname is invalid.
      */
-    std::vector<internet_address> get_addresses(const std::string& addr);
+    std::vector<internet_address> get_addresses(const char* addr);
 
 
 } //namespace netlib
