@@ -59,17 +59,6 @@ namespace netlib {
     //constructor
     internet_address::internet_address(const char* address, int af) {
 
-        //check address family
-        switch (af) {
-        case 0:
-        case AF_INET:
-        case AF_INET6:
-            break;
-
-        default:
-            throw std::invalid_argument("Invalid address family value: " + std::to_string(af));
-        }
-
         //if address is given
         if (address && strlen(address) > 0) {
 
@@ -79,16 +68,19 @@ namespace netlib {
                 return;
             }
 
-            //discover ipv4 address
-            if (inet_pton(AF_INET, address, m_data) == 1) {
-                m_address_family = AF_INET;
-                return;
-            }
+            //autodetect
+            if (af == 0) {
+                //discover ipv4 address
+                if (inet_pton(AF_INET, address, m_data) == 1) {
+                    m_address_family = AF_INET;
+                    return;
+                }
 
-            //discover ipv6 address
-            if (inet_pton(AF_INET6, address, m_data) == 1) {
-                m_address_family = AF_INET6;
-                return;
+                //discover ipv6 address
+                if (inet_pton(AF_INET6, address, m_data) == 1) {
+                    m_address_family = AF_INET6;
+                    return;
+                }
             }
 
             //get address from hostname
