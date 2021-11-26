@@ -96,6 +96,31 @@ namespace netlib {
     }
 
 
+    //parse ipv6 address
+    static bool parse_ipv6_address(const char* address, void* data, uint32_t& scope_id) {
+        //find percent
+        const char* percent_pos = strchr(address, '%');
+
+        //no percent pos, so use inet_pton
+        if (!percent_pos) {
+            return inet_pton(AF_INET6, address, data) == 1;
+        }
+
+        //get raw ipv6 address
+        std::string raw_address(address, percent_pos);
+
+        //parse raw address
+        if (inet_pton(AF_INET6, raw_address.c_str(), data) != 1) {
+            return false;
+        }
+
+        //success; parse scope id
+        scope_id = parse_ipv6_scope_id(percent_pos);
+
+        return true;
+    }
+
+
     //get zone name from id
     static std::string get_ipv6_zone_name(uint32_t scope_id) {
         return '%' + std::to_string(scope_id);
@@ -117,9 +142,8 @@ namespace netlib {
                     return;
                 }
 
-                if (inet_pton(AF_INET6, address, m_data) == 1) {
+                if (parse_ipv6_address(address, m_data, m_ipv6_scope_id)) {
                     m_address_family = AF_INET6;
-                    m_ipv6_scope_id = parse_ipv6_scope_id(address);
                     return;
                 }
             }
