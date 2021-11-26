@@ -88,6 +88,12 @@ namespace netlib {
         size_t size() const;
 
         /**
+         * Returns the scope id (i.e. zone id and level).
+         * @exception std::runtime_error thrown if the address is not ipv6.
+         */
+        uint32_t get_scope_id() const;
+
+        /**
          * converts the internet address to a string.
          * @exception std::runtime_error thrown if the address family is invalid.
          */
@@ -151,12 +157,20 @@ namespace netlib {
          */
         size_t hash() const noexcept;
 
+        /**
+         * Returns the hostname that corresponds to the current internet address.
+         * @return the name of the host, or an empty string if it does not correspond to a valid host.
+         * @exception std::runtime_error thrown on error.
+         */
+        std::string host_name() const;
+
     private:
         int m_address_family;
         char m_data[data_size];
+        uint32_t m_ipv6_scope_id;
 
         //internal constructor
-        internet_address(const void* data, int af);
+        internet_address(const void* data, int af, uint32_t ipv6_scope_id = 0);
 
         friend class utility;
         friend class socket_address;

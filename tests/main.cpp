@@ -85,6 +85,9 @@ public:
             check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C", AF_INET6).to_string() == "fe80:cd00:0:cde:1257:0:211e:729c");
             check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C", AF_INET6).address_family() == AF_INET6);
             check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C", AF_INET6).size() == sizeof(in6_addr));
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C%1", AF_INET6).to_string() == "fe80:cd00:0:cde:1257:0:211e:729c%1");
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C%1", AF_INET6).address_family() == AF_INET6);
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C%1", AF_INET6).size() == sizeof(in6_addr));
             check(check_host_ip(internet_address(get_host_name().c_str(), AF_INET)));
             check(internet_address(get_host_name().c_str(), AF_INET).address_family() == AF_INET);
             check(internet_address(get_host_name().c_str(), AF_INET).size() == sizeof(in_addr));
@@ -101,6 +104,7 @@ public:
             //invalid addresses/address families/host names
             check_exception(internet_address("192.I68.1.2", AF_INET), std::invalid_argument);
             check_exception(internet_address("FE80:CD00:0000:0CDE:I257:0000:211E:729C", AF_INET6), std::invalid_argument);
+            check_exception(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C$1", AF_INET6), std::invalid_argument);
             check_exception(internet_address("192.168.1.2", 255), std::invalid_argument);
             check_exception(internet_address("foobar", AF_INET), std::invalid_argument);
             check_exception(internet_address("foobar", AF_INET6), std::invalid_argument);
@@ -112,6 +116,9 @@ public:
             check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C").to_string() == "fe80:cd00:0:cde:1257:0:211e:729c");
             check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C").address_family() == AF_INET6);
             check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C").size() == sizeof(in6_addr));
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C%1").to_string() == "fe80:cd00:0:cde:1257:0:211e:729c%1");
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C%1").address_family() == AF_INET6);
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C%1").size() == sizeof(in6_addr));
 
             //comparison operators
             check(internet_address("192.168.1.2") == internet_address("192.168.1.2"));
@@ -130,6 +137,14 @@ public:
             check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D") <= internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D"));
             check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D") >= internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C"));
             check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D") >= internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D"));
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C%1") == internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C%1"));
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C%1") != internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C"));
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C%1") < internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C%2"));
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C%2") > internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C%1"));
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C%1") <= internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D%2"));
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D%2") <= internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D%2"));
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D%2") >= internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C%1"));
+            check(internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D%2") >= internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D%2"));
             check(!(internet_address("192.168.1.2") == internet_address("192.168.1.3")));
             check(!(internet_address("192.168.1.2") == internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729D")));
             check(!(internet_address("192.168.1.2") != internet_address("192.168.1.2")));
@@ -141,13 +156,11 @@ public:
             check_exception(internet_address("192.168.1.2") <= internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C"), std::invalid_argument);
             check_exception(internet_address("192.168.1.2") > internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C"), std::invalid_argument);
             check_exception(internet_address("192.168.1.2") >= internet_address("FE80:CD00:0000:0CDE:1257:0000:211E:729C"), std::invalid_argument);
-            });
-    }
 
-    static std::string get_host_name() {
-        char buf[256];
-        gethostname(buf, sizeof(buf));
-        return buf;
+            //hostname
+            check(internet_address("", AF_INET).host_name() == get_host_name());
+            check(internet_address("", AF_INET6).host_name() == get_host_name());
+            });
     }
 
     static void* get_sockaddr_internet_address(sockaddr* sa) {
@@ -185,7 +198,7 @@ class utility_test {
 public:
     utility_test() {
         test("function get_host_name", []() { 
-            check(netlib::get_host_name() == internet_address_test::get_host_name()); 
+            check(netlib::get_host_name() == internet_address("").host_name()); 
             });
 
         test("function get_addresses", []() { 
@@ -225,7 +238,12 @@ public:
             check(socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000).port() == 10000);
             check(socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000).size() == sizeof(sockaddr_in6));
             check(socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000).to_string() == "fe80:cd00:0:cde:1257:0:211e:729c:10000");
-        });
+            check(socket_address("fe80:cd00:0:cde:1257:0:211e:729c%1", 10000).address() == "fe80:cd00:0:cde:1257:0:211e:729c%1");
+            check(socket_address("fe80:cd00:0:cde:1257:0:211e:729c%1", 10000).address_family() == AF_INET6);
+            check(socket_address("fe80:cd00:0:cde:1257:0:211e:729c%1", 10000).port() == 10000);
+            check(socket_address("fe80:cd00:0:cde:1257:0:211e:729c%1", 10000).size() == sizeof(sockaddr_in6));
+            check(socket_address("fe80:cd00:0:cde:1257:0:211e:729c%1", 10000).to_string() == "fe80:cd00:0:cde:1257:0:211e:729c%1:10000");
+            });
     }
 };
 
@@ -239,6 +257,7 @@ int main() {
     utility_test();
     socket_address_test();
     cleanup();
+
     system("pause");
     return static_cast<int>(test_error_count);
 }

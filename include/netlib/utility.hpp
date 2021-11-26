@@ -20,10 +20,11 @@ namespace netlib {
     /**
      * returns the internet addresses of the given host.
      * @param addr name of host/ip address.
+     * @param af address family; if 0, then all address families are considered.
      * @return internet addresses of the given host.
      * @exception std::invalid_argument thrown if the hostname is invalid.
      */
-    std::vector<internet_address> get_addresses(const char* addr);
+    std::vector<internet_address> get_addresses(const char* addr, int af = 0);
 
 
 } //namespace netlib

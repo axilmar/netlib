@@ -6,6 +6,7 @@
 #include <WinSock2.h>
 #include <In6addr.h>
 #include <Ws2tcpip.h>
+#include <Iphlpapi.h>
 #include <Windows.h>
 #undef min
 #undef max

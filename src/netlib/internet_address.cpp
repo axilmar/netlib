@@ -21,7 +21,7 @@ namespace netlib {
 
 
     //get address from hostname
-    static int get_address_from_hostname(const char* address, int af, void* addr) {
+    static int get_address_from_hostname(const char* address, int af, void* addr, uint32_t& ipv6_scope_id) {
 
         //get address info
         addrinfo* ai;
@@ -36,21 +36,18 @@ namespace netlib {
 
         //find address to return
         for (; ai; ai = ai->ai_next) {
-            //skip the current entry if the address family is not requested
-            if (af && ai->ai_family != af) {
-                continue;
-            }
 
             //get ipv4 address
-            if (af == AF_INET) {
+            if (ai->ai_family == AF_INET && (af == 0 || af == AF_INET)) {
                 memcpy(addr, &reinterpret_cast<const SOCKADDR_IN*>(ai->ai_addr)->sin_addr, sizeof(in_addr));
                 freeaddrinfo(start_ai);
                 return AF_INET;
             }
 
             //get ipv6 address
-            if (af == AF_INET6) {
+            if (ai->ai_family == AF_INET6 && (af == 0 || af == AF_INET6)) {
                 memcpy(addr, &reinterpret_cast<const SOCKADDR_IN6*>(ai->ai_addr)->sin6_addr, sizeof(in6_addr));
+                ipv6_scope_id = reinterpret_cast<const SOCKADDR_IN6*>(ai->ai_addr)->sin6_scope_id;
                 freeaddrinfo(start_ai);
                 return AF_INET6;
             }
@@ -59,41 +56,76 @@ namespace netlib {
         freeaddrinfo(start_ai);
 
         //invalid address
-        throw std::invalid_argument(std::string("invalid internet address: ") + address);
+        throw std::invalid_argument(std::string("Upsupported internet address: ") + address);
+    }
+
+
+    //parses scope id
+    static uint32_t parse_ipv6_scope_id(const char* address) {
+        //locate '%'
+        const char* percent_pos = strchr(address, '%');
+
+        //if not found, then scope id is 0
+        if (!percent_pos) {
+            return 0;
+        }
+
+        //parse number
+        uint32_t result;
+        try {
+            if constexpr (sizeof(int) == sizeof(uint32_t)) {
+                result = std::stoi(percent_pos + 1);
+            }
+            else if constexpr (sizeof(long) == sizeof(uint32_t)) {
+                result = std::stol(percent_pos + 1);
+            }
+            else {
+                static_assert("Neither int nor long is 32-bits.");
+            }
+        }
+
+        //failed to parse integer; get scope id from name
+        catch (const std::invalid_argument&) {
+            result = if_nametoindex(percent_pos + 1);
+            if (!result) {
+                throw std::runtime_error("Could not convert interface name to scope id.");
+            }
+        }
+
+        return result;
+    }
+
+
+    //get zone name from id
+    static std::string get_ipv6_zone_name(uint32_t scope_id) {
+        return '%' + std::to_string(scope_id);
     }
 
 
     //constructor
     internet_address::internet_address(const char* address, int af) 
         : m_data{}
+        , m_ipv6_scope_id{}
     {
-
         //if address is given
         if (address && strlen(address) > 0) {
 
-            //try conversion to specific address family
-            if (inet_pton(af, address, m_data) == 1) {
-                m_address_family = af;
-                return;
-            }
-
-            //autodetect
+            //try to autodetect address family, if not given
             if (af == 0) {
-                //discover ipv4 address
                 if (inet_pton(AF_INET, address, m_data) == 1) {
                     m_address_family = AF_INET;
                     return;
                 }
 
-                //discover ipv6 address
                 if (inet_pton(AF_INET6, address, m_data) == 1) {
                     m_address_family = AF_INET6;
+                    m_ipv6_scope_id = parse_ipv6_scope_id(address);
                     return;
                 }
             }
 
             //get address from hostname
-            m_address_family = get_address_from_hostname(address, af, m_data);
+            m_address_family = get_address_from_hostname(address, af, m_data, m_ipv6_scope_id);
             return;
         }
 
@@ -112,13 +144,14 @@ namespace netlib {
         }
 
         //get address from this host
-        m_address_family = get_address_from_hostname(buf, af, m_data);
+        m_address_family = get_address_from_hostname(buf, af, m_data, m_ipv6_scope_id);
     }
 
 
     //internal constructor
-    internet_address::internet_address(const void* data, int af)
+    internet_address::internet_address(const void* data, int af, uint32_t ipv6_scope_id)
         : m_address_family(af)
+        , m_ipv6_scope_id(ipv6_scope_id)
     {
         if (af == AF_INET) {
             memcpy(m_data, data, sizeof(in_addr));
@@ -142,6 +175,15 @@ namespace netlib {
     }
 
 
+    //get scope id
+    uint32_t internet_address::get_scope_id() const {
+        if (m_address_family == AF_INET6) {
+            return m_ipv6_scope_id;
+        }
+        throw std::runtime_error("Current address family does not support scope id.");
+    }
+
+
     //converts the internet address to a string.
     std::string internet_address::to_string() const {
         char buf[256];
@@ -149,7 +191,16 @@ namespace netlib {
         const char* str = inet_ntop(m_address_family, m_data, buf, sizeof(buf));
 
         if (str) {
-            return str;
+            switch (m_address_family) {
+            case AF_INET6:
+                if (m_ipv6_scope_id) {
+                    return str + get_ipv6_zone_name(m_ipv6_scope_id);
+                }
+                return str;
+
+            default:
+                return str;
+            }
         }
 
         throw std::runtime_error(get_last_error());
@@ -166,7 +217,7 @@ namespace netlib {
             return memcmp(m_data, other.m_data, sizeof(in_addr)) == 0;
         }
 
-        return memcmp(m_data, other.m_data, data_size) == 0;
+        return memcmp(m_data, other.m_data, data_size) == 0 && m_ipv6_scope_id == other.m_ipv6_scope_id;
     }
 
 
@@ -180,7 +231,7 @@ namespace netlib {
             return memcmp(m_data, other.m_data, sizeof(in_addr)) != 0;
         }
 
-        return memcmp(m_data, other.m_data, data_size) != 0;
+        return memcmp(m_data, other.m_data, data_size) != 0 || m_ipv6_scope_id != other.m_ipv6_scope_id;
     }
 
 
@@ -194,7 +245,17 @@ namespace netlib {
             return memcmp(m_data, other.m_data, sizeof(in_addr)) < 0;
         }
 
-        return memcmp(m_data, other.m_data, data_size) < 0;
+        const int cmp = memcmp(m_data, other.m_data, data_size);
+
+        if (cmp < 0) {
+            return true;
+        }
+
+        if (cmp > 0) {
+            return false;
+        }
+
+        return m_ipv6_scope_id < other.m_ipv6_scope_id;
     }
 
 
@@ -208,7 +269,17 @@ namespace netlib {
             return memcmp(m_data, other.m_data, sizeof(in_addr)) > 0;
         }
 
-        return memcmp(m_data, other.m_data, data_size) > 0;
+        const int cmp = memcmp(m_data, other.m_data, data_size);
+
+        if (cmp > 0) {
+            return true;
+        }
+
+        if (cmp < 0) {
+            return false;
+        }
+
+        return m_ipv6_scope_id > other.m_ipv6_scope_id;
     }
 
 
@@ -222,7 +293,17 @@ namespace netlib {
             return memcmp(m_data, other.m_data, sizeof(in_addr)) <= 0;
         }
 
-        return memcmp(m_data, other.m_data, data_size) <= 0;
+        const int cmp = memcmp(m_data, other.m_data, data_size);
+
+        if (cmp < 0) {
+            return true;
+        }
+
+        if (cmp > 0) {
+            return false;
+        }
+
+        return m_ipv6_scope_id <= other.m_ipv6_scope_id;
     }
 
 
@@ -236,13 +317,108 @@ namespace netlib {
             return memcmp(m_data, other.m_data, sizeof(in_addr)) >= 0;
         }
 
-        return memcmp(m_data, other.m_data, data_size) >= 0;
+        const int cmp = memcmp(m_data, other.m_data, data_size);
+
+        if (cmp > 0) {
+            return true;
+        }
+
+        if (cmp < 0) {
+            return false;
+        }
+
+        return m_ipv6_scope_id >= other.m_ipv6_scope_id;
     }
 
 
     //get hash value
     size_t internet_address::hash() const noexcept {
         return std::hash<std::string_view>()(std::string_view(m_data, m_address_family == AF_INET ? sizeof(in_addr) : data_size));
+    }
+
+
+    //Checks if the internet address represents a valid node in the network.
+    std::string internet_address::host_name() const {
+        union {
+            sockaddr_storage sa_storage{};
+            sockaddr sa;
+            sockaddr_in sa4;
+            sockaddr_in6 sa6;
+        };
+        socklen_t sa_size;
+
+        //prepare the socket address
+        switch (m_address_family) {
+        case AF_INET:
+            memcpy(&sa4.sin_addr, m_data, sizeof(in_addr));
+            sa4.sin_family = AF_INET;
+            sa_size = sizeof(sa4);
+            break;
+
+        case AF_INET6:
+            memcpy(&sa6.sin6_addr, m_data, sizeof(in6_addr));
+            sa6.sin6_family = AF_INET6;
+            sa6.sin6_scope_id = m_ipv6_scope_id;
+            sa_size = sizeof(sa6);
+            break;
+
+        default:
+            throw std::runtime_error("Unsupported address family");
+        }
+
+        //get the name
+        char name[1024];
+        int error = getnameinfo(&sa, sa_size, name, sizeof(name), nullptr, 0, 0);
+
+        //no error
+        if (!error) {
+            return name;
+        }
+
+        //the name could not be resolved
+        if (error == EAI_NONAME) {
+            return std::string();
+        }
+
+        //get error string
+        std::string error_msg;
+        #ifdef _WIN32
+        error_msg = get_last_error();
+        #endif
+
+        #ifdef linux
+        switch (error) {
+            case EAI_AGAIN:
+                error_msg = "The name could not be resolved at this time.  Try again later.";
+                break;
+
+            case EAI_BADFLAGS:
+                error_msg = "The flags argument has an invalid value.";
+                break;
+
+            case EAI_FAIL:
+                error_msg = "A nonrecoverable error occurred.";
+                break;
+
+            case EAI_FAMILY:
+                error_msg = "The address family was not recognized, or the address length was invalid for the specified family.";
+                break;
+
+            case EAI_MEMORY:
+                error_msg = "Out of memory.";
+                break;
+
+            case EAI_OVERFLOW:
+                error_msg = "The buffer pointed to by host or serv was too small.";
+                break;
+
+            case EAI_SYSTEM:
+                error_msg = get_last_error();
+                break;
+    }
+        #endif
+
+        throw std::runtime_error(error_msg);
     }
 
 

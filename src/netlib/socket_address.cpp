@@ -25,6 +25,7 @@ namespace netlib {
             memcpy(&reinterpret_cast<sockaddr_in6*>(m_data)->sin6_addr, address.data(), sizeof(in6_addr));
             reinterpret_cast<sockaddr_in6*>(m_data)->sin6_family = AF_INET6;
             reinterpret_cast<sockaddr_in6*>(m_data)->sin6_port = htons(port);
+            reinterpret_cast<sockaddr_in6*>(m_data)->sin6_scope_id = address.m_ipv6_scope_id;
             break;
 
         default:
@@ -59,7 +60,7 @@ namespace netlib {
             return internet_address(&reinterpret_cast<const sockaddr_in*>(m_data)->sin_addr, AF_INET);
 
         case AF_INET6:
-            return internet_address(&reinterpret_cast<const sockaddr_in6*>(m_data)->sin6_addr, AF_INET6);
+            return internet_address(&reinterpret_cast<const sockaddr_in6*>(m_data)->sin6_addr, AF_INET6, reinterpret_cast<const sockaddr_in6*>(m_data)->sin6_scope_id);
         }
 
         throw std::runtime_error("Invalid address family.");
