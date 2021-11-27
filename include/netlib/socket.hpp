@@ -150,52 +150,6 @@ namespace netlib {
          */
         size_t receive(void* buffer, size_t size, socket_address& address, int flags = 0);
 
-        /**
-         * Sends a packet.
-         * @param buffer data to send.
-         * @param size number of bytes to send.
-         * @param flags send flags.
-         * @return number of bytes sent or 0 if the connection is closed.
-         * @exception std::runtime_error thrown if there was an error.
-         * @exception std::invalid_argument thrown if the given size exceeds the 32-bit limit.
-         */
-        size_t send_packet(const void* buffer, size_t size, int flags = 0);
-
-        /**
-         * Sends a packet to a specific address.
-         * @param buffer data to send.
-         * @param size number of bytes to send.
-         * @param address destination address.
-         * @param flags send flags.
-         * @return number of bytes sent, i.e. given size, or 0 if the connection is closed.
-         * @exception std::runtime_error thrown if there was an error.
-         * @exception std::invalid_argument thrown if the given size exceeds the 32-bit limit.
-         */
-        size_t send_packet(const void* buffer, size_t size, const socket_address& address, int flags = 0);
-
-        /**
-         * Receives a packet.
-         * @param buffer pointer to buffer to store the received data.
-         * @param size number of bytes to receive.
-         * @param flags receive flags.
-         * @return number of bytes received, i.e. given size, or 0 if the connection is closed.
-         * @exception std::runtime_error thrown if there was an error.
-         * @exception std::invalid_argument thrown if the given buffer is too small for the received data.
-         */
-        size_t receive_packet(void* buffer, size_t size, int flags = 0);
-
-        /**
-         * Receives a packet, returning the sender's address.
-         * @param buffer pointer to buffer to store the received data.
-         * @param size number of bytes to receive.
-         * @param address the address of the sender.
-         * @param flags receive flags.
-         * @return number of bytes received, i.e. given size, or 0 if the connection is closed.
-         * @exception std::runtime_error thrown if there was an error.
-         * @exception std::invalid_argument thrown if the given buffer is too small for the received data.
-         */
-        size_t receive_packet(void* buffer, size_t size, socket_address& address, int flags = 0);
-
     private:
         uintptr_t m_handle;
 
