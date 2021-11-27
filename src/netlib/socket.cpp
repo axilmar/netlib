@@ -40,7 +40,7 @@ namespace netlib {
 
 
     //handle send result
-    static size_t handle_send_result(uintptr_t &handle, size_t bytes_sent) {
+    static size_t handle_send_result(uintptr_t &handle, int bytes_sent) {
         if (bytes_sent >= 0) {
             return bytes_sent;
         }
@@ -71,7 +71,7 @@ namespace netlib {
 
 
     //handle receive result
-    static size_t handle_receive_result(uintptr_t& handle, size_t bytes_received) {
+    static size_t handle_receive_result(uintptr_t& handle, int bytes_received) {
         if (bytes_received > 0) {
             return bytes_received;
         }
@@ -218,8 +218,15 @@ namespace netlib {
     //receive from
     size_t socket::receive(void* buffer, size_t size, socket_address& addr, int flags) {
         check_buffer_size(size);
-        int bytes_received = recvfrom(m_handle, reinterpret_cast<char*>(buffer), static_cast<int>(size), flags, reinterpret_cast<sockaddr*>(addr.data()), nullptr);
+        int addr_len = socket_address::data_size;
+        int bytes_received = recvfrom(m_handle, reinterpret_cast<char*>(buffer), static_cast<int>(size), flags, reinterpret_cast<sockaddr*>(addr.data()), &addr_len);
         return handle_receive_result(m_handle, bytes_received);
+    }
+
+
+    //Checks if this socket is valid.
+    socket::operator bool() const noexcept {
+        return m_handle != invalid_socket_handle;
     }
 
 

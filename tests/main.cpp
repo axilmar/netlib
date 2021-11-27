@@ -7,6 +7,8 @@
 #include <iomanip>
 #include <algorithm>
 #include <chrono>
+#include <thread>
+#include <mutex>
 #include "testlib.hpp"
 #include "netlib/address_family.hpp"
 #include "netlib/socket_type.hpp"
@@ -14,6 +16,7 @@
 #include "netlib/internet_address.hpp"
 #include "netlib/utility.hpp"
 #include "netlib/socket_address.hpp"
+#include "netlib/socket.hpp"
 
 
 using namespace netlib;
@@ -231,6 +234,22 @@ public:
             check(socket_address("192.168.1.1", 10000).port() == 10000);
             check(socket_address("192.168.1.1", 10000).size() == sizeof(sockaddr_in));
             check(socket_address("192.168.1.1", 10000).to_string() == "192.168.1.1:10000");
+            check(socket_address("192.168.1.1", 10000) == socket_address("192.168.1.1", 10000));
+            check(!(socket_address("192.168.1.1", 10000) == socket_address("192.168.1.2", 10000)));
+            check(socket_address("192.168.1.1", 10000) != socket_address("192.168.1.2", 10000));
+            check(!(socket_address("192.168.1.1", 10000) != socket_address("192.168.1.1", 10000)));
+            check(socket_address("192.168.1.1", 10000) < socket_address("192.168.1.2", 10000));
+            check(!(socket_address("192.168.1.1", 10000) < socket_address("192.168.1.1", 10000)));
+            check(socket_address("192.168.1.2", 10000) > socket_address("192.168.1.1", 10000));
+            check(!(socket_address("192.168.1.2", 10000) > socket_address("192.168.1.2", 10000)));
+            check(socket_address("192.168.1.1", 10000) <= socket_address("192.168.1.2", 10000));
+            check(!(socket_address("192.168.1.2", 10000) <= socket_address("192.168.1.1", 10000)));
+            check(socket_address("192.168.1.2", 10000) >= socket_address("192.168.1.1", 10000));
+            check(!(socket_address("192.168.1.1", 10000) >= socket_address("192.168.1.2", 10000)));
+            check(socket_address("192.168.1.1", 10000) <= socket_address("192.168.1.1", 10000));
+            check(!(socket_address("192.168.1.2", 10000) <= socket_address("192.168.1.1", 10000)));
+            check(socket_address("192.168.1.1", 10000) >= socket_address("192.168.1.1", 10000));
+            check(!(socket_address("192.168.1.1", 10000) >= socket_address("192.168.1.2", 10000)));
 
             //ipv6
             check(socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000).address() == "fe80:cd00:0:cde:1257:0:211e:729c");
@@ -243,7 +262,109 @@ public:
             check(socket_address("fe80:cd00:0:cde:1257:0:211e:729c%1", 10000).port() == 10000);
             check(socket_address("fe80:cd00:0:cde:1257:0:211e:729c%1", 10000).size() == sizeof(sockaddr_in6));
             check(socket_address("fe80:cd00:0:cde:1257:0:211e:729c%1", 10000).to_string() == "fe80:cd00:0:cde:1257:0:211e:729c%1:10000");
+            check(socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000) == socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000));
+            check(!(socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000) == socket_address("fe80:cd00:0:cde:1257:0:211e:729d", 10000)));
+            check(socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000) != socket_address("fe80:cd00:0:cde:1257:0:211e:729d", 10000));
+            check(!(socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000) != socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000)));
+            check(socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000) < socket_address("fe80:cd00:0:cde:1257:0:211e:729d", 10000));
+            check(!(socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000) < socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000)));
+            check(socket_address("fe80:cd00:0:cde:1257:0:211e:729d", 10000) > socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000));
+            check(!(socket_address("fe80:cd00:0:cde:1257:0:211e:729d", 10000) > socket_address("fe80:cd00:0:cde:1257:0:211e:729d", 10000)));
+            check(socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000) <= socket_address("fe80:cd00:0:cde:1257:0:211e:729d", 10000));
+            check(!(socket_address("fe80:cd00:0:cde:1257:0:211e:729d", 10000) <= socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000)));
+            check(socket_address("fe80:cd00:0:cde:1257:0:211e:729d", 10000) >= socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000));
+            check(!(socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000) >= socket_address("fe80:cd00:0:cde:1257:0:211e:729d", 10000)));
+            check(socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000) <= socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000));
+            check(!(socket_address("fe80:cd00:0:cde:1257:0:211e:729d", 10000) <= socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000)));
+            check(socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000) >= socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000));
+            check(!(socket_address("fe80:cd00:0:cde:1257:0:211e:729c", 10000) >= socket_address("fe80:cd00:0:cde:1257:0:211e:729d", 10000)));
             });
+    }
+};
+
+
+class socket_test {
+public:
+    socket_test() {
+        test("class socket", []() {
+            test_invalid_socket();
+            test_tcp_socket();
+            test_udp_socket();
+            });
+    }
+
+private:
+    static void test_invalid_socket() {
+        netlib::socket s;
+        check(!s);
+    }
+
+    static constexpr size_t test_message_count = 10;
+    static inline const char message[] = "hello world";
+
+    static void test_tcp_socket() {
+        std::thread server_thread([] {
+            netlib::socket s(address_family::ipv4, socket_type::stream);
+
+            s.bind(socket_address({"", address_family::ipv4}, 10000));
+            s.listen();
+
+            auto [client_socket, client_address] = s.accept();
+
+            for (size_t i = 0; i < test_message_count; ++i) {
+                client_socket.send(message, sizeof(message) - 1);
+            }
+            });
+
+        std::thread client_thread([] {
+            netlib::socket s(address_family::ipv4, socket_type::stream);
+
+            s.connect(socket_address({ "", address_family::ipv4 }, 10000));
+
+            for (size_t i = 0; i < test_message_count; ++i) {
+                char buf[32];
+
+                const size_t size = s.receive(buf, sizeof(buf));
+
+                check(size == sizeof(message) - 1);
+                check(strncmp(buf, message, size) == 0);
+            }
+            });
+
+        client_thread.join();
+        server_thread.join();
+    }
+
+    static void test_udp_socket() {
+        socket_address addr({ "", address_family::ipv4 }, 10000);
+        netlib::socket s(address_family::ipv4, socket_type::datagram);
+        s.bind(addr);
+
+        std::thread server_thread([&] {
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+            for (size_t i = 0; i < test_message_count; ++i) {
+                s.send(message, sizeof(message) - 1, addr);
+            }
+            });
+
+        std::thread client_thread([&] {
+            socket_address receive_addr;
+
+            for (size_t i = 0; i < test_message_count; ++i) {
+                char buf[32];
+
+                const size_t size = s.receive(buf, sizeof(buf), receive_addr);
+
+                check(size == sizeof(message) - 1);
+                check(strncmp(buf, message, size) == 0);
+                check(receive_addr == addr);
+            }
+            });
+
+        client_thread.join();
+        server_thread.join();
     }
 };
 
@@ -253,9 +374,10 @@ int main() {
     address_family_test();
     socket_type_test();
     protocol_test();
-    internet_address_test();
-    utility_test();
+    //internet_address_test();
+    //utility_test();
     socket_address_test();
+    socket_test();
     cleanup();
 
     system("pause");

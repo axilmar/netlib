@@ -71,12 +71,82 @@ namespace netlib {
          */
         std::string to_string() const;
 
+        /**
+         * Checks if this socket address is equal to the given socket address.
+         * @param other the other socket address.
+         * @return true on success, false on failure.
+         */
+        bool operator == (const socket_address& other) const;
+
+        /**
+         * Checks if this socket address is different than the given socket address.
+         * @param other the other socket address.
+         * @return true on success, false on failure.
+         */
+        bool operator != (const socket_address& other) const;
+
+        /**
+         * Checks if this socket address is less than the given socket address.
+         * @param other the other socket address.
+         * @return true on success, false on failure.
+         * @exception std::invalid_argument thrown if the given socket address is of another address family.
+         */
+        bool operator < (const socket_address& other) const;
+
+        /**
+         * Checks if this socket address is greater than the given socket address.
+         * @param other the other socket address.
+         * @return true on success, false on failure.
+         * @exception std::invalid_argument thrown if the given socket address is of another address family.
+         */
+        bool operator > (const socket_address& other) const;
+
+        /**
+         * Checks if this socket address is less than or equal to the given socket address.
+         * @param other the other socket address.
+         * @return true on success, false on failure.
+         * @exception std::invalid_argument thrown if the given socket address is of another address family.
+         */
+        bool operator <= (const socket_address& other) const;
+
+        /**
+         * Checks if this socket address is greater than or equal to the given socket address.
+         * @param other the other socket address.
+         * @return true on success, false on failure.
+         * @exception std::invalid_argument thrown if the given socket address is of another address family.
+         */
+        bool operator >= (const socket_address& other) const;
+
+        /**
+         * Returns the hash value for this socket address. 
+         */
+        size_t hash() const noexcept;
+
     private:
         char m_data[data_size];
     };
 
 
 } //namespace netlib
+
+
+namespace std {
+
+
+    /**
+     * Get hash value for netlib::socket_address.
+     */
+    template <> struct hash<netlib::socket_address> {
+        /**
+         * Returns addr.hash().
+         */
+        size_t operator ()(const netlib::socket_address& addr) const noexcept {
+            return addr.hash();
+        }
+    };
+
+
+} //namespace std
 
 
 #endif //NETLIB_SOCKET_ADDRESS_HPP

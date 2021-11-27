@@ -150,6 +150,11 @@ namespace netlib {
          */
         size_t receive(void* buffer, size_t size, socket_address& address, int flags = 0);
 
+        /**
+         * Checks if this socket is valid. 
+         */
+        explicit operator bool() const noexcept;
+
     private:
         uintptr_t m_handle;
 
