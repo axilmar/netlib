@@ -33,10 +33,8 @@ namespace netlib {
 
     //checks value stored in size_t against int
     static void check_buffer_size(size_t size) {
-        if constexpr (sizeof(int) < sizeof(size_t)) {
-            if (size > std::numeric_limits<int>::max()) {
-                throw std::invalid_argument("Given size value too large for the sockets API.");
-            }
+        if (size > static_cast<size_t>(std::numeric_limits<int>::max())) {
+            throw std::invalid_argument("Given size value too large for the sockets API.");
         }
     }
 
