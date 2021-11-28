@@ -287,14 +287,14 @@ class socket_test {
 public:
     socket_test() {
         test("class socket", []() {
-            test_invalid_socket();
-            test_tcp_socket();
-            test_udp_socket();
+            invalid_socket_test();
+            tcp_socket_test();
+            udp_socket_test();
             });
     }
 
 private:
-    static void test_invalid_socket() {
+    static void invalid_socket_test() {
         netlib::socket s;
         check(!s);
     }
@@ -302,32 +302,42 @@ private:
     static constexpr size_t test_message_count = 10;
     static inline const char message[] = "hello world";
 
-    static void test_tcp_socket() {
+    static void tcp_socket_test() {
         std::thread server_thread([] {
-            netlib::socket s(address_family::ipv4, socket_type::stream);
+            try {
+                netlib::socket s(address_family::ipv4, socket_type::stream);
 
-            s.bind(socket_address({"", address_family::ipv4}, 10000));
-            s.listen();
+                s.bind(socket_address({ "", address_family::ipv4 }, 10000));
+                s.listen();
 
-            auto [client_socket, client_address] = s.accept();
+                auto [client_socket, client_address] = s.accept();
 
-            for (size_t i = 0; i < test_message_count; ++i) {
-                client_socket.send(message, sizeof(message) - 1);
+                for (size_t i = 0; i < test_message_count; ++i) {
+                    client_socket.send(message, sizeof(message) - 1);
+                }
+            }
+            catch (const std::exception& ex) {
+                std::cout << "Exception thrown by server: " << ex.what() << std::endl;
             }
             });
 
         std::thread client_thread([] {
-            netlib::socket s(address_family::ipv4, socket_type::stream);
+            try {
+                netlib::socket s(address_family::ipv4, socket_type::stream);
 
-            s.connect(socket_address({ "", address_family::ipv4 }, 10000));
+                s.connect(socket_address({ "", address_family::ipv4 }, 10000));
 
-            for (size_t i = 0; i < test_message_count; ++i) {
-                char buf[32];
+                for (size_t i = 0; i < test_message_count; ++i) {
+                    char buf[32];
 
-                const size_t size = s.receive(buf, sizeof(buf));
+                    const size_t size = s.receive(buf, sizeof(message) - 1);
 
-                check(size == sizeof(message) - 1);
-                check(strncmp(buf, message, size) == 0);
+                    check(size == sizeof(message) - 1);
+                    check(strncmp(buf, message, size) == 0);
+                }
+            }
+            catch (const std::exception& ex) {
+                std::cout << "Exception thrown by client: " << ex.what() << std::endl;
             }
             });
 
@@ -335,31 +345,40 @@ private:
         server_thread.join();
     }
 
-    static void test_udp_socket() {
+    static void udp_socket_test() {
         socket_address addr({ "", address_family::ipv4 }, 10000);
         netlib::socket s(address_family::ipv4, socket_type::datagram);
         s.bind(addr);
 
         std::thread server_thread([&] {
+            try {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
-            for (size_t i = 0; i < test_message_count; ++i) {
-                s.send(message, sizeof(message) - 1, addr);
+                for (size_t i = 0; i < test_message_count; ++i) {
+                    s.send(message, sizeof(message) - 1, addr);
+                }
+            }
+            catch (const std::exception& ex) {
+                std::cout << "Exception thrown by server: " << ex.what() << std::endl;
             }
             });
 
         std::thread client_thread([&] {
-            socket_address receive_addr;
+            try {
+                socket_address receive_addr;
 
-            for (size_t i = 0; i < test_message_count; ++i) {
-                char buf[32];
+                for (size_t i = 0; i < test_message_count; ++i) {
+                    char buf[32];
 
-                const size_t size = s.receive(buf, sizeof(buf), receive_addr);
+                    const size_t size = s.receive(buf, sizeof(buf), receive_addr);
 
-                check(size == sizeof(message) - 1);
-                check(strncmp(buf, message, size) == 0);
-                check(receive_addr == addr);
+                    check(size == sizeof(message) - 1);
+                    check(strncmp(buf, message, size) == 0);
+                    check(receive_addr == addr);
+                }
+            }
+            catch (const std::exception& ex) {
+                std::cout << "Exception thrown by client: " << ex.what() << std::endl;
             }
             });
 
@@ -374,8 +393,8 @@ int main() {
     address_family_test();
     socket_type_test();
     protocol_test();
-    //internet_address_test();
-    //utility_test();
+    internet_address_test();
+    utility_test();
     socket_address_test();
     socket_test();
     cleanup();
