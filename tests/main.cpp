@@ -404,6 +404,31 @@ private:
         int y;
     };
 
+    struct non_trivial {
+        int x;
+        int y;
+
+        non_trivial() {}
+
+        non_trivial(int x, int y) : x(x), y(y) {}
+
+        template <class Obj, class F> static void visit(Obj&& obj, F&& func) {
+            apply(func, obj.x, obj.y);
+        }
+
+        void serialize(std::vector<char>& buffer) const {
+            visit(*this, [&](const auto& v) { netlib::serialize(buffer, v); });
+        }
+
+        void deserialize(const std::vector<char>& buffer, size_t& pos) {
+            visit(*this, [&](auto& v) { netlib::deserialize(buffer, pos, v); });
+        }
+
+        bool operator == (const non_trivial& other) const {
+            return x == other.x && y == other.y;
+        }
+    };
+
     static void trivial_serialization_test() {
         std::vector<char> buffer;
 
@@ -419,6 +444,7 @@ private:
         const double f64 = 6.28;
         const bool b = true;
         const trivial t{1, 2};
+        const non_trivial nt{3, 4};
 
         serialize(buffer, i8);
         serialize(buffer, i16);
@@ -432,6 +458,15 @@ private:
         serialize(buffer, f64);
         serialize(buffer, b);
         serialize(buffer, t);
+        serialize(buffer, nt);
+
+        check(buffer.size() ==
+            sizeof(i8) + sizeof(i16) + sizeof(i32) + sizeof(i64) +
+            sizeof(u8) + sizeof(u16) + sizeof(u32) + sizeof(u64) +
+            sizeof(f32) + sizeof(f64) +
+            1 +
+            sizeof(t) +
+            sizeof(nt));
 
         size_t pos = 0;
 
@@ -447,6 +482,7 @@ private:
         double rf64;
         bool rb;
         trivial rt;
+        non_trivial rnt;
 
         deserialize(buffer, pos, ri8);
         deserialize(buffer, pos, ri16);
@@ -460,6 +496,7 @@ private:
         deserialize(buffer, pos, rf64);
         deserialize(buffer, pos, rb);
         deserialize(buffer, pos, rt);
+        deserialize(buffer, pos, rnt);
 
         check(i8 == ri8);
         check(i16 == ri16);
@@ -473,6 +510,7 @@ private:
         check(f64 == rf64);
         check(b == rb);
         check(t.x == rt.x && t.y == rt.y);
+        check(nt == rnt);
     }
 
     static void trivial_array_serialization_test() {
@@ -490,6 +528,7 @@ private:
         const double f64[] = { 6.28, 12.56 };
         const bool b[] = { true, false };
         const trivial t[] = { { 1, 2 }, {3, 4} };
+        const non_trivial nt[] = { {5, 6}, {7, 8} };
 
         serialize(buffer, i8, 2);
         serialize(buffer, i16, 2);
@@ -503,13 +542,15 @@ private:
         serialize(buffer, f64, 2);
         serialize(buffer, b, 2);
         serialize(buffer, t, 2);
+        serialize(buffer, nt, 2);
 
         check(buffer.size() == 
             sizeof(i8) + sizeof(i16) + sizeof(i32) + sizeof(i64) + 
             sizeof(u8) + sizeof(u16) + sizeof(u32) + sizeof(u64) + 
             sizeof(f32) + sizeof(f64) + 
             (((sizeof(b) / sizeof(bool)) + CHAR_BIT - 1) / CHAR_BIT) + 
-            sizeof(t));
+            sizeof(t) +
+            sizeof(nt));
 
         size_t pos = 0;
 

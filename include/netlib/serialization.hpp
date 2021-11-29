@@ -19,6 +19,16 @@ namespace netlib {
 
 
     /**
+     * Application of a function to multiple values. 
+     * @param func function to invoke.
+     * @param values to apply to function.
+     */
+    template <class F, class... T> void apply(F&& func, T&&... values) {
+        (func(std::forward<T>(values)), ...);
+    }
+
+
+    /**
      * Checks if this platform is little endian.
      * @return true if this platform is little endian, false otherwise.
      */
@@ -227,7 +237,7 @@ namespace netlib {
      * @param buffer std::vector-like buffer to that contains the data; its value type size must be 1.
      * @param pos current position into the buffer; at return, the next available position.
      * @param values values to deserialize.
-     * @param array_size size of array.
+     * @param array_size size of the array.
      */
     template <class Buffer> void deserialize(Buffer& buffer, size_t& pos, bool* values, const size_t array_size) {
         //find size of required bytes
@@ -251,6 +261,64 @@ namespace netlib {
         //update position
         pos += byte_size;
     }
+
+
+    /**
+     * Serializes a non-trivial value into a buffer.
+     * It invokes the member function 'serialize(buffer)'.
+     * @param buffer std::vector-like buffer to store the value; its value type size must be 1.
+     * @param value the value to serialize.
+     */
+    template <class Buffer, class T> std::enable_if_t<!std::is_trivial_v<T>>
+        serialize(Buffer& buffer, const T& value) {
+            value.serialize(buffer);
+        }
+
+
+    /**
+     * Deserializes a non-trivial value from a buffer.
+     * It invokes the member function 'deserialize(buffer, pos)'.
+     * @param buffer std::vector-like buffer to that contains the data; its value type size must be 1.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param value the value to deserialize.
+     * @exception std::out_of_range thrown if the position points beyond the last byte of the buffer.
+     */
+    template <class Buffer, class T> std::enable_if_t<!std::is_trivial_v<T>>
+        deserialize(const Buffer& buffer, size_t& pos, T& value) {
+            value.deserialize(buffer, pos);
+        }
+
+
+    /**
+     * Serializes an array of non-trivials values into a buffer.
+     * It invokes the member function 'serialize(buffer)' for each element in the array.
+     * @param buffer std::vector-like buffer to store the value; its value type size must be 1.
+     * @param values the values to serialize.
+     * @param array_size size of the array.
+     */
+    template <class Buffer, class T> std::enable_if_t<!std::is_trivial_v<T>>
+        serialize(Buffer& buffer, const T* values, const size_t array_size) {
+            for (const T* end = values + array_size; values < end;  ++values) {
+                values->serialize(buffer);
+            }
+        }
+
+
+    /**
+     * Deserializes an array of non-trivial values from a buffer.
+     * It invokes the member function 'deserialize(buffer, pos)' for each element in the array.
+     * @param buffer std::vector-like buffer to that contains the data; its value type size must be 1.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param values the values to deserialize.
+     * @param array_size size of the array.
+     * @exception std::out_of_range thrown if the position points beyond the last byte of the buffer.
+     */
+    template <class Buffer, class T> std::enable_if_t<!std::is_trivial_v<T>>
+        deserialize(const Buffer& buffer, size_t& pos, T* values, const size_t array_size) {
+            for (const T* end = values + array_size; values < end; ++values) {
+                values->deserialize(buffer, pos);
+            }
+        }
 
 
 } //namespace netlib
