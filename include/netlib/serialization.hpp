@@ -9,6 +9,7 @@
 #include <variant>
 #include <array>
 #include <vector>
+#include <deque>
 
 
 /**
@@ -527,6 +528,35 @@ namespace netlib {
         deserialize(buffer, pos, size);
         vec.resize(size);
         deserialize(buffer, pos, vec.data(), size);
+    }
+
+
+    /**
+     * Serializes an std::deque.
+     * @param buffer buffer that contains the data.
+     * @param dq deque to serialize.
+     */
+    template <class Buffer, class T, class Alloc> void serialize(Buffer& buffer, const std::deque<T, Alloc>& dq) {
+        serialize(buffer, dq.size());
+        for (const auto& elem : dq) {
+            serialize(buffer, elem);
+        }
+    }
+
+
+    /**
+     * Deserializes an std::deque.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param dq deque to deserialize.
+     */
+    template <class Buffer, class T, class Alloc> void deserialize(const Buffer& buffer, size_t& pos, std::deque<T, Alloc>& dq) {
+        size_t size;
+        deserialize(buffer, pos, size);
+        dq.resize(size);
+        for (auto& elem : dq) {
+            deserialize(buffer, pos, elem);
+        }
     }
 
 
