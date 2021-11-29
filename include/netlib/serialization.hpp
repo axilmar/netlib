@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <utility>
 #include <tuple>
+#include <optional>
 
 
 /**
@@ -319,7 +320,7 @@ namespace netlib {
         deserialize(const Buffer& buffer, size_t& pos, T* values, const size_t array_size) {
             for (const T* end = values + array_size; values < end; ++values) {
                 values->deserialize(buffer, pos);
-            }
+            }       
         }
 
 
@@ -338,7 +339,7 @@ namespace netlib {
      * Deserializes a pair.
      * @param buffer buffer that contains the data.
      * @param pos current position into the buffer; at return, the next available position.
-     * @param p pair to serialize.
+     * @param p pair to deserialize.
      */
     template <class Buffer, class T1, class T2> void deserialize(const Buffer& buffer, size_t& pos, std::pair<T1, T2>& p) {
         deserialize(buffer, pos, p.first);
@@ -364,6 +365,71 @@ namespace netlib {
      */
     template <class Buffer, class... T> void deserialize(const Buffer& buffer, size_t& pos, std::tuple<T...>& t) {
         std::apply([&](auto&... v) { (deserialize(buffer, pos, v), ...); }, t);
+    }
+
+
+    /**
+     * Serializes an optional.
+     * @param buffer buffer that contains the data.
+     * @param opt optional to serialize.
+     */
+    template <class Buffer, class T> void serialize(Buffer& buffer, const std::optional<T>& opt) {
+        serialize(buffer, opt.has_value());
+
+        if (opt.has_value()) {
+            serialize(buffer, opt.value());
+        }
+    }
+
+
+    /**
+     * Deserializes an optional.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param opt optional to deserialize.
+     */
+    template <class Buffer, class T> void deserialize(const Buffer& buffer, size_t& pos, std::optional<T>& opt) {
+        bool b;
+        deserialize(buffer, pos, b);
+
+        if (b) {
+            T value;
+            deserialize(buffer, pos, value);
+            opt = std::move(value);
+        }
+
+        else {
+            opt.reset();
+        }
+    }
+
+
+    /**
+     * Serializes multiple values at once.
+     * @param buffer buffer that contains the data.
+     * @param value1 first value to serialize.
+     * @param value2 second value to serialize.
+     * @param values values to serialize.
+     */
+    template <class Buffer, class T1, class T2, class... T> void serialize(Buffer& buffer, const T1& value1, const T2& value2, const T&... values) {
+        serialize(buffer, value1);
+        serialize(buffer, value2);
+        (serialize(buffer, values), ...);
+    }
+
+
+    /**
+     * Deserializes multiple values at once.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param value1 first value to deserialize.
+     * @param value2 second valut to deserialize.
+     * @param values rest of values to deserialize.
+     */
+    template <class Buffer, class T1, class T2, class... T> void deserialize(Buffer& buffer, size_t& pos, T1& value1, T2& value2, T&... values) {
+        deserialize(buffer, pos, value1);
+        deserialize(buffer, pos, value2);
+        (deserialize(buffer, pos, values), ...);
     }
 
 

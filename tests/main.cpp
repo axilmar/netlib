@@ -531,19 +531,19 @@ private:
         const trivial t[] = { { 1, 2 }, {3, 4} };
         const non_trivial nt[] = { {5, 6}, {7, 8} };
 
-        serialize(buffer, i8, 2);
-        serialize(buffer, i16, 2);
-        serialize(buffer, i32, 2);
-        serialize(buffer, i64, 2);
-        serialize(buffer, u8, 2);
-        serialize(buffer, u16, 2);
-        serialize(buffer, u32, 2);
-        serialize(buffer, u64, 2);
-        serialize(buffer, f32, 2);
-        serialize(buffer, f64, 2);
-        serialize(buffer, b, 2);
-        serialize(buffer, t, 2);
-        serialize(buffer, nt, 2);
+        serialize(buffer, i8, size_t(2));
+        serialize(buffer, i16, size_t(2));
+        serialize(buffer, i32, size_t(2));
+        serialize(buffer, i64, size_t(2));
+        serialize(buffer, u8, size_t(2));
+        serialize(buffer, u16, size_t(2));
+        serialize(buffer, u32, size_t(2));
+        serialize(buffer, u64, size_t(2));
+        serialize(buffer, f32, size_t(2));
+        serialize(buffer, f64, size_t(2));
+        serialize(buffer, b, size_t(2));
+        serialize(buffer, t, size_t(2));
+        serialize(buffer, nt, size_t(2));
 
         check(buffer.size() == 
             sizeof(i8) + sizeof(i16) + sizeof(i32) + sizeof(i64) + 
@@ -568,18 +568,18 @@ private:
         bool rb[2];
         trivial rt[2];
 
-        deserialize(buffer, pos, ri8, 2);
-        deserialize(buffer, pos, ri16, 2);
-        deserialize(buffer, pos, ri32, 2);
-        deserialize(buffer, pos, ri64, 2);
-        deserialize(buffer, pos, ru8, 2);
-        deserialize(buffer, pos, ru16, 2);
-        deserialize(buffer, pos, ru32, 2);
-        deserialize(buffer, pos, ru64, 2);
-        deserialize(buffer, pos, rf32, 2);
-        deserialize(buffer, pos, rf64, 2);
-        deserialize(buffer, pos, rb, 2);
-        deserialize(buffer, pos, rt, 2);
+        deserialize(buffer, pos, ri8, size_t(2));
+        deserialize(buffer, pos, ri16, size_t(2));
+        deserialize(buffer, pos, ri32, size_t(2));
+        deserialize(buffer, pos, ri64, size_t(2));
+        deserialize(buffer, pos, ru8, size_t(2));
+        deserialize(buffer, pos, ru16, size_t(2));
+        deserialize(buffer, pos, ru32, size_t(2));
+        deserialize(buffer, pos, ru64, size_t(2));
+        deserialize(buffer, pos, rf32, size_t(2));
+        deserialize(buffer, pos, rf64, size_t(2));
+        deserialize(buffer, pos, rb, size_t(2));
+        deserialize(buffer, pos, rt, size_t(2));
 
         check(memcmp(i8, ri8, sizeof(i8)) == 0);
         check(memcmp(i16, ri16, sizeof(i16)) == 0);
@@ -600,20 +600,27 @@ private:
 
         const std::pair<int, double> p1{ 1, 3.14 };
         const std::tuple<int, double, char> t1{ 1, 3.14, 'c' };
+        const std::optional<int> opt1{ 1 };
+        const std::optional<int> opt2;
 
         serialize(buffer, p1);
         serialize(buffer, t1);
+        serialize(buffer, opt1, opt2);
 
         size_t pos = 0;
 
         std::pair<int, double> rp1;
         std::tuple<int, double, char> rt1;
+        std::optional<int> ropt1;
+        std::optional<int> ropt2;
 
         deserialize(buffer, pos, rp1);
         deserialize(buffer, pos, rt1);
+        deserialize(buffer, pos, ropt1, ropt2);
 
         check(p1 == rp1);
         check(t1 == rt1);
+        check(opt1 == ropt1 && opt2 == ropt2);
     }
 };
 
