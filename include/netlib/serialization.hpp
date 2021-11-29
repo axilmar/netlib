@@ -7,6 +7,8 @@
 #include <tuple>
 #include <optional>
 #include <variant>
+#include <array>
+#include <vector>
 
 
 /**
@@ -472,13 +474,59 @@ namespace netlib {
      * @param buffer buffer that contains the data.
      * @param pos current position into the buffer; at return, the next available position.
      * @param value1 first value to deserialize.
-     * @param value2 second valut to deserialize.
+     * @param value2 second value to deserialize.
      * @param values rest of values to deserialize.
      */
     template <class Buffer, class T1, class T2, class... T> void deserialize(Buffer& buffer, size_t& pos, T1& value1, T2& value2, T&... values) {
         deserialize(buffer, pos, value1);
         deserialize(buffer, pos, value2);
         (deserialize(buffer, pos, values), ...);
+    }
+
+
+    /**
+     * Serializes an std::array.
+     * @param buffer buffer that contains the data.
+     * @param array array to serialize.
+     */
+    template <class Buffer, class T, size_t N> void serialize(Buffer& buffer, const std::array<T, N>& array) {
+        serialize(buffer, array.data(), N);
+    }
+
+
+    /**
+     * Deserializes an std::array.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param array array to deserialize.
+     */
+    template <class Buffer, class T, size_t N> void deserialize(const Buffer& buffer, size_t& pos, std::array<T, N>& array) {
+        deserialize(buffer, pos, array.data(), N);
+    }
+
+
+    /**
+     * Serializes an std::vector.
+     * @param buffer buffer that contains the data.
+     * @param vec vector to serialize.
+     */
+    template <class Buffer, class T, class Alloc> void serialize(Buffer& buffer, const std::vector<T, Alloc>& vec) {
+        serialize(buffer, vec.size());
+        serialize(buffer, vec.data(), vec.size());
+    }
+
+
+    /**
+     * Deserializes an std::vector.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param vec vector to deserialize.
+     */
+    template <class Buffer, class T, class Alloc> void deserialize(const Buffer& buffer, size_t& pos, std::vector<T, Alloc>& vec) {
+        size_t size;
+        deserialize(buffer, pos, size);
+        vec.resize(size);
+        deserialize(buffer, pos, vec.data(), size);
     }
 
 
