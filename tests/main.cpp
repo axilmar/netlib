@@ -602,10 +602,12 @@ private:
         const std::tuple<int, double, char> t1{ 1, 3.14, 'c' };
         const std::optional<int> opt1{ 1 };
         const std::optional<int> opt2;
+        const std::variant<int, double, char> v1 = 3.14;
 
         serialize(buffer, p1);
         serialize(buffer, t1);
         serialize(buffer, opt1, opt2);
+        serialize(buffer, v1);
 
         size_t pos = 0;
 
@@ -613,14 +615,17 @@ private:
         std::tuple<int, double, char> rt1;
         std::optional<int> ropt1;
         std::optional<int> ropt2;
+        std::variant<int, double, char> rv1;
 
         deserialize(buffer, pos, rp1);
         deserialize(buffer, pos, rt1);
         deserialize(buffer, pos, ropt1, ropt2);
+        deserialize(buffer, pos, rv1);
 
         check(p1 == rp1);
         check(t1 == rt1);
         check(opt1 == ropt1 && opt2 == ropt2);
+        check(v1 == rv1);
     }
 };
 

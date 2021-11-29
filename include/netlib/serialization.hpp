@@ -6,6 +6,7 @@
 #include <utility>
 #include <tuple>
 #include <optional>
+#include <variant>
 
 
 /**
@@ -401,6 +402,54 @@ namespace netlib {
         else {
             opt.reset();
         }
+    }
+
+
+    /**
+     * Serializes a variant.
+     * @param buffer buffer that contains the data.
+     * @param v variant to serialize.
+     * @exception std::invalid_argument thrown if the variant is valueless by exception.
+     */
+    template <class Buffer, class... T> void serialize(Buffer& buffer, const std::variant<T...>& v) {
+        //cannot serialize empty variant
+        if (v.valueless_by_exception()) {
+            throw std::invalid_argument("Cannot serialize a valueless variant.");
+        }
+
+        //serialize the index
+        serialize(buffer, v.index());
+
+        //serialize the value
+        visit([&](const auto& v) { serialize(buffer, v); }, v);
+    }
+
+
+    /**
+     * Deserializes a variant.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param v variant to deserialize.
+     * @exception std::invalid_argument thrown if the variant's serialized index indicates a valueless by exception variant.
+     */
+    template <class Buffer, class... T> void deserialize(const Buffer& buffer, size_t& pos, std::variant<T...>& v) {
+        //deserialize the index
+        size_t index;
+        deserialize(buffer, pos, index);
+
+        //check for invalid index
+        if (index == std::variant_npos) {
+            throw std::invalid_argument("Cannot deserialize a valueless variant.");
+        }
+
+        //init functions table
+        static std::variant<T...> (*const init_func[])() = { +[]() { return std::variant<T...>{T{}}; }... };
+
+        //init variant from index
+        v = init_func[index]();
+
+        //deserialize the value
+        visit([&](auto& v) { deserialize(buffer, pos, v); }, v);
     }
 
 
