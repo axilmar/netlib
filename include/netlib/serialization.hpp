@@ -3,6 +3,8 @@
 
 
 #include <type_traits>
+#include <utility>
+#include <tuple>
 
 
 /**
@@ -319,6 +321,50 @@ namespace netlib {
                 values->deserialize(buffer, pos);
             }
         }
+
+
+    /**
+     * Serializes a pair.
+     * @param buffer buffer that contains the data.
+     * @param p pair to serialize.
+     */
+    template <class Buffer, class T1, class T2> void serialize(Buffer& buffer, const std::pair<T1, T2>& p) {
+        serialize(buffer, p.first);
+        serialize(buffer, p.second);
+    }
+
+
+    /**
+     * Deserializes a pair.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param p pair to serialize.
+     */
+    template <class Buffer, class T1, class T2> void deserialize(const Buffer& buffer, size_t& pos, std::pair<T1, T2>& p) {
+        deserialize(buffer, pos, p.first);
+        deserialize(buffer, pos, p.second);
+    }
+
+
+    /**
+     * Serializes a tuple.
+     * @param buffer buffer that contains the data.
+     * @param t tuple to serialize.
+     */
+    template <class Buffer, class... T> void serialize(Buffer& buffer, const std::tuple<T...>& t) {
+        std::apply([&](const auto&... v) { (serialize(buffer, v), ...); }, t);
+    }
+
+
+    /**
+     * Deserializes a tuple.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param t tuple to deserialize.
+     */
+    template <class Buffer, class... T> void deserialize(const Buffer& buffer, size_t& pos, std::tuple<T...>& t) {
+        std::apply([&](auto&... v) { (deserialize(buffer, pos, v), ...); }, t);
+    }
 
 
 } //namespace netlib

@@ -395,6 +395,7 @@ public:
         test("serialization", []() {
             trivial_serialization_test();
             trivial_array_serialization_test();
+            stl_serialization_test();
             });
     }
 
@@ -592,6 +593,27 @@ private:
         check(memcmp(f64, rf64, sizeof(f64)) == 0);
         check(memcmp(b, rb, sizeof(b)) == 0);
         check(memcmp(t, rt, sizeof(t)) == 0);
+    }
+
+    static void stl_serialization_test() {
+        std::vector<char> buffer;
+
+        const std::pair<int, double> p1{ 1, 3.14 };
+        const std::tuple<int, double, char> t1{ 1, 3.14, 'c' };
+
+        serialize(buffer, p1);
+        serialize(buffer, t1);
+
+        size_t pos = 0;
+
+        std::pair<int, double> rp1;
+        std::tuple<int, double, char> rt1;
+
+        deserialize(buffer, pos, rp1);
+        deserialize(buffer, pos, rt1);
+
+        check(p1 == rp1);
+        check(t1 == rt1);
     }
 };
 
