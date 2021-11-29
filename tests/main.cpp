@@ -17,6 +17,7 @@
 #include "netlib/utility.hpp"
 #include "netlib/socket_address.hpp"
 #include "netlib/socket.hpp"
+#include "netlib/serialization.hpp"
 
 
 using namespace netlib;
@@ -388,15 +389,182 @@ private:
 };
 
 
+class serialization_test {
+public:
+    serialization_test() {
+        test("serialization", []() {
+            trivial_serialization_test();
+            trivial_array_serialization_test();
+            });
+    }
+
+private:
+    struct trivial {
+        int x;
+        int y;
+    };
+
+    static void trivial_serialization_test() {
+        std::vector<char> buffer;
+
+        const int8_t i8 = -1;
+        const int16_t i16 = -10;
+        const int32_t i32 = -100;
+        const int32_t i64 = -1000;
+        const uint8_t u8 = 0x01;
+        const uint16_t u16 = 0x0201;
+        const uint32_t u32 = 0x4030201;
+        const uint64_t u64 = 0x0d0c0b0a4030201;
+        const float f32 = 3.14f;
+        const double f64 = 6.28;
+        const bool b = true;
+        const trivial t{1, 2};
+
+        serialize(buffer, i8);
+        serialize(buffer, i16);
+        serialize(buffer, i32);
+        serialize(buffer, i64);
+        serialize(buffer, u8);
+        serialize(buffer, u16);
+        serialize(buffer, u32);
+        serialize(buffer, u64);
+        serialize(buffer, f32);
+        serialize(buffer, f64);
+        serialize(buffer, b);
+        serialize(buffer, t);
+
+        size_t pos = 0;
+
+        int8_t ri8;
+        int16_t ri16;
+        int32_t ri32;
+        int32_t ri64;
+        uint8_t ru8;
+        uint16_t ru16;
+        uint32_t ru32;
+        uint64_t ru64;
+        float rf32;
+        double rf64;
+        bool rb;
+        trivial rt;
+
+        deserialize(buffer, pos, ri8);
+        deserialize(buffer, pos, ri16);
+        deserialize(buffer, pos, ri32);
+        deserialize(buffer, pos, ri64);
+        deserialize(buffer, pos, ru8);
+        deserialize(buffer, pos, ru16);
+        deserialize(buffer, pos, ru32);
+        deserialize(buffer, pos, ru64);
+        deserialize(buffer, pos, rf32);
+        deserialize(buffer, pos, rf64);
+        deserialize(buffer, pos, rb);
+        deserialize(buffer, pos, rt);
+
+        check(i8 == ri8);
+        check(i16 == ri16);
+        check(i32 == ri32);
+        check(i64 == ri64);
+        check(u8 == ru8);
+        check(u16 == ru16);
+        check(u32 == ru32);
+        check(u64 == ru64);
+        check(f32 == rf32);
+        check(f64 == rf64);
+        check(b == rb);
+        check(t.x == rt.x && t.y == rt.y);
+    }
+
+    static void trivial_array_serialization_test() {
+        std::vector<char> buffer;
+
+        const int8_t i8[] = { -1, -2 };
+        const int16_t i16[] = { -10, -20 };
+        const int32_t i32[] = { -100, -200 };
+        const int32_t i64[] = { -1000, -2000 };
+        const uint8_t u8[] = { 0x01, 0x02 };
+        const uint16_t u16[] = { 0x0201, 0x0102 };
+        const uint32_t u32[] = { 0x4030201, 0x01020304 };
+        const uint64_t u64[] = { 0x0d0c0b0a8040201, 0x010204080a0b0c0d };
+        const float f32[] = { 3.14f, 6.28f };
+        const double f64[] = { 6.28, 12.56 };
+        const bool b[] = { true, false };
+        const trivial t[] = { { 1, 2 }, {3, 4} };
+
+        serialize(buffer, i8, 2);
+        serialize(buffer, i16, 2);
+        serialize(buffer, i32, 2);
+        serialize(buffer, i64, 2);
+        serialize(buffer, u8, 2);
+        serialize(buffer, u16, 2);
+        serialize(buffer, u32, 2);
+        serialize(buffer, u64, 2);
+        serialize(buffer, f32, 2);
+        serialize(buffer, f64, 2);
+        serialize(buffer, b, 2);
+        serialize(buffer, t, 2);
+
+        check(buffer.size() == 
+            sizeof(i8) + sizeof(i16) + sizeof(i32) + sizeof(i64) + 
+            sizeof(u8) + sizeof(u16) + sizeof(u32) + sizeof(u64) + 
+            sizeof(f32) + sizeof(f64) + 
+            (((sizeof(b) / sizeof(bool)) + CHAR_BIT - 1) / CHAR_BIT) + 
+            sizeof(t));
+
+        size_t pos = 0;
+
+        int8_t ri8[2];
+        int16_t ri16[2];
+        int32_t ri32[2];
+        int32_t ri64[2];
+        uint8_t ru8[2];
+        uint16_t ru16[2];
+        uint32_t ru32[2];
+        uint64_t ru64[2];
+        float rf32[2];
+        double rf64[2];
+        bool rb[2];
+        trivial rt[2];
+
+        deserialize(buffer, pos, ri8, 2);
+        deserialize(buffer, pos, ri16, 2);
+        deserialize(buffer, pos, ri32, 2);
+        deserialize(buffer, pos, ri64, 2);
+        deserialize(buffer, pos, ru8, 2);
+        deserialize(buffer, pos, ru16, 2);
+        deserialize(buffer, pos, ru32, 2);
+        deserialize(buffer, pos, ru64, 2);
+        deserialize(buffer, pos, rf32, 2);
+        deserialize(buffer, pos, rf64, 2);
+        deserialize(buffer, pos, rb, 2);
+        deserialize(buffer, pos, rt, 2);
+
+        check(memcmp(i8, ri8, sizeof(i8)) == 0);
+        check(memcmp(i16, ri16, sizeof(i16)) == 0);
+        check(memcmp(i32, ri32, sizeof(i32)) == 0);
+        check(memcmp(i64, ri64, sizeof(i64)) == 0);
+        check(memcmp(u8, ru8, sizeof(u8)) == 0);
+        check(memcmp(u16, ru16, sizeof(u16)) == 0);
+        check(memcmp(u32, ru32, sizeof(u32)) == 0);
+        check(memcmp(u64, ru64, sizeof(u64)) == 0);
+        check(memcmp(f32, rf32, sizeof(f32)) == 0);
+        check(memcmp(f64, rf64, sizeof(f64)) == 0);
+        check(memcmp(b, rb, sizeof(b)) == 0);
+        check(memcmp(t, rt, sizeof(t)) == 0);
+    }
+};
+
+
 int main() {
     init();
-    address_family_test();
-    socket_type_test();
-    protocol_test();
-    internet_address_test();
-    utility_test();
-    socket_address_test();
-    socket_test();
+    //address_family_test();
+    //socket_type_test();
+    //protocol_test();
+    //internet_address_test();
+    //utility_test();
+    //socket_address_test();
+    //socket_test();
+    serialization_test();
     cleanup();
 
     system("pause");
