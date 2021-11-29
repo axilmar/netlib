@@ -10,6 +10,7 @@
 #include <array>
 #include <vector>
 #include <deque>
+#include <forward_list>
 
 
 /**
@@ -556,6 +557,68 @@ namespace netlib {
         dq.resize(size);
         for (auto& elem : dq) {
             deserialize(buffer, pos, elem);
+        }
+    }
+
+
+    /**
+     * Serializes an std::forward_list.
+     * @param buffer buffer that contains the data.
+     * @param fl forward_list to serialize.
+     * @param size list size.
+     */
+    template <class Buffer, class T, class Alloc> void serialize(Buffer& buffer, const std::forward_list<T, Alloc>& fl, const size_t size) {
+        //serialize the size
+        serialize(buffer, size);
+        
+        //serialize the elements
+        for (const auto& elem : fl) {
+            serialize(buffer, elem);
+        }
+    }
+
+
+    /**
+     * Serializes an std::forward_list.
+     * @param buffer buffer that contains the data.
+     * @param fl forward_list to serialize.
+     */
+    template <class Buffer, class T, class Alloc> void serialize(Buffer& buffer, const std::forward_list<T, Alloc>& fl) {
+        size_t size = 0;
+        for (const auto& elem : fl) {
+            ++size;
+        }
+
+        serialize(buffer, fl, size);
+    }
+
+
+    /**
+     * Deserializes an std::forward_list.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param fl forward_list to deserialize.
+     */
+    template <class Buffer, class T, class Alloc> void deserialize(const Buffer& buffer, size_t& pos, std::forward_list<T, Alloc>& fl) {
+        //get size
+        size_t size;
+        deserialize(buffer, pos, size);
+
+        //if size is greater than 0, then deserialize elements
+        if (size > 0) {
+            //deserialize the first element
+            deserialize(buffer, pos, fl.emplace_front());
+
+            //deserialize rest of elements
+            for (auto it = fl.begin(); size > 1; --size) {
+                it = fl.emplace_after(it);
+                deserialize(buffer, pos, *it);
+            }
+        }
+
+        //else clear the list
+        else {
+            fl.clear();
         }
     }
 

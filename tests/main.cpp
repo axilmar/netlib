@@ -606,6 +606,7 @@ private:
         const std::array<int, 3> arr1{1, 2, 3};
         const std::vector<int> vec1{4, 5, 6};
         const std::deque<int> dq1{ 7, 8, 9 };
+        const std::forward_list<int> fl1{ 10, 11, 12 };
 
         serialize(buffer, p1);
         serialize(buffer, t1);
@@ -614,6 +615,7 @@ private:
         serialize(buffer, arr1);
         serialize(buffer, vec1);
         serialize(buffer, dq1);
+        serialize(buffer, fl1);
 
         size_t pos = 0;
 
@@ -625,6 +627,7 @@ private:
         std::array<int, 3> rarr1;
         std::vector<int> rvec1;
         std::deque<int> rdq1;
+        std::forward_list<int> rfl1;
 
         deserialize(buffer, pos, rp1);
         deserialize(buffer, pos, rt1);
@@ -633,6 +636,7 @@ private:
         deserialize(buffer, pos, rarr1);
         deserialize(buffer, pos, rvec1);
         deserialize(buffer, pos, rdq1);
+        deserialize(buffer, pos, rfl1);
 
         check(p1 == rp1);
         check(t1 == rt1);
@@ -641,6 +645,7 @@ private:
         check(arr1 == rarr1);
         check(vec1 == rvec1);
         check(dq1 == rdq1);
+        check(fl1 == rfl1);
     }
 };
 
