@@ -308,32 +308,6 @@ namespace netlib {
 
 
     /**
-     * Serializes a non-trivial value into a buffer.
-     * It invokes the member function 'serialize(buffer)'.
-     * @param buffer std::vector-like buffer to store the value; its value type size must be 1.
-     * @param value the value to serialize.
-     */
-    template <class Buffer, class T> std::enable_if_t<!std::is_trivial_v<T>>
-        serialize(Buffer& buffer, const T& value) {
-            value.serialize(buffer);
-        }
-
-
-    /**
-     * Deserializes a non-trivial value from a buffer.
-     * It invokes the member function 'deserialize(buffer, pos)'.
-     * @param buffer std::vector-like buffer to that contains the data; its value type size must be 1.
-     * @param pos current position into the buffer; at return, the next available position.
-     * @param value the value to deserialize.
-     * @exception std::out_of_range thrown if the position points beyond the last byte of the buffer.
-     */
-    template <class Buffer, class T> std::enable_if_t<!std::is_trivial_v<T>>
-        deserialize(const Buffer& buffer, size_t& pos, T& value) {
-            value.deserialize(buffer, pos);
-        }
-
-
-    /**
      * Serializes an array of non-trivials values into a buffer.
      * It invokes the member function 'serialize(buffer)' for each element in the array.
      * @param buffer std::vector-like buffer to store the value; its value type size must be 1.
@@ -385,27 +359,6 @@ namespace netlib {
     template <class Buffer, class T1, class T2> void deserialize(const Buffer& buffer, size_t& pos, std::pair<T1, T2>& p) {
         deserialize(buffer, pos, p.first);
         deserialize(buffer, pos, p.second);
-    }
-
-
-    /**
-     * Serializes a tuple.
-     * @param buffer buffer that contains the data.
-     * @param t tuple to serialize.
-     */
-    template <class Buffer, class... T> void serialize(Buffer& buffer, const std::tuple<T...>& t) {
-        std::apply([&](const auto&... v) { (serialize(buffer, v), ...); }, t);
-    }
-
-
-    /**
-     * Deserializes a tuple.
-     * @param buffer buffer that contains the data.
-     * @param pos current position into the buffer; at return, the next available position.
-     * @param t tuple to deserialize.
-     */
-    template <class Buffer, class... T> void deserialize(const Buffer& buffer, size_t& pos, std::tuple<T...>& t) {
-        std::apply([&](auto&... v) { (deserialize(buffer, pos, v), ...); }, t);
     }
 
 
@@ -944,6 +897,53 @@ namespace netlib {
             multimap.insert(std::move(elem));
         }
     }
+
+
+    /**
+     * Serializes a non-trivial value into a buffer.
+     * It invokes the member function 'serialize(buffer)', if the object has such a method.
+     * @param buffer std::vector-like buffer to store the value; its value type size must be 1.
+     * @param value the value to serialize.
+     */
+    template <class Buffer, class T> std::enable_if_t<!std::is_trivial_v<T>/* && std::is_invocable_v<decltype(&T::serialize), Buffer&>*/>
+        serialize(Buffer& buffer, const T& value) {
+            value.serialize(buffer);
+        }
+
+
+    /**
+     * Serializes a tuple.
+     * @param buffer buffer that contains the data.
+     * @param t tuple to serialize.
+     */
+    template <class Buffer, class... T> void serialize(Buffer& buffer, const std::tuple<T...>& t) {
+        std::apply([&](const auto&... v) { (serialize(buffer, v), ...); }, t);
+    }
+
+
+    /**
+     * Deserializes a tuple.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param t tuple to deserialize.
+     */
+    template <class Buffer, class... T> void deserialize(const Buffer& buffer, size_t& pos, std::tuple<T...>& t) {
+        std::apply([&](auto&... v) { (deserialize(buffer, pos, v), ...); }, t);
+    }
+
+
+    /**
+     * Deserializes a non-trivial value from a buffer.
+     * It invokes the member function 'deserialize(buffer, pos)'.
+     * @param buffer std::vector-like buffer to that contains the data; its value type size must be 1.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param value the value to deserialize.
+     * @exception std::out_of_range thrown if the position points beyond the last byte of the buffer.
+     */
+    template <class Buffer, class T> std::enable_if_t<!std::is_trivial_v<T>>
+        deserialize(const Buffer& buffer, size_t& pos, T& value) {
+            value.deserialize(buffer, pos);
+        }
 
 
     /**

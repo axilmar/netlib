@@ -18,6 +18,8 @@
 #include "netlib/socket_address.hpp"
 #include "netlib/socket.hpp"
 #include "netlib/serialization.hpp"
+#include "netlib/message.hpp"
+#include "netlib/message_io.hpp"
 
 
 using namespace netlib;
@@ -700,16 +702,118 @@ private:
 };
 
 
+class message_test {
+public:
+    message_test() {
+        test("message I/O", []() {
+            tcp_test();
+            udp_test();
+            });
+    }
+
+private:
+    using test_message = message<size_t, std::string, double>;
+
+    static constexpr size_t test_message_count = 10;
+
+    static void tcp_test() {
+        std::thread server_thread([] {
+            try {
+                netlib::socket s(address_family::ipv4, socket_type::stream);
+
+                s.bind(socket_address({ "", address_family::ipv4 }, 10000));
+                s.listen();
+
+                auto [client_socket, client_address] = s.accept();
+
+                for (size_t i = 0; i < test_message_count; ++i) {
+                    tcp_send_message(client_socket, test_message(i, "hello world!!!", 3.14));
+                }
+            }
+            catch (const std::exception& ex) {
+                std::cout << "Exception thrown by server: " << ex.what() << std::endl;
+            }
+            });
+
+        std::thread client_thread([] {
+            try {
+                netlib::socket s(address_family::ipv4, socket_type::stream);
+
+                s.connect(socket_address({ "", address_family::ipv4 }, 10000));
+
+                for (size_t i = 0; i < test_message_count; ++i) {
+                    message_ptr msg = tcp_receive_message(s);
+                    if (msg->message_id() == test_message::id) {
+                        test_message& tm = dynamic_cast<test_message&>(*msg);
+                        check(std::get<0>(tm) == i);
+                        check(std::get<1>(tm) == "hello world!!!");
+                        check(std::get<2>(tm) == 3.14);
+                    }
+                }
+            }
+            catch (const std::exception& ex) {
+                std::cout << "Exception thrown by client: " << ex.what() << std::endl;
+            }
+            });
+
+        client_thread.join();
+        server_thread.join();
+    }
+
+    static void udp_test() {
+        socket_address addr({ "", address_family::ipv4 }, 10000);
+        netlib::socket s(address_family::ipv4, socket_type::datagram);
+        s.bind(addr);
+
+        std::thread server_thread([&] {
+            try {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+                for (size_t i = 0; i < test_message_count; ++i) {
+                    udp_send_message(s, addr, test_message(i, "hello world!!!", 3.14));
+                }
+            }
+            catch (const std::exception& ex) {
+                std::cout << "Exception thrown by server: " << ex.what() << std::endl;
+            }
+            });
+
+        std::thread client_thread([&] {
+            try {
+                socket_address receive_addr;
+
+                for (size_t i = 0; i < test_message_count; ++i) {
+                    message_ptr msg = udp_receive_message(s, receive_addr);
+                    if (msg->message_id() == test_message::id) {
+                        test_message& tm = dynamic_cast<test_message&>(*msg);
+                        check(std::get<0>(tm) == i);
+                        check(std::get<1>(tm) == "hello world!!!");
+                        check(std::get<2>(tm) == 3.14);
+                    }
+                }
+            }
+            catch (const std::exception& ex) {
+                std::cout << "Exception thrown by client: " << ex.what() << std::endl;
+            }
+            });
+
+        client_thread.join();
+        server_thread.join();
+    }
+};
+
+
 int main() {
     init();
-    //address_family_test();
-    //socket_type_test();
-    //protocol_test();
-    //internet_address_test();
-    //utility_test();
-    //socket_address_test();
-    //socket_test();
+    address_family_test();
+    socket_type_test();
+    protocol_test();
+    internet_address_test();
+    utility_test();
+    socket_address_test();
+    socket_test();
     serialization_test();
+    message_test();
     cleanup();
 
     system("pause");
