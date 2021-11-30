@@ -7,8 +7,10 @@
 #include <tuple>
 #include <optional>
 #include <variant>
+#include <initializer_list>
 #include <array>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <deque>
 #include <forward_list>
@@ -463,6 +465,17 @@ namespace netlib {
 
 
     /**
+     * Serializes an std::initializer_list.
+     * There is no deserialization function for std::initializer_list.
+     * @param buffer buffer that contains the data.
+     * @param list list to serialize.
+     */
+    template <class Buffer, class T> void serialize(Buffer& buffer, const std::initializer_list<T>& list) {
+        serialize(buffer, list.data(), list.size());
+    }
+
+
+    /**
      * Serializes an std::array.
      * @param buffer buffer that contains the data.
      * @param array array to serialize.
@@ -505,6 +518,18 @@ namespace netlib {
         deserialize(buffer, pos, size);
         str.resize(size);
         deserialize(buffer, pos, str.data(), size);
+    }
+
+
+    /**
+     * Serializes an std::basic_string_view.
+     * There is no deserialization function for string views.
+     * @param buffer buffer that contains the data.
+     * @param str basic_string_view to serialize.
+     */
+    template <class Buffer, class T, class Tr> void serialize(Buffer& buffer, const std::basic_string_view<T, Tr>& str) {
+        serialize(buffer, str.size());
+        serialize(buffer, str.data(), str.size());
     }
 
 
