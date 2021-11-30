@@ -747,6 +747,126 @@ namespace netlib {
 
 
     /**
+     * Serializes an std::unordered_set.
+     * @param buffer buffer that contains the data.
+     * @param set set to serialize.
+     */
+    template <class Buffer, class T, class Hash, class Pr, class Alloc> void serialize(Buffer& buffer, const std::unordered_set<T, Hash, Pr, Alloc>& set) {
+        serialize(buffer, set.size());
+        for (const T& elem : set) {
+            serialize(buffer, elem);
+        }
+    }
+
+
+    /**
+     * Deserializes an std::unordered_set.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param set set to deserialize.
+     */
+    template <class Buffer, class T, class Hash, class Pr, class Alloc> void deserialize(const Buffer& buffer, size_t& pos, std::unordered_set<T, Hash, Pr, Alloc>& set) {
+        size_t size;
+        deserialize(buffer, pos, size);
+        for (; size > 0; --size) {
+            T elem;
+            deserialize(buffer, pos, elem);
+            set.insert(std::move(elem));
+        }
+    }
+
+
+    /**
+     * Serializes an std::unordered_multiset.
+     * @param buffer buffer that contains the data.
+     * @param multiset multiset to serialize.
+     */
+    template <class Buffer, class T, class Hash, class Pr, class Alloc> void serialize(Buffer& buffer, const std::unordered_multiset<T, Hash, Pr, Alloc>& multiset) {
+        serialize(buffer, multiset.size());
+        for (const T& elem : multiset) {
+            serialize(buffer, elem);
+        }
+    }
+
+
+    /**
+     * Deserializes an std::unordered_multiset.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param multiset multiset to deserialize.
+     */
+    template <class Buffer, class T, class Hash, class Pr, class Alloc> void deserialize(const Buffer& buffer, size_t& pos, std::unordered_multiset<T, Hash, Pr, Alloc>& multiset) {
+        size_t size;
+        deserialize(buffer, pos, size);
+        for (; size > 0; --size) {
+            T elem;
+            deserialize(buffer, pos, elem);
+            multiset.insert(std::move(elem));
+        }
+    }
+
+
+    /**
+     * Serializes an std::unordered_map.
+     * @param buffer buffer that contains the data.
+     * @param map map to serialize.
+     */
+    template <class Buffer, class Key, class Value, class Hash, class Pr, class Alloc> void serialize(Buffer& buffer, const std::unordered_map<Key, Value, Hash, Pr, Alloc>& map) {
+        serialize(buffer, map.size());
+        for (const auto& elem : map) {
+            serialize(buffer, elem);
+        }
+    }
+
+
+    /**
+     * Deserializes an std::unordered_map.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param map map to deserialize.
+     */
+    template <class Buffer, class Key, class Value, class Hash, class Pr, class Alloc> void deserialize(const Buffer& buffer, size_t& pos, std::unordered_map<Key, Value, Hash, Pr, Alloc>& map) {
+        size_t size;
+        deserialize(buffer, pos, size);
+        for (; size > 0; --size) {
+            std::pair<Key, Value> elem;
+            deserialize(buffer, pos, elem);
+            map.insert(std::move(elem));
+        }
+    }
+
+
+    /**
+     * Serializes an std::unordered_multimap.
+     * @param buffer buffer that contains the data.
+     * @param multimap multimap to serialize.
+     */
+    template <class Buffer, class Key, class Value, class Hash, class Pr, class Alloc> void serialize(Buffer& buffer, const std::unordered_multimap<Key, Value, Hash, Pr, Alloc>& multimap) {
+        serialize(buffer, multimap.size());
+        for (const auto& elem : multimap) {
+            serialize(buffer, elem);
+        }
+    }
+
+
+    /**
+     * Deserializes an std::unordered_multimap.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param multimap multimap to deserialize.
+     */
+    template <class Buffer, class Key, class Value, class Hash, class Pr, class Alloc> void deserialize(const Buffer& buffer, size_t& pos, std::unordered_multimap<Key, Value, Hash, Pr, Alloc>& multimap) {
+        size_t size;
+        deserialize(buffer, pos, size);
+        for (; size > 0; --size) {
+            std::pair<Key, Value> elem;
+            deserialize(buffer, pos, elem);
+            multimap.insert(std::move(elem));
+        }
+    }
+
+
+    /**
      * Serializes multiple values at once.
      * @param buffer buffer that contains the data.
      * @param value1 first value to serialize.

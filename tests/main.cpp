@@ -612,6 +612,10 @@ private:
         const std::multiset<int> set2{ 19, 20, 21 };
         const std::map<int, int> map1{ std::pair(0, 0), std::pair(1, 1) };
         const std::multimap<int, int> map2{ std::pair(2, 2), std::pair(3, 3) };
+        const std::unordered_set<int> uset1{ 16, 17, 18 };
+        const std::unordered_multiset<int> uset2{ 19, 20, 21 };
+        const std::unordered_map<int, int> umap1{ std::pair(0, 0), std::pair(1, 1) };
+        const std::unordered_multimap<int, int> umap2{ std::pair(2, 2), std::pair(3, 3) };
 
         serialize(buffer, p1);
         serialize(buffer, t1);
@@ -626,6 +630,10 @@ private:
         serialize(buffer, set2);
         serialize(buffer, map1);
         serialize(buffer, map2);
+        serialize(buffer, uset1);
+        serialize(buffer, uset2);
+        serialize(buffer, umap1);
+        serialize(buffer, umap2);
 
         size_t pos = 0;
 
@@ -643,6 +651,10 @@ private:
         std::multiset<int> rset2;
         std::map<int, int> rmap1;
         std::multimap<int, int> rmap2;
+        std::unordered_set<int> ruset1;
+        std::unordered_multiset<int> ruset2;
+        std::unordered_map<int, int> rumap1;
+        std::unordered_multimap<int, int> rumap2;
 
         deserialize(buffer, pos, rp1);
         deserialize(buffer, pos, rt1);
@@ -657,6 +669,10 @@ private:
         deserialize(buffer, pos, rset2);
         deserialize(buffer, pos, rmap1);
         deserialize(buffer, pos, rmap2);
+        deserialize(buffer, pos, ruset1);
+        deserialize(buffer, pos, ruset2);
+        deserialize(buffer, pos, rumap1);
+        deserialize(buffer, pos, rumap2);
 
         check(p1 == rp1);
         check(t1 == rt1);
@@ -671,6 +687,10 @@ private:
         check(set2 == rset2);
         check(map1 == rmap1);
         check(map2 == rmap2);
+        check(uset1 == ruset1);
+        check(uset2 == ruset2);
+        check(umap1 == rumap1);
+        check(umap2 == rumap2);
     }
 };
 
