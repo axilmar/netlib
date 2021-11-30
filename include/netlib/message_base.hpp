@@ -22,7 +22,7 @@ namespace netlib {
         /**
          * Interface for retrieving the message id of the message.
          */
-        virtual message_id message_id() const = 0;
+        virtual message_id id() const = 0;
 
         /**
          * Serializes this message into the given buffer.

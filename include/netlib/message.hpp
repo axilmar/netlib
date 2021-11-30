@@ -41,7 +41,7 @@ namespace netlib {
         /**
          * the id of the message.
          */
-        static inline const netlib::message_id id = message_registry_entry.message_id();
+        static netlib::message_id message_id() { return message_registry_entry.message_id(); }
 
         /**
          * Empty message constructor.
@@ -57,8 +57,8 @@ namespace netlib {
         /**
          * Retrieves the message id of the message.
          */
-        netlib::message_id message_id() const override final { 
-            return id;
+        netlib::message_id id() const override final { 
+            return message_id();
         }
 
         /**
@@ -66,7 +66,7 @@ namespace netlib {
          * @param buffer destination buffer.
          */
         void serialize(std::vector<char>& buffer) const final {
-            netlib::serialize(buffer, message_id());
+            netlib::serialize(buffer, id());
             netlib::serialize(buffer, static_cast<const std::tuple<T...>&>(*this));
         }
 

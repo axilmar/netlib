@@ -706,6 +706,7 @@ class message_test {
 public:
     message_test() {
         test("message I/O", []() {
+            msg_test(),
             tcp_test();
             udp_test();
             });
@@ -713,8 +714,16 @@ public:
 
 private:
     using test_message = message<size_t, std::string, double>;
+    using test_message1 = message<size_t>;
+    using test_message2 = message<size_t, std::string>;
 
     static constexpr size_t test_message_count = 10;
+
+    static void msg_test() {
+        check(test_message().id() == test_message::message_id());
+        check(test_message1().id() == test_message1::message_id());
+        check(test_message2().id() == test_message2::message_id());
+    }
 
     static void tcp_test() {
         std::thread server_thread([] {
@@ -743,7 +752,7 @@ private:
 
                 for (size_t i = 0; i < test_message_count; ++i) {
                     message_ptr msg = tcp_receive_message(s);
-                    if (msg->message_id() == test_message::id) {
+                    if (msg->id() == test_message::message_id()) {
                         test_message& tm = dynamic_cast<test_message&>(*msg);
                         check(std::get<0>(tm) == i);
                         check(std::get<1>(tm) == "hello world!!!");
@@ -784,7 +793,7 @@ private:
 
                 for (size_t i = 0; i < test_message_count; ++i) {
                     message_ptr msg = udp_receive_message(s, receive_addr);
-                    if (msg->message_id() == test_message::id) {
+                    if (msg->id() == test_message::message_id()) {
                         test_message& tm = dynamic_cast<test_message&>(*msg);
                         check(std::get<0>(tm) == i);
                         check(std::get<1>(tm) == "hello world!!!");
