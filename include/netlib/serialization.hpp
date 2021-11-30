@@ -18,6 +18,7 @@
 #include <map>
 #include <unordered_set>
 #include <unordered_map>
+#include <limits>
 
 
 /**
@@ -31,6 +32,34 @@
 
 
 namespace netlib {
+
+
+    /**
+     * Smallest possible type for the given unsigned integer value.
+     * @param V value.
+     */
+    template <size_t V> struct smallest_unsigned_int {
+    private:
+        static constexpr auto func() {
+            if constexpr (V <= std::numeric_limits<uint8_t>::max()) return uint8_t{};
+            else if (V <= std::numeric_limits<uint16_t>::max()) return uint16_t{};
+            else if (V <= std::numeric_limits<uint32_t>::max()) return uint32_t{};
+            else return uint64_t{};
+        }
+
+    public:
+        /**
+         * Type.
+         */
+        using type = decltype(func());
+    };
+
+
+    /**
+     * Shortcut for the smallest unsigned int type.
+     * @param V value.
+     */
+    template <size_t V> using smallest_unsigned_int_t = typename smallest_unsigned_int<V>::type;
 
 
     /**
@@ -428,8 +457,8 @@ namespace netlib {
             throw std::invalid_argument("Cannot serialize a valueless variant.");
         }
 
-        //serialize the index
-        serialize(buffer, v.index());
+        //serialize the index (optimized for variant size)
+        serialize(buffer, smallest_unsigned_int_t<sizeof...(T)>(v.index()));
 
         //serialize the value
         visit([&](const auto& v) { serialize(buffer, v); }, v);
@@ -445,7 +474,7 @@ namespace netlib {
      */
     template <class Buffer, class... T> void deserialize(const Buffer& buffer, size_t& pos, std::variant<T...>& v) {
         //deserialize the index
-        size_t index;
+        smallest_unsigned_int_t<sizeof...(T)> index;
         deserialize(buffer, pos, index);
 
         //check for invalid index
