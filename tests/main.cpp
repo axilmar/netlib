@@ -610,6 +610,8 @@ private:
         const std::list<int> list1{ 13, 14, 15 };
         const std::set<int> set1{ 16, 17, 18 };
         const std::multiset<int> set2{ 19, 20, 21 };
+        const std::map<int, int> map1{ std::pair(0, 0), std::pair(1, 1) };
+        const std::multimap<int, int> map2{ std::pair(2, 2), std::pair(3, 3) };
 
         serialize(buffer, p1);
         serialize(buffer, t1);
@@ -622,6 +624,8 @@ private:
         serialize(buffer, list1);
         serialize(buffer, set1);
         serialize(buffer, set2);
+        serialize(buffer, map1);
+        serialize(buffer, map2);
 
         size_t pos = 0;
 
@@ -637,6 +641,8 @@ private:
         std::list<int> rlist1;
         std::set<int> rset1;
         std::multiset<int> rset2;
+        std::map<int, int> rmap1;
+        std::multimap<int, int> rmap2;
 
         deserialize(buffer, pos, rp1);
         deserialize(buffer, pos, rt1);
@@ -649,6 +655,8 @@ private:
         deserialize(buffer, pos, rlist1);
         deserialize(buffer, pos, rset1);
         deserialize(buffer, pos, rset2);
+        deserialize(buffer, pos, rmap1);
+        deserialize(buffer, pos, rmap2);
 
         check(p1 == rp1);
         check(t1 == rt1);
@@ -661,6 +669,8 @@ private:
         check(list1 == rlist1);
         check(set1 == rset1);
         check(set2 == rset2);
+        check(map1 == rmap1);
+        check(map2 == rmap2);
     }
 };
 
