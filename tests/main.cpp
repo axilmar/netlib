@@ -608,6 +608,8 @@ private:
         const std::deque<int> dq1{ 7, 8, 9 };
         const std::forward_list<int> fl1{ 10, 11, 12 };
         const std::list<int> list1{ 13, 14, 15 };
+        const std::set<int> set1{ 16, 17, 18 };
+        const std::multiset<int> set2{ 19, 20, 21 };
 
         serialize(buffer, p1);
         serialize(buffer, t1);
@@ -618,6 +620,8 @@ private:
         serialize(buffer, dq1);
         serialize(buffer, fl1);
         serialize(buffer, list1);
+        serialize(buffer, set1);
+        serialize(buffer, set2);
 
         size_t pos = 0;
 
@@ -631,6 +635,8 @@ private:
         std::deque<int> rdq1;
         std::forward_list<int> rfl1;
         std::list<int> rlist1;
+        std::set<int> rset1;
+        std::multiset<int> rset2;
 
         deserialize(buffer, pos, rp1);
         deserialize(buffer, pos, rt1);
@@ -641,6 +647,8 @@ private:
         deserialize(buffer, pos, rdq1);
         deserialize(buffer, pos, rfl1);
         deserialize(buffer, pos, rlist1);
+        deserialize(buffer, pos, rset1);
+        deserialize(buffer, pos, rset2);
 
         check(p1 == rp1);
         check(t1 == rt1);
@@ -651,6 +659,8 @@ private:
         check(dq1 == rdq1);
         check(fl1 == rfl1);
         check(list1 == rlist1);
+        check(set1 == rset1);
+        check(set2 == rset2);
     }
 };
 

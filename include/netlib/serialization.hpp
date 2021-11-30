@@ -627,6 +627,66 @@ namespace netlib {
 
 
     /**
+     * Serializes an std::set.
+     * @param buffer buffer that contains the data.
+     * @param set set to serialize.
+     */
+    template <class Buffer, class T, class Alloc> void serialize(Buffer& buffer, const std::set<T, Alloc>& set) {
+        serialize(buffer, set.size());
+        for (const T& elem : set) {
+            serialize(buffer, elem);
+        }
+    }
+
+
+    /**
+     * Deserializes an std::set.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param set set to deserialize.
+     */
+    template <class Buffer, class T, class Pr, class Alloc> void deserialize(const Buffer& buffer, size_t& pos, std::set<T, Pr, Alloc>& set) {
+        size_t size;
+        deserialize(buffer, pos, size);
+        for (; size > 0; --size) {
+            T elem;
+            deserialize(buffer, pos, elem);
+            set.insert(std::move(elem));
+        }
+    }
+
+
+    /**
+     * Serializes an std::multiset.
+     * @param buffer buffer that contains the data.
+     * @param multiset multiset to serialize.
+     */
+    template <class Buffer, class T, class Alloc> void serialize(Buffer& buffer, const std::multiset<T, Alloc>& multiset) {
+        serialize(buffer, multiset.size());
+        for (const T& elem : multiset) {
+            serialize(buffer, elem);
+        }
+    }
+
+
+    /**
+     * Deserializes an std::multiset.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param multiset multiset to deserialize.
+     */
+    template <class Buffer, class T, class Pr, class Alloc> void deserialize(const Buffer& buffer, size_t& pos, std::multiset<T, Pr, Alloc>& multiset) {
+        size_t size;
+        deserialize(buffer, pos, size);
+        for (; size > 0; --size) {
+            T elem;
+            deserialize(buffer, pos, elem);
+            multiset.insert(std::move(elem));
+        }
+    }
+
+
+    /**
      * Serializes multiple values at once.
      * @param buffer buffer that contains the data.
      * @param value1 first value to serialize.
