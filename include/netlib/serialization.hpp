@@ -11,6 +11,10 @@
 #include <vector>
 #include <deque>
 #include <forward_list>
+#include <set>
+#include <map>
+#include <unordered_set>
+#include <unordered_map>
 
 
 /**
@@ -31,7 +35,7 @@ namespace netlib {
      * @param func function to invoke.
      * @param values to apply to function.
      */
-    template <class F, class... T> void apply(F&& func, T&&... values) {
+    template <class F, class... T> void apply_to_each_value(F&& func, T&&... values) {
         (func(std::forward<T>(values)), ...);
     }
 
@@ -458,35 +462,6 @@ namespace netlib {
 
 
     /**
-     * Serializes multiple values at once.
-     * @param buffer buffer that contains the data.
-     * @param value1 first value to serialize.
-     * @param value2 second value to serialize.
-     * @param values values to serialize.
-     */
-    template <class Buffer, class T1, class T2, class... T> void serialize(Buffer& buffer, const T1& value1, const T2& value2, const T&... values) {
-        serialize(buffer, value1);
-        serialize(buffer, value2);
-        (serialize(buffer, values), ...);
-    }
-
-
-    /**
-     * Deserializes multiple values at once.
-     * @param buffer buffer that contains the data.
-     * @param pos current position into the buffer; at return, the next available position.
-     * @param value1 first value to deserialize.
-     * @param value2 second value to deserialize.
-     * @param values rest of values to deserialize.
-     */
-    template <class Buffer, class T1, class T2, class... T> void deserialize(Buffer& buffer, size_t& pos, T1& value1, T2& value2, T&... values) {
-        deserialize(buffer, pos, value1);
-        deserialize(buffer, pos, value2);
-        (deserialize(buffer, pos, values), ...);
-    }
-
-
-    /**
      * Serializes an std::array.
      * @param buffer buffer that contains the data.
      * @param array array to serialize.
@@ -620,6 +595,63 @@ namespace netlib {
         else {
             fl.clear();
         }
+    }
+
+
+    /**
+     * Serializes an std::list.
+     * @param buffer buffer that contains the data.
+     * @param list list to serialize.
+     */
+    template <class Buffer, class T, class Alloc> void serialize(Buffer& buffer, const std::list<T, Alloc>& list) {
+        serialize(buffer, list.size());
+        for (const T& elem : list) {
+            serialize(buffer, elem);
+        }
+    }
+
+
+    /**
+     * Deserializes an std::list.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param list list to deserialize.
+     */
+    template <class Buffer, class T, class Alloc> void deserialize(const Buffer& buffer, size_t& pos, std::list<T, Alloc>& list) {
+        size_t size;
+        deserialize(buffer, pos, size);
+        for (; size > 0; --size) {
+            deserialize(buffer, pos, list.emplace_back());
+        }
+    }
+
+
+    /**
+     * Serializes multiple values at once.
+     * @param buffer buffer that contains the data.
+     * @param value1 first value to serialize.
+     * @param value2 second value to serialize.
+     * @param values values to serialize.
+     */
+    template <class Buffer, class T1, class T2, class... T> void serialize(Buffer& buffer, const T1& value1, const T2& value2, const T&... values) {
+        serialize(buffer, value1);
+        serialize(buffer, value2);
+        (serialize(buffer, values), ...);
+    }
+
+
+    /**
+     * Deserializes multiple values at once.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param value1 first value to deserialize.
+     * @param value2 second value to deserialize.
+     * @param values rest of values to deserialize.
+     */
+    template <class Buffer, class T1, class T2, class... T> void deserialize(Buffer& buffer, size_t& pos, T1& value1, T2& value2, T&... values) {
+        deserialize(buffer, pos, value1);
+        deserialize(buffer, pos, value2);
+        (deserialize(buffer, pos, values), ...);
     }
 
 

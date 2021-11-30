@@ -414,7 +414,7 @@ private:
         non_trivial(int x, int y) : x(x), y(y) {}
 
         template <class Obj, class F> static void visit(Obj&& obj, F&& func) {
-            apply(func, obj.x, obj.y);
+            apply_to_each_value(func, obj.x, obj.y);
         }
 
         void serialize(std::vector<char>& buffer) const {
@@ -607,6 +607,7 @@ private:
         const std::vector<int> vec1{4, 5, 6};
         const std::deque<int> dq1{ 7, 8, 9 };
         const std::forward_list<int> fl1{ 10, 11, 12 };
+        const std::list<int> list1{ 13, 14, 15 };
 
         serialize(buffer, p1);
         serialize(buffer, t1);
@@ -616,6 +617,7 @@ private:
         serialize(buffer, vec1);
         serialize(buffer, dq1);
         serialize(buffer, fl1);
+        serialize(buffer, list1);
 
         size_t pos = 0;
 
@@ -628,6 +630,7 @@ private:
         std::vector<int> rvec1;
         std::deque<int> rdq1;
         std::forward_list<int> rfl1;
+        std::list<int> rlist1;
 
         deserialize(buffer, pos, rp1);
         deserialize(buffer, pos, rt1);
@@ -637,6 +640,7 @@ private:
         deserialize(buffer, pos, rvec1);
         deserialize(buffer, pos, rdq1);
         deserialize(buffer, pos, rfl1);
+        deserialize(buffer, pos, rlist1);
 
         check(p1 == rp1);
         check(t1 == rt1);
@@ -646,6 +650,7 @@ private:
         check(vec1 == rvec1);
         check(dq1 == rdq1);
         check(fl1 == rfl1);
+        check(list1 == rlist1);
     }
 };
 
