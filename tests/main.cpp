@@ -604,6 +604,7 @@ private:
         const std::optional<int> opt2;
         const std::variant<int, double, char> v1 = 3.14;
         const std::array<int, 3> arr1{1, 2, 3};
+        const std::string str1{"hello world!!!"};
         const std::vector<int> vec1{4, 5, 6};
         const std::deque<int> dq1{ 7, 8, 9 };
         const std::forward_list<int> fl1{ 10, 11, 12 };
@@ -622,6 +623,7 @@ private:
         serialize(buffer, opt1, opt2);
         serialize(buffer, v1);
         serialize(buffer, arr1);
+        serialize(buffer, str1);
         serialize(buffer, vec1);
         serialize(buffer, dq1);
         serialize(buffer, fl1);
@@ -643,6 +645,7 @@ private:
         std::optional<int> ropt2;
         std::variant<int, double, char> rv1;
         std::array<int, 3> rarr1;
+        std::string rstr1;
         std::vector<int> rvec1;
         std::deque<int> rdq1;
         std::forward_list<int> rfl1;
@@ -661,6 +664,7 @@ private:
         deserialize(buffer, pos, ropt1, ropt2);
         deserialize(buffer, pos, rv1);
         deserialize(buffer, pos, rarr1);
+        deserialize(buffer, pos, rstr1);
         deserialize(buffer, pos, rvec1);
         deserialize(buffer, pos, rdq1);
         deserialize(buffer, pos, rfl1);
@@ -679,6 +683,7 @@ private:
         check(opt1 == ropt1 && opt2 == ropt2);
         check(v1 == rv1);
         check(arr1 == rarr1);
+        check(str1 == rstr1);
         check(vec1 == rvec1);
         check(dq1 == rdq1);
         check(fl1 == rfl1);

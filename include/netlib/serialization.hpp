@@ -8,6 +8,7 @@
 #include <optional>
 #include <variant>
 #include <array>
+#include <string>
 #include <vector>
 #include <deque>
 #include <forward_list>
@@ -479,6 +480,31 @@ namespace netlib {
      */
     template <class Buffer, class T, size_t N> void deserialize(const Buffer& buffer, size_t& pos, std::array<T, N>& array) {
         deserialize(buffer, pos, array.data(), N);
+    }
+
+
+    /**
+     * Serializes an std::basic_string.
+     * @param buffer buffer that contains the data.
+     * @param str basic_string to serialize.
+     */
+    template <class Buffer, class T, class Tr, class Alloc> void serialize(Buffer& buffer, const std::basic_string<T, Tr, Alloc>& str) {
+        serialize(buffer, str.size());
+        serialize(buffer, str.data(), str.size());
+    }
+
+
+    /**
+     * Deserializes an std::basic_string.
+     * @param buffer buffer that contains the data.
+     * @param pos current position into the buffer; at return, the next available position.
+     * @param str basic_string to deserialize.
+     */
+    template <class Buffer, class T, class Tr, class Alloc> void deserialize(const Buffer& buffer, size_t& pos, std::basic_string<T, Tr, Alloc>& str) {
+        size_t size;
+        deserialize(buffer, pos, size);
+        str.resize(size);
+        deserialize(buffer, pos, str.data(), size);
     }
 
 
