@@ -155,6 +155,59 @@ namespace netlib {
          */
         explicit operator bool() const noexcept;
 
+        /**
+         * Returns the socket's handle.
+         */
+        uintptr_t handle() const { return m_handle; }
+
+        /**
+         * Equal-to comparator.
+         * Compares the socket handles.
+         * @param other the other socket to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator == (const socket& other) const { return m_handle == other.m_handle; }
+
+        /**
+         * Different-than comparator.
+         * Compares the socket handles.
+         * @param other the other socket to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator != (const socket& other) const { return m_handle != other.m_handle; }
+
+        /**
+         * Less-than comparator.
+         * Compares the socket handles.
+         * @param other the other socket to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator < (const socket& other) const { return m_handle < other.m_handle; }
+
+        /**
+         * Greater-than comparator.
+         * Compares the socket handles.
+         * @param other the other socket to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator > (const socket& other) const { return m_handle > other.m_handle; }
+
+        /**
+         * Less-than-or-equal-to comparator.
+         * Compares the socket handles.
+         * @param other the other socket to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator <= (const socket& other) const { return m_handle <= other.m_handle; }
+
+        /**
+         * Greater-than-or-equal-to comparator.
+         * Compares the socket handles.
+         * @param other the other socket to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator >= (const socket& other) const { return m_handle >= other.m_handle; }
+
     private:
         uintptr_t m_handle;
 
