@@ -9,6 +9,14 @@
 #include "message_registry.hpp"
 
 
+/**
+ * max message size preprocessor definition. 
+ */
+#ifndef NETLIB_MAX_MESSAGE_SIZE
+#define NETLIB_MAX_MESSAGE_SIZE 4096
+#endif
+
+
 namespace netlib {
 
 
@@ -204,7 +212,7 @@ namespace netlib {
      * @param max_message_size maximum message size.
      * @return pointer to message or a null ptr if the socket is closed.
      */
-    template <class Decrypt> message_ptr udp_receive_message(socket& s, Decrypt&& decrypt, std::vector<char>& buffer = intermediate_buffer(), std::pmr::memory_resource& memory_resource = *std::pmr::get_default_resource(), const size_t max_message_size = 4096) {
+    template <class Decrypt> message_ptr udp_receive_message(socket& s, Decrypt&& decrypt, std::vector<char>& buffer = intermediate_buffer(), std::pmr::memory_resource& memory_resource = *std::pmr::get_default_resource(), const size_t max_message_size = NETLIB_MAX_MESSAGE_SIZE) {
         //receive the data
         buffer.resize(max_message_size);
         const size_t received_bytes = s.receive(buffer.data(), buffer.size());
@@ -228,7 +236,7 @@ namespace netlib {
      * @param max_message_size maximum message size.
      * @return pointer to message or a null ptr if the socket is closed.
      */
-    inline message_ptr udp_receive_message(socket& s, std::vector<char>& buffer = intermediate_buffer(), std::pmr::memory_resource& memory_resource = *std::pmr::get_default_resource(), const size_t max_message_size = 4096) {
+    inline message_ptr udp_receive_message(socket& s, std::vector<char>& buffer = intermediate_buffer(), std::pmr::memory_resource& memory_resource = *std::pmr::get_default_resource(), const size_t max_message_size = NETLIB_MAX_MESSAGE_SIZE) {
         return udp_receive_message(s, [](void*, size_t) {}, buffer, memory_resource, max_message_size);
     }
 
@@ -281,7 +289,7 @@ namespace netlib {
      * @param max_message_size maximum message size.
      * @return pointer to message or a null ptr if the socket is closed.
      */
-    template <class Decrypt> message_ptr udp_receive_message(socket& s, socket_address& addr, Decrypt&& decrypt, std::vector<char>& buffer = intermediate_buffer(), std::pmr::memory_resource& memory_resource = *std::pmr::get_default_resource(), const size_t max_message_size = 4096) {
+    template <class Decrypt> message_ptr udp_receive_message(socket& s, socket_address& addr, Decrypt&& decrypt, std::vector<char>& buffer = intermediate_buffer(), std::pmr::memory_resource& memory_resource = *std::pmr::get_default_resource(), const size_t max_message_size = NETLIB_MAX_MESSAGE_SIZE) {
         //receive the data
         buffer.resize(max_message_size);
         const size_t received_bytes = s.receive(buffer.data(), buffer.size(), addr);
@@ -306,7 +314,7 @@ namespace netlib {
      * @param max_message_size maximum message size.
      * @return pointer to message or a null ptr if the socket is closed.
      */
-    inline message_ptr udp_receive_message(socket& s, socket_address& addr, std::vector<char>& buffer = intermediate_buffer(), std::pmr::memory_resource& memory_resource = *std::pmr::get_default_resource(), const size_t max_message_size = 4096) {
+    inline message_ptr udp_receive_message(socket& s, socket_address& addr, std::vector<char>& buffer = intermediate_buffer(), std::pmr::memory_resource& memory_resource = *std::pmr::get_default_resource(), const size_t max_message_size = NETLIB_MAX_MESSAGE_SIZE) {
         return udp_receive_message(s, addr, [](void*, size_t) {}, buffer, memory_resource, max_message_size);
     }
 

@@ -27,8 +27,14 @@ static std::string make_error_message(int error_number, const std::string& msg) 
 }
 
 
+//Returns the last error number.
+int get_last_error_number() {
+    return WSAGetLastError();
+}
+
+
 //get last error for windows
-std::string get_last_error(int error_number) {
+std::string get_last_error_message(int error_number) {
 
     //get the last error id if not given
     if (!error_number) {
@@ -66,8 +72,14 @@ std::string get_last_error(int error_number) {
 #include <string.h>
 
 
+//Returns the last error number.
+int get_last_error_number() {
+    return errno;
+}
+
+
 //get last error for linux
-std::string get_last_error(int error_number) {
+std::string get_last_error_message(int error_number) {
 
     //get the last error if not given
     if (!error_number) {

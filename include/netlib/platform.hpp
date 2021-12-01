@@ -10,6 +10,8 @@
 #include <Windows.h>
 #undef min
 #undef max
+#define poll WSAPoll
+#define nfds_t ULONG
 #endif
 
 
@@ -17,6 +19,7 @@
 #include <sys/socket.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
+#include <poll.h>
 #endif
 
 
@@ -24,10 +27,16 @@
 
 
 /**
+ * Returns the last error number.
+ */
+int get_last_error_number();
+
+
+/**
  * Retrieves the last error as a string.
  * @param error_number error number; if 0, then it is retrieved from platform error number.
  */
-std::string get_last_error(int error_number = 0);
+std::string get_last_error_message(int error_number = 0);
 
 
 #endif //NETLIB_PLATFORM_HPP

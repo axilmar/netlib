@@ -29,7 +29,7 @@ namespace netlib {
 
         //throw for error
         if (error) {
-            throw std::invalid_argument(get_last_error(error));
+            throw std::invalid_argument(get_last_error_message(error));
         }
 
         addrinfo* start_ai = ai;
@@ -164,7 +164,7 @@ namespace netlib {
         //get the host name
         const int result = gethostname(buf, sizeof(buf) - 1);
         if (result == -1) {
-            throw std::runtime_error(get_last_error());
+            throw std::runtime_error(get_last_error_message());
         }
 
         //get address from this host
@@ -227,7 +227,7 @@ namespace netlib {
             }
         }
 
-        throw std::runtime_error(get_last_error());
+        throw std::runtime_error(get_last_error_message());
     }
 
 
@@ -407,7 +407,7 @@ namespace netlib {
         //get error string
         std::string error_msg;
         #ifdef _WIN32
-        error_msg = get_last_error();
+        error_msg = get_last_error_message();
         #endif
 
         #ifdef linux
@@ -437,7 +437,7 @@ namespace netlib {
                 break;
 
             case EAI_SYSTEM:
-                error_msg = get_last_error();
+                error_msg = get_last_error_message();
                 break;
     }
         #endif

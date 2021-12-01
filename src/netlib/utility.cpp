@@ -25,7 +25,7 @@ namespace netlib {
 
         //cannot get hostname; throw exception
         if (error != 0) {
-            throw std::runtime_error(get_last_error());
+            throw std::runtime_error(get_last_error_message());
         }
 
         //hints for canonical name
@@ -39,7 +39,7 @@ namespace netlib {
 
         //cannot get address info; throw exception
         if (error) {
-            throw std::invalid_argument(get_last_error(error));
+            throw std::invalid_argument(get_last_error_message(error));
         }
 
         //get result
@@ -58,7 +58,7 @@ namespace netlib {
         int error = getaddrinfo(addr, nullptr, nullptr, &ai);
 
         if (error) {
-            throw std::invalid_argument(get_last_error(error));
+            throw std::invalid_argument(get_last_error_message(error));
         }
 
         addrinfo* start_ai = ai;

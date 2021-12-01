@@ -66,7 +66,7 @@ namespace netlib {
         }
         #endif
 
-        throw std::runtime_error(get_last_error());
+        throw std::runtime_error(get_last_error_message());
     }
 
 
@@ -81,7 +81,7 @@ namespace netlib {
             return 0;
         }
 
-        throw std::runtime_error(get_last_error());
+        throw std::runtime_error(get_last_error_message());
     }
 
 
@@ -97,7 +97,7 @@ namespace netlib {
         : m_handle{ ::socket(af, type, protocol) }
     {
         if (m_handle == invalid_socket_handle) {
-            throw std::runtime_error(get_last_error());
+            throw std::runtime_error(get_last_error_message());
         }
     }
 
@@ -150,7 +150,7 @@ namespace netlib {
             return;
         }
 
-        throw std::runtime_error(get_last_error());
+        throw std::runtime_error(get_last_error_message());
     }
 
 
@@ -163,7 +163,7 @@ namespace netlib {
             return { socket(new_socket_handle), addr };
         }
 
-        throw std::runtime_error(get_last_error());
+        throw std::runtime_error(get_last_error_message());
     }
 
 
@@ -175,7 +175,7 @@ namespace netlib {
             return;
         }
 
-        throw std::runtime_error(get_last_error());
+        throw std::runtime_error(get_last_error_message());
     }
 
 
@@ -187,7 +187,7 @@ namespace netlib {
             return;
         }
 
-        throw std::runtime_error(get_last_error());
+        throw std::runtime_error(get_last_error_message());
     }
 
 
