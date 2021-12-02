@@ -362,9 +362,9 @@ namespace netlib {
      */
     inline bool pipe_send(pipe& p, const void* data, size_t size) {
         while (size) {
-            const size_t bytes_sent = p.write(data, size);
+            const auto [bytes_sent, open] = p.write(data, size);
 
-            if (bytes_sent == pipe::nsize) {
+            if (!open) {
                 return false;
             }
 
@@ -386,9 +386,9 @@ namespace netlib {
      */
     inline bool pipe_receive(pipe& p, void* data, size_t size) {
         while (size) {
-            const size_t bytes_received = p.read(data, size);
+            const auto [bytes_received, open] = p.read(data, size);
 
-            if (bytes_received == pipe::nsize) {
+            if (!open) {
                 return false;
             }
 
@@ -486,6 +486,146 @@ namespace netlib {
      */
     inline message_ptr pipe_receive_message(pipe& p, std::vector<char>& buffer = intermediate_buffer(), std::pmr::memory_resource& memory_resource = *std::pmr::get_default_resource()) {
         return pipe_receive_message(p, [](void*, size_t) {}, buffer, memory_resource);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////
+    // io_resource functions
+    ///////////////////////////////////////////////////////////////////////////
+
+
+    /**
+     * Sends data over an io_resource.
+     * @param io_resource io_resource to use for sending data.
+     * @param data data to send.
+     * @param size number of bytes to send.
+     * @return true if the data were sent, false if the connection was closed.
+     */
+    inline bool io_resource_write(io_resource& r, const void* data, size_t size) {
+        while (size) {
+            const auto [bytes_sent, open] = r.write(data, size);
+
+            if (!open) {
+                return false;
+            }
+
+            size -= bytes_sent;
+            reinterpret_cast<const char*&>(data) += bytes_sent;
+        }
+
+        return true;
+    }
+
+
+    /**
+     * Receives data over a io_resource.
+     * @param r io_resource to receive data from.
+     * @param data destination buffer.
+     * @param size number of bytes to receive.
+     * @return true if the data were received, false if the connection was closed.
+     */
+    inline bool io_resource_read(io_resource& r, void* data, size_t size) {
+        while (size) {
+            const auto [bytes_received, open] = r.read(data, size);
+
+            if (!open) {
+                return false;
+            }
+
+            size -= bytes_received;
+            reinterpret_cast<char*&>(data) += bytes_received;
+        }
+
+        return true;
+    }
+
+
+    /**
+     * Sends a message over a io_resource.
+     * It sends the message size, before the message, and waits for all the data to be send, before returning.
+     * @param r io_resource to send the message over.
+     * @param msg message to send.
+     * @param encrypt the encrypt function.
+     * @param buffer intermediate buffer used for serialization.
+     * @return true if the data were sent, false if the io_resource was closed.
+     * @exception std::out_of_range thrown if the message is too big for the current message size.
+     */
+    template <class Encrypt, class... T> bool io_resource_write_message(io_resource& r, const message<T...>& msg, Encrypt&& encrypt, std::vector<char>& buffer = intermediate_buffer()) {
+        buffer.clear();
+
+        //serialize the message
+        msg.serialize(buffer);
+
+        //check the size
+        if (buffer.size() > std::numeric_limits<message_size>::max()) {
+            throw std::out_of_range("Buffer size too big for message size type.");
+        }
+
+        //send the size
+        message_size size = static_cast<message_size>(buffer.size());
+        encrypt(&size, sizeof(size));
+        if (!io_resource_write(r, &size, sizeof(size))) {
+            return false;
+        }
+
+        //send the data
+        encrypt(buffer.data(), buffer.size());
+        return io_resource_write(r, buffer.data(), buffer.size());
+    }
+
+
+    /**
+     * Sends a message without encryption.
+     * @param r io_resource to send the message over.
+     * @param msg message to send.
+     * @param buffer intermediate buffer used for serialization.
+     * @return true if the data were sent, false if the io_resource was closed.
+     * @exception std::out_of_range thrown if the message is too big for the current message size.
+     */
+    template <class... T> bool io_resource_write_message(io_resource& r, const message<T...>& msg, std::vector<char>& buffer = intermediate_buffer()) {
+        return io_resource_write_message(r, msg, [](void*, size_t) {}, buffer);
+    }
+
+
+    /**
+     * Receives a message over a io_resource.
+     * The message to be received must have been registered with the message registry (automatic when using message<T...>).
+     * @param r io_resource to use.
+     * @param decrypt decrypt function.
+     * @param buffer intermediate buffer.
+     * @param memory_resource memory resource to use for allocating memory for the message.
+     * @return pointer to message or a null ptr if the io_resource is closed.
+     */
+    template <class Decrypt> message_ptr io_resource_read_message(io_resource& r, Decrypt&& decrypt, std::vector<char>& buffer = intermediate_buffer(), std::pmr::memory_resource& memory_resource = *std::pmr::get_default_resource()) {
+        //receive the size
+        message_size size;
+        if (!io_resource_read(r, &size, sizeof(size))) {
+            return nullptr;
+        }
+        decrypt(&size, sizeof(size));
+
+        //receive the data
+        buffer.resize(size);
+        if (!io_resource_read(r, buffer.data(), buffer.size())) {
+            return nullptr;
+        }
+        decrypt(buffer.data(), buffer.size());
+
+        //create the message
+        return message_registry::deserialize(buffer, memory_resource);
+    }
+
+
+    /**
+     * Receives a message over a io_resource without decryption.
+     * The message to be received must have been registered with the message registry (automatic when using message<T...>).
+     * @param r io_resource to use.
+     * @param buffer intermediate buffer.
+     * @param memory_resource memory resource to use for allocating memory for the message.
+     * @return pointer to message or a null ptr if the io_resource is closed.
+     */
+    inline message_ptr io_resource_read_message(io_resource& r, std::vector<char>& buffer = intermediate_buffer(), std::pmr::memory_resource& memory_resource = *std::pmr::get_default_resource()) {
+        return io_resource_read_message(r, [](void*, size_t) {}, buffer, memory_resource);
     }
 
 

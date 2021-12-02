@@ -7,20 +7,16 @@ namespace netlib {
 
 
     //The default constructor.
-    pipe::pipe() {
+    pipe::pipe(size_t capacity) {
         //create the pipe
         int fd[2];
-        int error = ::pipe(fd);
-        
-        //success
-        if (!error) {
-            m_read_fd = fd[0];
-            m_write_fd = fd[1];
-            return;
+        if (!create_pipe(fd, capacity)) {
+            throw std::runtime_error(get_last_error_message());
         }
 
-        //throw error
-        throw std::runtime_error(get_last_error_message());
+        //success
+        m_read_fd = fd[0];
+        m_write_fd = fd[1];
     }
 
 
@@ -54,7 +50,7 @@ namespace netlib {
 
 
     //write data to the pipe.
-    size_t pipe::write(const void* buffer, size_t size) {
+    io_resource::result pipe::write(const void* buffer, size_t size) {
         //check the size against the return type
         if (size > std::numeric_limits<int>::max()) {
             throw std::invalid_argument("Size too big to return it as 'int'.");
@@ -67,7 +63,7 @@ namespace netlib {
 
         //check the write handle
         if (m_write_fd == -1) {
-            return nsize;
+            return { 0, false };
         }
 
         //write
@@ -76,13 +72,13 @@ namespace netlib {
 
         //success
         if (bytes_written >= 0) {
-            return bytes_written;
+            return { bytes_written, true };
         }
 
         //if error is 'the other end is closed', close this too
         if (errno == EPIPE) {
             close_write_descriptor();
-            return nsize;
+            return { 0, false };
         }
 
         //throw error
@@ -91,7 +87,7 @@ namespace netlib {
 
 
     //read data from the pipe
-    size_t pipe::read(void* buffer, size_t size) {
+    io_resource::result pipe::read(void* buffer, size_t size) {
         //check the size against the return type
         if (size > std::numeric_limits<int>::max()) {
             throw std::invalid_argument("Size too big to return it as 'int'.");
@@ -104,7 +100,7 @@ namespace netlib {
 
         //check the read handle
         if (m_read_fd == -1) {
-            return nsize;
+            return { 0, false };
         }
 
         //read
@@ -113,13 +109,13 @@ namespace netlib {
 
         //success
         if (bytes_read >= 0) {
-            return bytes_read;
+            return { bytes_read, true };
         }
 
         //if error is 'the other end is closed', close this too
         if (errno == EPIPE) {
             close_read_descriptor();
-            return nsize;
+            return { 0, false };
         }
 
         //throw error

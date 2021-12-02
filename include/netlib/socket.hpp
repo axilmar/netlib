@@ -7,6 +7,7 @@
 #include "socket_type.hpp"
 #include "protocol.hpp"
 #include "socket_address.hpp"
+#include "io_resource.hpp"
 
 
 namespace netlib {
@@ -15,7 +16,7 @@ namespace netlib {
     /**
      * A socket.
      */
-    class socket {
+    class socket : public io_resource {
     public:
         /**
          * Size value that indicates the socket is gracefully closed. 
@@ -212,6 +213,22 @@ namespace netlib {
          * @return true on success, false on failure.
          */
         bool operator >= (const socket& other) const { return m_handle >= other.m_handle; }
+
+        /**
+         * Receives data from the socket.
+         * @param buffer destination buffer.
+         * @param size number of bytes to read.
+         * @return number of bytes read or closed.
+         */
+        result read(void* buffer, size_t size) override;
+
+        /**
+         * Sends data over the socket.
+         * @param buffer source buffer.
+         * @param size number of bytes to write.
+         * @return number of bytes written or closed.
+         */
+        result write(const void* buffer, size_t size) override;
 
     private:
         uintptr_t m_handle;

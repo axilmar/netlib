@@ -2,13 +2,24 @@
 #define NETLIB_PIPE_HPP
 
 
+#include "io_resource.hpp"
+
+
+/**
+ * Default pipe size.
+ */
+#ifndef NETLIB_DEFAULT_PIPE_SIZE
+#define NETLIB_DEFAULT_PIPE_SIZE 65536
+#endif
+
+
 namespace netlib {
 
 
     /**
      * A bidirectional communication in-kernel binary data channel.  
      */
-    class pipe {
+    class pipe : public io_resource {
     public:
         /**
          * constant that indicates the returned size was invalid. 
@@ -19,7 +30,7 @@ namespace netlib {
          * The default constructor. 
          * @exception std::runtime_error thrown if there was an error creating the pipe.
          */
-        pipe();
+        pipe(size_t capacity = NETLIB_DEFAULT_PIPE_SIZE);
 
         /**
          * The copy constructor. 
@@ -56,21 +67,21 @@ namespace netlib {
          * Writes data to the pipe.
          * @param buffer pointer to data to write.
          * @param size number of bytes to write.
-         * @return number of bytes written or pipe::nsize if the pipe is closed.
+         * @return result of operation.
          * @exception std::runtime_error thrown if there was an error.
          * @exception std::invalid_argument thrown if size is too big for the operation.
          */
-        size_t write(const void* buffer, size_t size);
+        result write(const void* buffer, size_t size) override;
 
         /**
          * Reads data from the pipe.
          * @param buffer pointer to data to receive.
          * @param size number of bytes to receive.
-         * @return number of bytes received or pipe::nsize if the pipe is closed.
+         * @return result of operation.
          * @exception std::runtime_error thrown if there was an error.
          * @exception std::invalid_argument thrown if size is too big for the operation.
          */
-        size_t read(void* buffer, size_t size);
+        result read(void* buffer, size_t size) override;
 
         /**
          * Returns the read descriptor. 

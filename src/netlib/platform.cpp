@@ -5,11 +5,6 @@
 #ifdef _WIN32
 
 
-#ifndef NETLIB_PIPE_SIZE
-#define NETLIB_PIPE_SIZE 65536
-#endif
-
-
 //winsock requires initialization
 static const struct winsock_initializer {
     winsock_initializer() {
@@ -67,8 +62,11 @@ std::string get_last_error_message(int error_number) {
 
 
 //Creates a pipe.
-int pipe(int fds[2]) {
-    return _pipe(fds, NETLIB_PIPE_SIZE, O_BINARY);
+bool create_pipe(int fds[2], size_t size) {
+    if (size > std::numeric_limits<unsigned int>::max()) {
+        throw std::invalid_argument("Size too big to be stored in a variable of type 'unsigned int'.");
+    }
+    return _pipe(fds, static_cast<unsigned int>(size), O_BINARY) == 0;
 }
 
 
@@ -128,6 +126,37 @@ std::string get_last_error_message(int error_number) {
 
     //the error is unknown
     return make_error_message(error, "Unknown error.");
+}
+
+
+//Creates a pipe.
+bool create_pipe(int fds[2], size_t size) {
+    //check the size
+    if (size > std::numeric_limits<int>::max()) {
+        throw std::invalid_argument("Size too big to be stored in a variable of type 'int'.");
+    }
+
+    //create the pipe
+    int error = pipe(fds);
+
+    //there was an error
+    if (error) {
+        return false;
+    }
+
+    //set the pipe size
+    int int_size = static_cast<int>(size);
+    int capacity = fcntl(fds[0], F_SETPIPE_SZ, int_size);
+
+    //error setting the capacity
+    if (capacity != size) {
+        close(fd[0]);
+        close(fd[1]);
+        return false;
+    }
+
+    //success
+    return true;
 }
 
 

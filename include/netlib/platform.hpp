@@ -19,11 +19,13 @@
 
 
 #ifdef linux
+#define _GNU_SOURCE
 #include <sys/socket.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <poll.h>
 #include <unistd.h>
+#include <fcntl.h>
 #endif
 
 
@@ -43,18 +45,13 @@ int get_last_error_number();
 std::string get_last_error_message(int error_number = 0);
 
 
-#ifdef _WIN32
-
-
 /**
  * Creates a pipe. 
- * @param fds file descriptors; descriptor 0 is for reading, descriptor 1 is for writing.
- * @return 0 on success, -1 on error. 
+ * @param fds result file descriptors; descriptor 0 is for reading, descriptor 1 is for writing.
+ * @param size size of pipe buffer.
+ * @return true on success, false on error. 
  */
-int pipe(int fds[2]);
-
-
-#endif _WIN32
+bool create_pipe(int fds[2], size_t size);
 
 
 #endif //NETLIB_PLATFORM_HPP
