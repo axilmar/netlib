@@ -64,6 +64,16 @@ namespace netlib {
         pipe& operator = (pipe&& p);
 
         /**
+         * Returns the socket handle.
+         */
+        handle_type write_handle() const override { return m_write_fd; }
+
+        /**
+         * Returns the socket handle.
+         */
+        handle_type read_handle() const override { return m_read_fd; }
+
+        /**
          * Writes data to the pipe.
          * @param buffer pointer to data to write.
          * @param size number of bytes to write.
@@ -71,7 +81,7 @@ namespace netlib {
          * @exception std::runtime_error thrown if there was an error.
          * @exception std::invalid_argument thrown if size is too big for the operation.
          */
-        result write(const void* buffer, size_t size) override;
+        io_result_type write(const void* buffer, size_t size) override;
 
         /**
          * Reads data from the pipe.
@@ -81,7 +91,7 @@ namespace netlib {
          * @exception std::runtime_error thrown if there was an error.
          * @exception std::invalid_argument thrown if size is too big for the operation.
          */
-        result read(void* buffer, size_t size) override;
+        io_result_type read(void* buffer, size_t size) override;
 
         /**
          * Returns the read descriptor. 

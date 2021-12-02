@@ -13,7 +13,6 @@
 #include <fcntl.h>
 #undef min
 #undef max
-#define poll WSAPoll
 #define nfds_t ULONG
 #endif
 
@@ -52,6 +51,11 @@ std::string get_last_error_message(int error_number = 0);
  * @return true on success, false on error. 
  */
 bool create_pipe(int fds[2], size_t size);
+
+
+#ifdef _WIN32
+int poll(struct pollfd* fds, nfds_t nfds, int timeout);
+#endif
 
 
 #endif //NETLIB_PLATFORM_HPP

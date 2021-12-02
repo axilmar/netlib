@@ -16,7 +16,12 @@ namespace netlib {
         /**
          * Result type : pair of size of bytes read/written, open boolean flag.
          */
-        using result = std::pair<size_t, bool>;
+        using io_result_type = std::pair<size_t, bool>;
+
+        /**
+         * handle type.
+         */
+        using handle_type = uintptr_t;
 
         /**
          * Virtual destructor due to polymorphism.
@@ -24,12 +29,22 @@ namespace netlib {
         virtual ~io_resource() {}
 
         /**
+         * Returns the write handle.
+         */
+        virtual handle_type write_handle() const = 0;
+
+        /**
+         * Returns the read handle.
+         */
+        virtual handle_type read_handle() const = 0;
+
+        /**
          * Interface for reading data from a resource.
          * @param buffer destination buffer.
          * @param size number of bytes to read.
          * @return number of bytes read or closed.
          */
-        virtual result read(void* buffer, size_t size) = 0;
+        virtual io_result_type read(void* buffer, size_t size) = 0;
 
         /**
          * Interface for writing data to a resource.
@@ -37,7 +52,7 @@ namespace netlib {
          * @param size number of bytes to write.
          * @return number of bytes written or closed.
          */
-        virtual result write(const void* buffer, size_t size) = 0;
+        virtual io_result_type write(const void* buffer, size_t size) = 0;
     };
 
 

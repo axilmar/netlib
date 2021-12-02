@@ -50,7 +50,7 @@ namespace netlib {
 
 
     //write data to the pipe.
-    io_resource::result pipe::write(const void* buffer, size_t size) {
+    io_resource::io_result_type pipe::write(const void* buffer, size_t size) {
         //check the size against the return type
         if (size > std::numeric_limits<int>::max()) {
             throw std::invalid_argument("Size too big to return it as 'int'.");
@@ -87,7 +87,7 @@ namespace netlib {
 
 
     //read data from the pipe
-    io_resource::result pipe::read(void* buffer, size_t size) {
+    io_resource::io_result_type pipe::read(void* buffer, size_t size) {
         //check the size against the return type
         if (size > std::numeric_limits<int>::max()) {
             throw std::invalid_argument("Size too big to return it as 'int'.");

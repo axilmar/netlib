@@ -290,14 +290,14 @@ namespace netlib {
 
 
     //Receives data from the socket.
-    io_resource::result socket::read(void* buffer, size_t size) {
+    io_resource::io_result_type socket::read(void* buffer, size_t size) {
         const size_t res = receive(buffer, size);
         return {res, res != nsize};
     }
 
 
     //Sends data over the socket.
-    io_resource::result socket::write(const void* buffer, size_t size) {
+    io_resource::io_result_type socket::write(const void* buffer, size_t size) {
         const size_t res = send(buffer, size);
         return { res, res != nsize };
     }

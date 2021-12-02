@@ -215,12 +215,22 @@ namespace netlib {
         bool operator >= (const socket& other) const { return m_handle >= other.m_handle; }
 
         /**
+         * Returns the socket handle.
+         */
+        handle_type write_handle() const override { return m_handle; }
+
+        /**
+         * Returns the socket handle.
+         */
+        handle_type read_handle() const override { return m_handle; }
+
+        /**
          * Receives data from the socket.
          * @param buffer destination buffer.
          * @param size number of bytes to read.
          * @return number of bytes read or closed.
          */
-        result read(void* buffer, size_t size) override;
+        io_result_type read(void* buffer, size_t size) override;
 
         /**
          * Sends data over the socket.
@@ -228,7 +238,7 @@ namespace netlib {
          * @param size number of bytes to write.
          * @return number of bytes written or closed.
          */
-        result write(const void* buffer, size_t size) override;
+        io_result_type write(const void* buffer, size_t size) override;
 
     private:
         uintptr_t m_handle;

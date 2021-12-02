@@ -70,6 +70,12 @@ bool create_pipe(int fds[2], size_t size) {
 }
 
 
+//poll
+int poll(struct pollfd* fds, nfds_t nfds, int timeout) {
+    return WSAPoll(fds, nfds, timeout);
+}
+
+
 #endif //_WIN32
 
 
