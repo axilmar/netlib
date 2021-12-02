@@ -812,6 +812,53 @@ private:
 };
 
 
+class pipe_test {
+private:
+    static constexpr size_t test_message_count = 10;
+    using test_message = message<size_t, std::string, double>;
+
+public:
+    pipe_test() {
+        test("class pipe", []() {
+            netlib::pipe p;
+
+            std::thread server_thread([&] {
+                try {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+                    for (size_t i = 0; i < test_message_count; ++i) {
+                        pipe_send_message(p, test_message(i, "hello world!!!", 3.14));
+                    }
+                }
+                catch (const std::exception& ex) {
+                    std::cout << "Exception thrown by server: " << ex.what() << std::endl;
+                }
+                });
+
+            std::thread client_thread([&] {
+                try {
+                    for (size_t i = 0; i < test_message_count; ++i) {
+                        message_ptr msg = pipe_receive_message(p);
+                        if (msg->id() == test_message::message_id()) {
+                            test_message& tm = dynamic_cast<test_message&>(*msg);
+                            check(std::get<0>(tm) == i);
+                            check(std::get<1>(tm) == "hello world!!!");
+                            check(std::get<2>(tm) == 3.14);
+                        }
+                    }
+                }
+                catch (const std::exception& ex) {
+                    std::cout << "Exception thrown by client: " << ex.what() << std::endl;
+                }
+                });
+
+            client_thread.join();
+            server_thread.join();
+            });
+    }
+};
+
+
 int main() {
     init();
     address_family_test();
@@ -823,6 +870,7 @@ int main() {
     socket_test();
     serialization_test();
     message_test();
+    pipe_test();
     cleanup();
 
     system("pause");

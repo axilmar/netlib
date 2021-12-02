@@ -39,32 +39,81 @@ namespace netlib {
     }
 
 
+    //checks if the socket is still connected.
+    static bool is_socket_connected(uintptr_t handle) {
+        //get option
+        int optval;
+        socklen_t optlen = sizeof(optval);
+        int res = getsockopt(handle, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&optval), &optlen);
+
+        //handle result
+        if (res) {
+            //handle result on win32
+            #ifdef _WIN32
+            DWORD error = WSAGetLastError();
+            switch (error) {
+            case WSAENOTSOCK:
+                return false;
+            default:
+                throw std::runtime_error(get_last_error_message(error));
+            }
+            #endif
+
+            //handle result on linux
+            #ifdef linux
+            switch (errno) {
+            case EBADF:
+            case ENOTSOCK:
+                return false;
+            default:
+                throw std::runtime_error(get_last_error_message(errno));
+            }
+            #endif
+        }
+
+        //handle error value in win32
+        #ifdef WIN32
+        switch (optval) {
+        case WSAENOTCONN:
+        case WSAENETRESET:
+        case WSAENOTSOCK:
+        case WSAESHUTDOWN:
+        case WSAECONNABORTED:
+        case WSAETIMEDOUT:
+        case WSAECONNRESET:
+            return false;
+        }
+        #endif
+
+        //handle error value in linux
+        #ifdef linux
+        switch (optval) {
+        case ECONNRESET:
+        case EBADF:
+        case ENOTCONN:
+        case ENOTSOCK:
+        case EPIPE:
+            return false;
+        }
+        #endif
+
+        //socket still connected
+        return true;
+    }
+
+
     //handle send result
     static size_t handle_send_result(uintptr_t &handle, int bytes_sent) {
+        //normal case
         if (bytes_sent >= 0) {
             return bytes_sent;
         }
 
-        #ifdef _WIN32
-        switch (WSAGetLastError()) {
-        case WSAESHUTDOWN:
-        case WSAECONNABORTED:
-        case WSAECONNRESET:
+        //if not connected, reset the handle and return not-size.
+        if (!is_socket_connected(handle)) {
             handle = invalid_socket_handle;
-            return 0;
+            return socket::nsize;
         }
-        #endif
-
-        #ifdef linux
-        switch (errno) {
-        case ECONNRESET:
-        case EPIPE:
-            handle = invalid_socket_handle;
-            return 0;
-
-        default:
-        }
-        #endif
 
         throw std::runtime_error(get_last_error_message());
     }
@@ -72,15 +121,25 @@ namespace netlib {
 
     //handle receive result
     static size_t handle_receive_result(uintptr_t& handle, int bytes_received) {
+        //normal case; some data were received
         if (bytes_received > 0) {
             return bytes_received;
         }
 
+        //special case; need to detect if the connection is closed
         if (bytes_received == 0) {
+            //if the socket is still connected, then 0 is allowed
+            if (is_socket_connected(handle)) {
+                return bytes_received;
+            }
+
+            //the connection was broken; reset the handle and return no-size.
             handle = invalid_socket_handle;
-            return 0;
+            return socket::nsize;
         }
 
+        //error
+        handle = invalid_socket_handle;
         throw std::runtime_error(get_last_error_message());
     }
 

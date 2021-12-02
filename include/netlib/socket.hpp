@@ -18,6 +18,11 @@ namespace netlib {
     class socket {
     public:
         /**
+         * Size value that indicates the socket is gracefully closed. 
+         */
+        static constexpr size_t nsize = ~size_t{0};
+
+        /**
          * The default constructor.
          * The socket is initialized in an invalid state.
          */
@@ -111,7 +116,7 @@ namespace netlib {
          * @param buffer pointer to data to send.
          * @param size number of bytes to send.
          * @param flags send flags.
-         * @return number of bytes sent, 0 if the connection is closed.
+         * @return number of bytes sent, nsize if the connection is closed.
          * @exception std::runtime_error thrown if there was an error.
          */
         size_t send(const void* buffer, size_t size, int flags = 0);
@@ -122,7 +127,7 @@ namespace netlib {
          * @param size number of bytes to send.
          * @param address destination address.
          * @param flags send flags.
-         * @return number of bytes sent, 0 if the connection is closed.
+         * @return number of bytes sent, nsize if the connection is closed.
          * @exception std::runtime_error thrown if there was an error.
          */
         size_t send(const void* buffer, size_t size, const socket_address& address, int flags = 0);
@@ -133,7 +138,7 @@ namespace netlib {
          * @param buffer pointer to buffer to store the received data.
          * @param size number of bytes that can be stored in the buffer.
          * @param flags receive flags.
-         * @return number of received bytes or 0 if the connection is closed.
+         * @return number of received bytes or socket::nsize if the connection is closed.
          * @exception std::runtime_error thrown if there was an error.
          */
         size_t receive(void* buffer, size_t size, int flags = 0);
@@ -145,7 +150,7 @@ namespace netlib {
          * @param size number of bytes that can be stored in the buffer.
          * @param address the address of the sender.
          * @param flags receive flags.
-         * @return number of received bytes or 0 if the connection is closed.
+         * @return number of received bytes or socket::nsize if the connection is closed.
          * @exception std::runtime_error thrown if there was an error.
          */
         size_t receive(void* buffer, size_t size, socket_address& address, int flags = 0);

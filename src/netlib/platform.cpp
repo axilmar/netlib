@@ -5,6 +5,11 @@
 #ifdef _WIN32
 
 
+#ifndef NETLIB_PIPE_SIZE
+#define NETLIB_PIPE_SIZE 65536
+#endif
+
+
 //winsock requires initialization
 static const struct winsock_initializer {
     winsock_initializer() {
@@ -29,16 +34,15 @@ static std::string make_error_message(int error_number, const std::string& msg) 
 
 //Returns the last error number.
 int get_last_error_number() {
-    return WSAGetLastError();
+    return GetLastError();
 }
 
 
 //get last error for windows
 std::string get_last_error_message(int error_number) {
-
-    //get the last error id if not given
+    //get the last error number if not given
     if (!error_number) {
-        error_number = WSAGetLastError();
+        error_number = get_last_error_number();
     }
 
     //no error exists; return empty string
@@ -59,6 +63,12 @@ std::string get_last_error_message(int error_number) {
 
     //create the message
     return make_error_message(error_number, msg_str);
+}
+
+
+//Creates a pipe.
+int pipe(int fds[2]) {
+    return _pipe(fds, NETLIB_PIPE_SIZE, O_BINARY);
 }
 
 

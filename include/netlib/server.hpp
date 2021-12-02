@@ -71,6 +71,25 @@ namespace netlib {
          * @return true if data were read successfully, false if the socket was closed.
          */
         virtual bool on_receive(socket& s) = 0;
+
+        /**
+         * The poll error event.
+         * It is invoked when the poll function returns an error.
+         * @param error_number the error number.
+         * @param error_message the error message.
+         * @return if true, the resources for polling are released, otherwise the error is ignored.
+         */
+        virtual bool on_poll_error(int error_number, const std::string& error_message) = 0;
+
+        /**
+         * The receive error event.
+         * It is invoked when there is an error receiving data from a socket.
+         * @param s socket that the error was for.
+         * @param error_number the error number.
+         * @param error_message the error message.
+         * @return if true, the socket is closed, otherwise the error is ignored.
+         */
+        virtual bool on_socket_error(socket& s, int error_number, const std::string& error_message) = 0;
     };
 
 
