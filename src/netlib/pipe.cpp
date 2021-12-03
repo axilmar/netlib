@@ -84,21 +84,12 @@ namespace netlib {
             throw std::invalid_argument("Size too big to cast it to 'int'.");
         }
 
+        //get the write handle synchronized
+        uintptr_t write_handle = this->write_handle();
+
+        //write
         bool pipe_is_open;
-        int bytes_written;
-
-        //synchronized write
-        {
-            std::shared_lock lock(m_mutex);
-
-            //check the write handle
-            if (WRITE_HANDLE == -1) {
-                return { 0, false };
-            }
-
-            //write
-            bytes_written = ::pipe_write(WRITE_HANDLE, buffer, static_cast<int>(size), pipe_is_open);
-        }
+        int bytes_written = ::pipe_write(write_handle, buffer, static_cast<int>(size), pipe_is_open);
 
         //success/graceful close
         if (bytes_written >= 0) {
@@ -117,21 +108,13 @@ namespace netlib {
             throw std::invalid_argument("Size too big to cast it to 'int'.");
         }
 
+
+        //get the read handle synchronized
+        uintptr_t read_handle = this->read_handle();
+
+        //read
         bool pipe_is_open;
-        int bytes_read;
-
-        //synchronized read
-        {
-            std::shared_lock lock(m_mutex);
-
-            //check the read handle
-            if (READ_HANDLE == -1) {
-                return { 0, false };
-            }
-
-            //read
-            bytes_read = pipe_read(READ_HANDLE, buffer, static_cast<int>(size), pipe_is_open);
-        }
+        int bytes_read = pipe_read(read_handle, buffer, static_cast<int>(size), pipe_is_open);
 
         //success/graceful close
         if (bytes_read >= 0) {

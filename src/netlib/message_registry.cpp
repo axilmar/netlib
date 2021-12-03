@@ -27,16 +27,23 @@ namespace netlib {
 namespace netlib {
 
 
+    //message info
+    struct message_info {
+        //id of message
+        message_id id;
+
+        //deserialization function
+        message_registry::deserialization_function deserialization_function;
+    };
+
+
     //message registry data
     struct message_registry_data {
         //mutex for global protection
         std::shared_mutex mutex;
 
-        //name to message id
-        std::map<std::string, message_id> name_to_id;
-
-        //message name to message deserialization function
-        std::map<std::string, message_registry::deserialization_function> name_to_deserialization_function;
+        //name message info
+        std::map<std::string, message_info> name_to_message_info;
 
         //message id to message deserialization function
         std::map<message_id, message_registry::deserialization_function> id_to_deserialization_function;
@@ -101,15 +108,12 @@ namespace netlib {
         const std::string dm_name = demangle_name(msg_name);
 
         //insert the entry
-        auto [it, ok] = data.name_to_id.emplace(dm_name, 0);
+        auto [it, ok] = data.name_to_message_info.emplace(dm_name, message_info{0, deserialize });
 
         //if insertion was not possible, throw
         if (!ok) {
             throw std::runtime_error("Message " + dm_name + " already registered.");
         }
-
-        //add the deserialization function
-        data.name_to_deserialization_function.emplace(dm_name, deserialize);
     }
 
 
@@ -128,13 +132,13 @@ namespace netlib {
         if (data.id_to_deserialization_function.empty()) {
             netlib::message_id id = 0;
 
-            //enumerate the messages lexicographically
-            for (auto& entry : data.name_to_id) {
-                //set the id of the entry
-                entry.second = id;
+            //enumerate the messages lexicographically (since the name_to_message_info map is sorted by name)
+            for (auto& entry : data.name_to_message_info) {
+                //set the id
+                entry.second.id = id;
 
-                //add deserialization function entry
-                data.id_to_deserialization_function.emplace(id, data.name_to_deserialization_function[dm_name]);
+                //set the deserialization function
+                data.id_to_deserialization_function.emplace(id, entry.second.deserialization_function);
 
                 //next message id
                 ++id;
@@ -147,11 +151,11 @@ namespace netlib {
         }
 
         //find the entry
-        auto it = data.name_to_id.find(dm_name);
+        auto it = data.name_to_message_info.find(dm_name);
 
         //if found, return the id
-        if (it != data.name_to_id.end()) {
-            return it->second;
+        if (it != data.name_to_message_info.end()) {
+            return it->second.id;
         }
 
         //not found

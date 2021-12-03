@@ -21,6 +21,7 @@
 #include "netlib/message.hpp"
 #include "netlib/message_io.hpp"
 #include "netlib/io_multiplexer.hpp"
+#include "netlib/lockable_resource.hpp"
 
 
 using namespace netlib;
@@ -939,6 +940,19 @@ public:
                 //add the test resources to the multiplexer
                 test_multiplexer.add(test_resources, resource_callback);
 
+                //add a mutex
+                std::atomic<size_t> mutex_signalled_count = 0;
+                std::atomic<size_t> successful_lock_count = 0;
+                netlib::mutex test_mutex;
+                test_multiplexer.add(test_mutex, [&](io_multiplexer& mpx, io_resource& res) {
+                    mutex_signalled_count.fetch_add(1, std::memory_order_relaxed);
+                    char buf[1];
+                    if (test_mutex.read(buf, 0).first) {
+                        successful_lock_count.fetch_add(1, std::memory_order_relaxed);
+                        test_mutex.unlock();
+                    }
+                    });
+
                 //begin polling thread
                 std::thread polling_thread([&]() {
                     try {
@@ -961,6 +975,8 @@ public:
                         //prepare random resource index generation
                         std::random_device rd;
                         std::default_random_engine re(rd());
+
+                        //avoid the mutex
                         std::uniform_int_distribution<size_t> dist(0, test_resources.size() - 1);
 
                         //send test messages
@@ -1008,6 +1024,7 @@ public:
                 polling_thread.join();
 
                 check(received_all_messages);
+                check(mutex_signalled_count.load(std::memory_order_acquire) == successful_lock_count.load(std::memory_order_acquire));
             }
             catch (const std::exception& ex) {
                 std::cout << "\n test error: " << ex.what() << std::endl;
@@ -1027,16 +1044,16 @@ private:
 
 int main() {
     init();
-    //address_family_test();
-    //socket_type_test();
-    //protocol_test();
-    //internet_address_test();
-    //utility_test();
-    //socket_address_test();
-    //socket_test();
-    //serialization_test();
-    //message_test();
-    //pipe_test();
+    address_family_test();
+    socket_type_test();
+    protocol_test();
+    internet_address_test();
+    utility_test();
+    socket_address_test();
+    socket_test();
+    serialization_test();
+    message_test();
+    pipe_test();
     io_multiplexer_test();
     cleanup();
 

@@ -66,7 +66,8 @@ namespace netlib {
          * @param buffer destination buffer.
          */
         void serialize(std::vector<char>& buffer) const final {
-            netlib::serialize(buffer, id());
+            const netlib::message_id id = message_id();
+            netlib::serialize(buffer, id);
             netlib::serialize(buffer, static_cast<const std::tuple<T...>&>(*this));
         }
 
@@ -82,7 +83,8 @@ namespace netlib {
             netlib::deserialize(buffer, pos, id);
 
             //check the message id
-            if (id != message_id()) {
+            const netlib::message_id mid = message_id();
+            if (id != mid) {
                 throw std::invalid_argument("Invalid message id");
             }
 

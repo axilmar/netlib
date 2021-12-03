@@ -14,6 +14,14 @@
 #endif
 
 
+ /**
+  * minimum pipe size.
+  */
+#ifndef NETLIB_MINIMUM_PIPE_SIZE
+#define NETLIB_MINIMUM_PIPE_SIZE 4096
+#endif
+
+
 #ifdef _WIN32
 inline constexpr bool pipes_are_stream_oriented = false;
 #endif
