@@ -297,13 +297,13 @@ public:
     }
 
 private:
+    static constexpr size_t test_message_count = 10;
+    static inline const char message[] = "hello world";
+
     static void invalid_socket_test() {
         netlib::socket s;
         check(!s);
     }
-
-    static constexpr size_t test_message_count = 10;
-    static inline const char message[] = "hello world";
 
     static void tcp_socket_test() {
         std::thread server_thread([] {
@@ -317,6 +317,11 @@ private:
 
                 for (size_t i = 0; i < test_message_count; ++i) {
                     client_socket.send(message, sizeof(message) - 1);
+                }
+
+                //send 0 size
+                for (size_t i = 0; i < test_message_count; ++i) {
+                    client_socket.send(message, 0);
                 }
             }
             catch (const std::exception& ex) {
@@ -332,11 +337,16 @@ private:
 
                 for (size_t i = 0; i < test_message_count; ++i) {
                     char buf[32];
-
                     const size_t size = s.receive(buf, sizeof(message) - 1);
-
                     check(size == sizeof(message) - 1);
                     check(strncmp(buf, message, size) == 0);
+                }
+
+                //receive 0 size
+                for (size_t i = 0; i < test_message_count; ++i) {
+                    char buf[32];
+                    const size_t size = s.receive(buf, 0);
+                    check(size == 0);
                 }
             }
             catch (const std::exception& ex) {
@@ -360,6 +370,11 @@ private:
                 for (size_t i = 0; i < test_message_count; ++i) {
                     s.send(message, sizeof(message) - 1, addr);
                 }
+
+                //send 0 size
+                for (size_t i = 0; i < test_message_count; ++i) {
+                    s.send(message, 0, addr);
+                }
             }
             catch (const std::exception& ex) {
                 std::cout << "Exception thrown by server: " << ex.what() << std::endl;
@@ -372,11 +387,17 @@ private:
 
                 for (size_t i = 0; i < test_message_count; ++i) {
                     char buf[32];
-
                     const size_t size = s.receive(buf, sizeof(buf), receive_addr);
-
                     check(size == sizeof(message) - 1);
                     check(strncmp(buf, message, size) == 0);
+                    check(receive_addr == addr);
+                }
+
+                //receive 0 size
+                for (size_t i = 0; i < test_message_count; ++i) {
+                    char buf[32];
+                    const size_t size = s.receive(buf, sizeof(buf), receive_addr);
+                    check(size == 0);
                     check(receive_addr == addr);
                 }
             }
@@ -861,16 +882,16 @@ public:
 
 int main() {
     init();
-    address_family_test();
-    socket_type_test();
-    protocol_test();
-    internet_address_test();
-    utility_test();
-    socket_address_test();
+    //address_family_test();
+    //socket_type_test();
+    //protocol_test();
+    //internet_address_test();
+    //utility_test();
+    //socket_address_test();
     socket_test();
-    serialization_test();
-    message_test();
-    pipe_test();
+    //serialization_test();
+    //message_test();
+    //pipe_test();
     cleanup();
 
     system("pause");
