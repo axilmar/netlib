@@ -910,6 +910,7 @@ public:
                     test_socket_addresses[i] = socket_address({ "", address_family::ipv4 }, static_cast<uint16_t>(10000 + i));
                     test_sockets[i] = netlib::socket(address_family::ipv4, socket_type::datagram);
                     test_sockets[i].bind(test_socket_addresses[i]);
+                    test_sockets[i].connect(test_socket_addresses[i]);
                 }
 
                 //put all test resources in one big array so as that the test thread can randomly some of them
@@ -917,9 +918,11 @@ public:
                 for (netlib::socket& s : test_sockets) {
                     test_resources.push_back(&s);
                 }
+                /*
                 for (pipe& p : test_pipes) {
                     test_resources.push_back(&p);
                 }
+                */
 
                 //the test multiplexer
                 io_multiplexer test_multiplexer;
@@ -1035,7 +1038,7 @@ int main() {
     //socket_test();
     //serialization_test();
     //message_test();
-    //pipe_test();
+    pipe_test();
     //io_multiplexer_test();
     cleanup();
 

@@ -434,12 +434,23 @@ namespace netlib {
      * @exception std::out_of_range thrown if the message is too big for the current message size.
      */
     template <class Encrypt, class... T> bool pipe_send_message(pipe& p, const message<T...>& msg, Encrypt&& encrypt, std::vector<char>& buffer = intermediate_buffer()) {
-        return stream_send_message(msg, std::forward<Encrypt>(encrypt), buffer, [&](const void* buffer, const size_t size) {
-            return stream_send(buffer, size, pipe::nsize, [&](const void* data, const size_t size) {
-                const auto [sent_size, ok] = p.write(data, size);
-                return sent_size;
+        //stream send
+        if constexpr (pipes_are_stream_oriented) {
+            return stream_send_message(msg, std::forward<Encrypt>(encrypt), buffer, [&](const void* buffer, const size_t size) {
+                return stream_send(buffer, size, pipe::nsize, [&](const void* data, const size_t size) {
+                    const auto [sent_size, ok] = p.write(data, size);
+                    return sent_size;
+                    });
                 });
-            });
+        }
+
+        //else packet send
+        else {
+            return packet_send_message(msg, std::forward<Encrypt>(encrypt), buffer, [&](const void* buffer, const size_t size) {
+                const auto [sent_size, ok] = p.write(buffer, size);
+                return sent_size == size;
+                });
+        }
     }
 
 
@@ -466,12 +477,24 @@ namespace netlib {
      * @return pointer to message or a null ptr if the pipe is closed.
      */
     template <class Decrypt> message_ptr pipe_receive_message(pipe& p, Decrypt&& decrypt, std::vector<char>& buffer = intermediate_buffer(), std::pmr::memory_resource& memory_resource = *std::pmr::get_default_resource()) {
-        return stream_receive_message(std::forward<Decrypt>(decrypt), buffer, memory_resource, [&](void* buffer, size_t size) {
-            return stream_receive(buffer, size, pipe::nsize, [&](void* data, size_t size) {
-                const auto [received_size, ok] = p.read(data, size);
-                return received_size;
+        //stream receive
+        if constexpr (pipes_are_stream_oriented) {
+            return stream_receive_message(std::forward<Decrypt>(decrypt), buffer, memory_resource, [&](void* buffer, size_t size) {
+                return stream_receive(buffer, size, pipe::nsize, [&](void* data, size_t size) {
+                    const auto [received_size, ok] = p.read(data, size);
+                    return received_size;
+                    });
                 });
-            });
+        }
+
+        //else packet receive
+        else {
+            return packet_receive_message(std::forward<Decrypt>(decrypt), buffer, memory_resource, [&](void* buffer, const size_t size, size_t& packet_size) {
+                const auto [received_size, ok] = p.read(buffer, size);
+                packet_size = received_size;
+                return ok;
+                });
+        }
     }
 
 

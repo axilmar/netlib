@@ -171,14 +171,6 @@ namespace netlib {
         //wait for data; add one to the resource count to account for the internal pipe
         int result = ::poll(reinterpret_cast<pollfd*>(m_pollfd.data()), static_cast<nfds_t>(m_resource_table.size()), timeout);
 
-        //check if stopped after waking up
-        {
-            std::lock_guard lock(m_mutex);
-            if (m_stop) {
-                return stopped;
-            }
-        }
-
         //if result was greater than 0, then process resources
         if (result > 0) {
             process_resources(result);
@@ -241,8 +233,8 @@ namespace netlib {
 
         //put the internal pipe as the first object; there is no resource for it
         ++res;
-        pfd->events = POLLRDNORM;
-        pfd->fd = m_resources_changed_pipe.get_read_descriptor();
+        pfd->events = POLLIN;
+        pfd->fd = m_resources_changed_pipe.read_handle();
         ++pfd;
 
         //put resources
@@ -266,12 +258,12 @@ namespace netlib {
     void io_multiplexer::put_resource(struct pollfd* pfd, const resource_info& resource) {
         switch (resource.operation) {
         case read:
-            pfd->events = POLLRDNORM;
+            pfd->events = POLLIN;
             pfd->fd = resource.resource->read_handle();
             break;
 
         case write:
-            pfd->events = POLLWRNORM;
+            pfd->events = POLLOUT;
             pfd->fd = resource.resource->write_handle();
             break;
         }
@@ -287,7 +279,7 @@ namespace netlib {
         }
 
         //skip entry at 0 because it is the internal pipe
-        for (size_t resource_index = 1; resource_index < m_resource_table.size() && resource_count > 0; ++resource_index) {
+        for (size_t resource_index = 1; resource_index < m_resource_table.size()/* && resource_count > 0*/; ++resource_index) {
 
             //get pointer to the pfd structure
             pollfd* pfd = &reinterpret_cast<pollfd*>(m_pollfd.data())[resource_index];

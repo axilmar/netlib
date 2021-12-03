@@ -14,6 +14,7 @@
 #undef min
 #undef max
 #define nfds_t ULONG
+int poll(struct pollfd* fds, nfds_t nfds, int timeout);
 #endif
 
 
@@ -50,12 +51,32 @@ std::string get_last_error_message(int error_number = 0);
  * @param size size of pipe buffer.
  * @return true on success, false on error. 
  */
-bool create_pipe(int fds[2], size_t size);
+bool create_pipe(uintptr_t fds[2], size_t size);
 
 
-#ifdef _WIN32
-int poll(struct pollfd* fds, nfds_t nfds, int timeout);
-#endif
+/**
+ * Read data from pipe.
+ */
+int pipe_read(uintptr_t fd, void* buffer, int size, bool& pipe_is_open);
+
+
+/**
+ * Write to pipe.
+ */
+int pipe_write(uintptr_t fd, const void* buffer, int size, bool& pipe_is_open);
+
+
+/**
+ * Closes a pipe.
+ * @param fd file descriptors of the pipe.
+ */
+void close_pipe(uintptr_t fds[2]);
+
+
+/**
+ * checks if the socket is still connected.
+ */
+bool is_socket_connected(uintptr_t handle);
 
 
 #endif //NETLIB_PLATFORM_HPP

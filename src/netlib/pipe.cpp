@@ -3,49 +3,77 @@
 #include "netlib/pipe.hpp"
 
 
+#define READ_HANDLE m_fds[0]
+#define WRITE_HANDLE m_fds[1]
+
+
 namespace netlib {
 
 
     //The default constructor.
     pipe::pipe(size_t capacity) {
         //create the pipe
-        int fd[2];
-        if (!create_pipe(fd, capacity)) {
+        if (!create_pipe(m_fds, capacity)) {
             throw std::runtime_error(get_last_error_message());
         }
-
-        //success
-        m_read_fd = fd[0];
-        m_write_fd = fd[1];
     }
 
 
     //The move constructor.
-    pipe::pipe(pipe&& p) : m_read_fd(p.m_read_fd), m_write_fd(p.m_write_fd) {
-        p.m_read_fd = -1;
-        p.m_write_fd = -1;
+    pipe::pipe(pipe&& p) {
+        //get handles from given pipe
+        READ_HANDLE = p.READ_HANDLE;
+        WRITE_HANDLE = p.WRITE_HANDLE;
+
+        //reset given pipe
+        std::lock_guard lock(p.m_mutex);
+        p.READ_HANDLE = -1;
+        p.WRITE_HANDLE = -1;
     }
 
 
     //closes the pipe
     pipe::~pipe() {
-        close_read_descriptor();
-        close_write_descriptor();
+        std::lock_guard lock(m_mutex);
+        close_pipe(m_fds);
     }
 
 
     //The move assignment operator.
     pipe& pipe::operator = (pipe&& p) {
-        int temp_read_fd = p.m_read_fd;
-        int temp_write_fd = p.m_write_fd;
+        if (&p == this) {
+            return *this;
+        }
 
-        p.m_read_fd = -1;
-        p.m_write_fd = -1;
+        std::scoped_lock locks(m_mutex, p.m_mutex);
 
-        m_read_fd = temp_read_fd;
-        m_write_fd = temp_write_fd;
-        
+        //set this' handles from input pipe handles
+        READ_HANDLE = p.READ_HANDLE;
+        WRITE_HANDLE = p.WRITE_HANDLE;
+
+        //reset input pipe handles
+        p.READ_HANDLE = -1;
+        p.WRITE_HANDLE = -1;
+
         return *this;
+    }
+
+
+    /**
+     * Returns the write handle.
+     */
+    io_resource::handle_type pipe::write_handle() const {
+        std::shared_lock lock(m_mutex);
+        return WRITE_HANDLE;
+    }
+
+
+    /**
+     * Returns the read handle.
+     */
+    io_resource::handle_type pipe::read_handle() const {
+        std::shared_lock lock(m_mutex);
+        return READ_HANDLE;
     }
 
 
@@ -53,32 +81,28 @@ namespace netlib {
     io_resource::io_result_type pipe::write(const void* buffer, size_t size) {
         //check the size against the return type
         if (size > std::numeric_limits<int>::max()) {
-            throw std::invalid_argument("Size too big to return it as 'int'.");
+            throw std::invalid_argument("Size too big to cast it to 'int'.");
         }
 
-        //check the size against unsigned int
-        if (size > std::numeric_limits<unsigned int>::max()) {
-            throw std::invalid_argument("Size too big to pass to the 'write' function.");
+        bool pipe_is_open;
+        int bytes_written;
+
+        //synchronized write
+        {
+            std::shared_lock lock(m_mutex);
+
+            //check the write handle
+            if (WRITE_HANDLE == -1) {
+                return { 0, false };
+            }
+
+            //write
+            bytes_written = ::pipe_write(WRITE_HANDLE, buffer, static_cast<int>(size), pipe_is_open);
         }
 
-        //check the write handle
-        if (m_write_fd == -1) {
-            return { 0, false };
-        }
-
-        //write
-        errno = 0;
-        int bytes_written = ::write(m_write_fd, buffer, static_cast<unsigned int>(size));
-
-        //success
+        //success/graceful close
         if (bytes_written >= 0) {
-            return { bytes_written, true };
-        }
-
-        //if error is 'the other end is closed', close this too
-        if (errno == EPIPE) {
-            close_write_descriptor();
-            return { 0, false };
+            return { bytes_written, pipe_is_open };
         }
 
         //throw error
@@ -90,54 +114,32 @@ namespace netlib {
     io_resource::io_result_type pipe::read(void* buffer, size_t size) {
         //check the size against the return type
         if (size > std::numeric_limits<int>::max()) {
-            throw std::invalid_argument("Size too big to return it as 'int'.");
+            throw std::invalid_argument("Size too big to cast it to 'int'.");
         }
 
-        //check the size against unsigned int
-        if (size > std::numeric_limits<unsigned int>::max()) {
-            throw std::invalid_argument("Size too big to pass to the 'read' function.");
+        bool pipe_is_open;
+        int bytes_read;
+
+        //synchronized read
+        {
+            std::shared_lock lock(m_mutex);
+
+            //check the read handle
+            if (READ_HANDLE == -1) {
+                return { 0, false };
+            }
+
+            //read
+            bytes_read = pipe_read(READ_HANDLE, buffer, static_cast<int>(size), pipe_is_open);
         }
 
-        //check the read handle
-        if (m_read_fd == -1) {
-            return { 0, false };
-        }
-
-        //read
-        errno = 0;
-        int bytes_read = ::read(m_read_fd, buffer, static_cast<unsigned int>(size));
-
-        //success
+        //success/graceful close
         if (bytes_read >= 0) {
-            return { bytes_read, true };
-        }
-
-        //if error is 'the other end is closed', close this too
-        if (errno == EPIPE) {
-            close_read_descriptor();
-            return { 0, false };
+            return { bytes_read, pipe_is_open };
         }
 
         //throw error
         throw std::runtime_error(get_last_error_message());
-    }
-
-
-    //Closes the read descriptor.
-    void pipe::close_read_descriptor() {
-        if (m_read_fd != -1) {
-            close(m_read_fd);
-            m_read_fd = -1;
-        }
-    }
-
-
-    //Closes the write descriptor.
-    void pipe::close_write_descriptor() {
-        if (m_write_fd != -1) {
-            close(m_write_fd);
-            m_write_fd = -1;
-        }
     }
 
 

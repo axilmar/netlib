@@ -2,6 +2,7 @@
 #define NETLIB_PIPE_HPP
 
 
+#include <shared_mutex>
 #include "io_resource.hpp"
 
 
@@ -10,6 +11,16 @@
  */
 #ifndef NETLIB_DEFAULT_PIPE_SIZE
 #define NETLIB_DEFAULT_PIPE_SIZE 65536
+#endif
+
+
+#ifdef _WIN32
+inline constexpr bool pipes_are_stream_oriented = false;
+#endif
+
+
+#ifdef linux
+inline constexpr bool pipes_are_stream_oriented = true;
 #endif
 
 
@@ -64,19 +75,19 @@ namespace netlib {
         pipe& operator = (pipe&& p);
 
         /**
-         * Returns the socket handle.
+         * Returns the write handle.
          */
-        handle_type write_handle() const override { return m_write_fd; }
+        handle_type write_handle() const override;
 
         /**
-         * Returns the socket handle.
+         * Returns the read handle.
          */
-        handle_type read_handle() const override { return m_read_fd; }
+        handle_type read_handle() const override;
 
         /**
-         * Returns true, since pipes are like streams.
+         * Returns true, is the pipe supports stream mode, otherwise false.
          */
-        bool is_stream_oriented() const override { return true; }
+        bool is_stream_oriented() const override { return pipes_are_stream_oriented; }
 
         /**
          * Writes data to the pipe.
@@ -98,29 +109,9 @@ namespace netlib {
          */
         io_result_type read(void* buffer, size_t size) override;
 
-        /**
-         * Returns the read descriptor. 
-         */
-        int get_read_descriptor() const { return m_read_fd; }
-
-        /**
-         * Returns the write descriptor.
-         */
-        int get_write_descriptor() const { return m_write_fd; }
-
-        /**
-         * Closes the read descriptor. 
-         */
-        void close_read_descriptor();
-
-        /**
-         * Closes the write descriptor. 
-         */
-        void close_write_descriptor();
-
     private:
-        int m_read_fd;
-        int m_write_fd;
+        mutable std::shared_mutex m_mutex;
+        uintptr_t m_fds[2];
     };
 
 

@@ -62,11 +62,86 @@ std::string get_last_error_message(int error_number) {
 
 
 //Creates a pipe.
-bool create_pipe(int fds[2], size_t size) {
-    if (size > std::numeric_limits<unsigned int>::max()) {
-        throw std::invalid_argument("Size too big to be stored in a variable of type 'unsigned int'.");
+bool create_pipe(uintptr_t fds[2], size_t size) {
+    //create a socket
+    uintptr_t socket = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+    //prepare address to bind the socket to
+    sockaddr_in addr{};
+    addr.sin_addr.S_un.S_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_family = AF_INET;
+    addr.sin_port = 0;
+
+    //bind the socket
+    int error = ::bind(socket, reinterpret_cast<const sockaddr*>(&addr), sizeof(addr));
+
+    //bind error
+    if (error) {
+        throw std::runtime_error(get_last_error_message());
     }
-    return _pipe(fds, static_cast<unsigned int>(size), O_BINARY) == 0;
+
+    //success; get address to connect the socket to
+    int namelen = sizeof(addr);
+    error = getsockname(socket, reinterpret_cast<sockaddr*>(&addr), &namelen);
+
+    //getsockname error
+    if (error) {
+        throw std::runtime_error(get_last_error_message());
+    }
+
+    //connect to same address so as that data can be read
+    error = connect(socket, reinterpret_cast<const sockaddr*>(&addr), sizeof(addr));
+
+    //connect error
+    if (error) {
+        throw std::runtime_error(get_last_error_message());
+    }
+
+    //success; set both handles to the socket
+    fds[0] = socket;
+    fds[1] = socket;
+    return true;
+}
+
+
+//Read data from pipe.
+int pipe_read(uintptr_t fd, void* buffer, int size, bool& pipe_is_open) {
+    int bytes_read = ::recv(fd, reinterpret_cast<char*>(buffer), size, 0);
+
+    if (bytes_read > 0) {
+        pipe_is_open = true;
+        return bytes_read;
+    }
+
+    if (bytes_read == 0) {
+        pipe_is_open = is_socket_connected(fd);
+        return bytes_read;
+    }
+
+    return bytes_read;
+}
+
+
+//Write to pipe.
+int pipe_write(uintptr_t fd, const void* buffer, int size, bool& pipe_is_open) {
+    int bytes_written = ::send(fd, reinterpret_cast<const char*>(buffer), size, 0);
+
+    if (bytes_written >= 0) {
+        pipe_is_open = true;
+        return bytes_written;
+    }
+
+    pipe_is_open = is_socket_connected(fd);
+
+    return bytes_written;
+}
+
+
+//Closes a pipe.
+void close_pipe(uintptr_t fds[2]) {
+    closesocket(fds[0]);
+    fds[0] = static_cast<uintptr_t>(-1);
+    fds[1] = static_cast<uintptr_t>(-1);
 }
 
 
@@ -136,14 +211,16 @@ std::string get_last_error_message(int error_number) {
 
 
 //Creates a pipe.
-bool create_pipe(int fds[2], size_t size) {
+bool create_pipe(uintptr_t fds[2], size_t size) {
     //check the size
     if (size > std::numeric_limits<int>::max()) {
         throw std::invalid_argument("Size too big to be stored in a variable of type 'int'.");
     }
 
+    int internal_fds[2];
+
     //create the pipe
-    int error = pipe(fds);
+    int error = pipe(internal_fds);
 
     //there was an error
     if (error) {
@@ -162,8 +239,114 @@ bool create_pipe(int fds[2], size_t size) {
     }
 
     //success
+    fds[0] = internal_fds[0];
+    fds[1] = internal_fds[1];
     return true;
 }
 
 
+static void handle_pipe_result(int bytes, bool& pipe_is_open) {
+    if (bytes < 0) {
+        switch (errno) {
+        case EBADF:
+        case EPIPE:
+            pipe_is_open = false;
+            break;
+        }
+    }
+}
+
+
+//Read data from pipe.
+int pipe_read(uintptr_t fd, void* buffer, int size, bool& pipe_is_open) {
+    int bytes_read = static_cast<int>(::read(fd, buffer, static_cast<unsigned int>(size)));
+    pipe_is_open = true;
+    handle_pipe_result(bytes_read, pipe_is_open);
+    return bytes_read;
+}
+
+
+//Write to pipe.
+int pipe_write(uintptr_t fd, const void* buffer, int size, bool& pipe_is_open) {
+    int bytes_written = static_cast<int>(::write(fd, buffer, static_cast<unsigned int>(size)));
+    pipe_is_open = true;
+    handle_pipe_result(bytes_written, pipe_is_open);
+    return bytes_written;
+}
+
+
+//Closes a pipe.
+void close_pipe(uintptr_t fds[2]) {
+    close(static_cast<int>(fds[0]));
+    close(static_cast<int>(fds[1]));
+    fds[0] = static_cast<uintptr_t>(-1);
+    fds[1] = static_cast<uintptr_t>(-1);
+}
+
+
 #endif //linux
+
+
+//checks if the socket is still connected.
+bool is_socket_connected(uintptr_t handle) {
+    //get option
+    int optval;
+    socklen_t optlen = sizeof(optval);
+    int res = getsockopt(handle, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&optval), &optlen);
+
+    //handle result
+    if (res) {
+        //handle result on win32
+        #ifdef _WIN32
+        DWORD error = WSAGetLastError();
+        switch (error) {
+        case WSAENOTSOCK:
+            return false;
+        default:
+            throw std::runtime_error(get_last_error_message(error));
+        }
+        #endif
+
+        //handle result on linux
+        #ifdef linux
+        switch (errno) {
+        case EBADF:
+        case ENOTSOCK:
+            return false;
+        default:
+            throw std::runtime_error(get_last_error_message(errno));
+        }
+        #endif
+    }
+
+    //handle error value in win32
+    #ifdef WIN32
+    switch (optval) {
+    case WSAENOTCONN:
+    case WSAENETRESET:
+    case WSAENOTSOCK:
+    case WSAESHUTDOWN:
+    case WSAECONNABORTED:
+    case WSAETIMEDOUT:
+    case WSAECONNRESET:
+        return false;
+    }
+    #endif
+
+    //handle error value in linux
+    #ifdef linux
+    switch (optval) {
+    case ECONNRESET:
+    case EBADF:
+    case ENOTCONN:
+    case ENOTSOCK:
+    case EPIPE:
+        return false;
+    }
+    #endif
+
+    //socket still connected
+    return true;
+}
+
+
