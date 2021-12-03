@@ -850,6 +850,12 @@ public:
                     for (size_t i = 0; i < test_message_count; ++i) {
                         pipe_send_message(p, test_message(i, "hello world!!!", 3.14));
                     }
+
+                    //send 0 bytes
+                    for (size_t i = 0; i < test_message_count; ++i) {
+                        char buf[1];
+                        p.write(buf, 0);
+                    }
                 }
                 catch (const std::exception& ex) {
                     std::cout << "Exception thrown by server: " << ex.what() << std::endl;
@@ -867,6 +873,14 @@ public:
                             check(std::get<2>(tm) == 3.14);
                         }
                     }
+
+                    //receive 0 bytes
+                    for (size_t i = 0; i < test_message_count; ++i) {
+                        char buf[1];
+                        const auto [size, ok] = p.read(buf, 0);
+                        check(size == 0);
+                        check(ok);
+                    }
                 }
                 catch (const std::exception& ex) {
                     std::cout << "Exception thrown by client: " << ex.what() << std::endl;
@@ -882,16 +896,16 @@ public:
 
 int main() {
     init();
-    //address_family_test();
-    //socket_type_test();
-    //protocol_test();
-    //internet_address_test();
-    //utility_test();
-    //socket_address_test();
+    address_family_test();
+    socket_type_test();
+    protocol_test();
+    internet_address_test();
+    utility_test();
+    socket_address_test();
     socket_test();
-    //serialization_test();
-    //message_test();
-    //pipe_test();
+    serialization_test();
+    message_test();
+    pipe_test();
     cleanup();
 
     system("pause");

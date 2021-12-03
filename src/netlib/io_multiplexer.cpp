@@ -131,6 +131,11 @@ namespace netlib {
                 return stopped;
             }
 
+            //if empty
+            if (m_resources.empty()) {
+                return empty;
+            }
+ 
             //if resources are changed, rebuild the arrays needed for polling and processing
             if (m_resources_changed) {
                 m_resources_changed = false;
@@ -138,11 +143,16 @@ namespace netlib {
             }
         }
 
-        //only one thread can poll
-        std::lock_guard poll_lock(m_poll_mutex);
-
         //wait for data
         int result = ::poll(reinterpret_cast<pollfd*>(m_pollfd.data()), static_cast<nfds_t>(m_max_resource_count), timeout);
+
+        //check if stopped after waking up
+        {
+            std::lock_guard lock(m_mutex);
+            if (m_stop) {
+                return stopped;
+            }
+        }
 
         //if result was greater than 0, then process resources
         if (result > 0) {

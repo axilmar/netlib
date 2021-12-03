@@ -53,19 +53,24 @@ namespace netlib {
          */
         enum poll_result_type {
             /**
-             * poll is ok.
+             * The multiplexer did not have any resources.
              */
-            ok,
+            empty = -2,
 
             /**
              * there was a timeout.
              */
-            timeout,
+             timeout = -1,
 
-            /**
-             * poll is stopped. 
+             /**
+              * poll is stopped.
+              */
+              stopped = 0,
+
+              /**
+             * poll is ok.
              */
-            stopped
+            ok = 1,
         };
 
         /**
@@ -128,6 +133,7 @@ namespace netlib {
          * Only one thread can safely poll for resources.
          * @param milliseconds milliseconds to wait; if less then zero, then it blocks.
          * @return true if polling can continue, false if the multiplexer object is destroyed.
+         * @exception std::runtime_error thrown if there was an error.
          */
         poll_result_type poll(int milliseconds = -1);
 
@@ -156,9 +162,6 @@ namespace netlib {
 
         //resources count
         size_t m_resource_count;
-
-        //mutex used for polling
-        std::mutex m_poll_mutex;
 
         //resource table; 1:1 correspondence with the pollfd array.
         std::vector<resource_info> m_resource_table;
