@@ -918,11 +918,9 @@ public:
                 for (netlib::socket& s : test_sockets) {
                     test_resources.push_back(&s);
                 }
-                /*
                 for (pipe& p : test_pipes) {
                     test_resources.push_back(&p);
                 }
-                */
 
                 //the test multiplexer
                 io_multiplexer test_multiplexer;
@@ -1038,8 +1036,8 @@ int main() {
     //socket_test();
     //serialization_test();
     //message_test();
-    pipe_test();
-    //io_multiplexer_test();
+    //pipe_test();
+    io_multiplexer_test();
     cleanup();
 
     system("pause");
