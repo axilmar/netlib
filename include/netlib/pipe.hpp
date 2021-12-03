@@ -74,6 +74,11 @@ namespace netlib {
         handle_type read_handle() const override { return m_read_fd; }
 
         /**
+         * Returns true, since pipes are like streams.
+         */
+        bool is_stream_oriented() const override { return true; }
+
+        /**
          * Writes data to the pipe.
          * @param buffer pointer to data to write.
          * @param size number of bytes to write.

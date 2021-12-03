@@ -39,6 +39,11 @@ namespace netlib {
         virtual handle_type read_handle() const = 0;
 
         /**
+         * Returns true if the resource is stream-oriented, false otherwise.
+         */
+        virtual bool is_stream_oriented() const = 0;
+
+        /**
          * Interface for reading data from a resource.
          * @param buffer destination buffer.
          * @param size number of bytes to read.

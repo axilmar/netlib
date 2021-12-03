@@ -20,6 +20,7 @@
 #include "netlib/serialization.hpp"
 #include "netlib/message.hpp"
 #include "netlib/message_io.hpp"
+#include "netlib/io_multiplexer.hpp"
 
 
 using namespace netlib;
@@ -894,18 +895,148 @@ public:
 };
 
 
+class io_multiplexer_test {
+public:
+    io_multiplexer_test() {
+        test("class io_multiplexer", []() {
+            try {
+                //the test objects
+                std::vector<socket_address> test_socket_addresses(test_socket_count);
+                std::vector<netlib::socket> test_sockets(test_socket_count);
+                std::vector<pipe> test_pipes(test_pipe_count);
+
+                //init the test sockets
+                for (size_t i = 0; i < test_socket_count; ++i) {
+                    test_socket_addresses[i] = socket_address({ "", address_family::ipv4 }, static_cast<uint16_t>(10000 + i));
+                    test_sockets[i] = netlib::socket(address_family::ipv4, socket_type::datagram);
+                    test_sockets[i].bind(test_socket_addresses[i]);
+                }
+
+                //put all test resources in one big array so as that the test thread can randomly some of them
+                std::vector<io_resource*> test_resources;
+                for (netlib::socket& s : test_sockets) {
+                    test_resources.push_back(&s);
+                }
+                for (pipe& p : test_pipes) {
+                    test_resources.push_back(&p);
+                }
+
+                //the test multiplexer
+                io_multiplexer test_multiplexer;
+
+                std::atomic<size_t> receive_message_count = 0;
+
+                //the resource callback
+                auto resource_callback = [&](io_multiplexer& mpx, io_resource& res) {
+                    message_ptr msg = io_resource_read_message(res);
+                    check(msg->id() == test_message::message_id());
+                    test_message& test_msg = dynamic_cast<test_message&>(*msg);
+                    check(std::get<0>(test_msg) == test_text);
+                    receive_message_count.fetch_add(1, std::memory_order_relaxed);
+                };
+
+                //add the test resources to the multiplexer
+                test_multiplexer.add(test_resources, resource_callback);
+
+                //begin polling thread
+                std::thread polling_thread([&]() {
+                    try {
+                        for (;;) {
+                            if (test_multiplexer.poll() == io_multiplexer::stopped) {
+                                break;
+                            }
+                        }
+                    }
+                    catch (const std::exception& ex) {
+                        std::cout << "\npolling thread error: " << ex.what() << std::endl;
+                    }
+                    });
+
+                std::atomic<size_t> send_message_count = 0;
+
+                //begin thread that sends the data
+                std::thread sender_thread([&]() {
+                    try {
+                        //prepare random resource index generation
+                        std::random_device rd;
+                        std::default_random_engine re(rd());
+                        std::uniform_int_distribution<size_t> dist(0, test_resources.size() - 1);
+
+                        //send test messages
+                        for (size_t i = 0; i < test_message_count; ++i) {
+                            size_t resource_index = dist(re);
+                            io_resource_write_message(*test_resources[resource_index], test_message(test_text));
+                            send_message_count.fetch_add(1, std::memory_order_relaxed);
+                        }
+                    }
+                    catch (const std::exception& ex) {
+                        std::cout << "\nsender thread error: " << ex.what() << std::endl;
+                    }
+                    });
+
+                //wait for sender thread to terminate
+                sender_thread.join();                
+
+                //wait for all messages to arrive
+                bool received_all_messages = false;
+                if (send_message_count.load(std::memory_order_acquire) == test_message_count) {
+                    received_all_messages = true;
+
+                    const auto wait_start_time = std::chrono::high_resolution_clock::now();
+                    for (;;) {
+                        //if all messages are received
+                        if (receive_message_count.load(std::memory_order_acquire) == send_message_count.load(std::memory_order_acquire)) {
+                            break;
+                        }
+
+                        //if waited long enough, break with error; the test did not succeed
+                        const auto now = std::chrono::high_resolution_clock::now();
+                        const auto wait_duration = std::chrono::duration_cast<std::chrono::seconds>(now - wait_start_time);
+                        if (wait_duration.count() > 10) {
+                            received_all_messages = false;
+                            break;
+                        }
+
+                        //yield
+                        std::this_thread::yield();
+                    }
+                }
+
+                //stop the polling thread
+                test_multiplexer.stop();
+                polling_thread.join();
+
+                check(received_all_messages);
+            }
+            catch (const std::exception& ex) {
+                std::cout << "\n test error: " << ex.what() << std::endl;
+            }
+            });
+    }
+
+private:
+    static constexpr size_t test_message_count = 100;
+    static constexpr size_t test_socket_count = 10;
+    static constexpr size_t test_pipe_count = 10;
+
+    static inline const std::string test_text = "hello world!!!";
+    using test_message = message<std::string>;
+};
+
+
 int main() {
     init();
-    address_family_test();
-    socket_type_test();
-    protocol_test();
-    internet_address_test();
-    utility_test();
-    socket_address_test();
-    socket_test();
-    serialization_test();
-    message_test();
-    pipe_test();
+    //address_family_test();
+    //socket_type_test();
+    //protocol_test();
+    //internet_address_test();
+    //utility_test();
+    //socket_address_test();
+    //socket_test();
+    //serialization_test();
+    //message_test();
+    //pipe_test();
+    //io_multiplexer_test();
     cleanup();
 
     system("pause");

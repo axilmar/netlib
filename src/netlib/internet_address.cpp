@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <string_view>
+#include <cstring>
 #include "netlib/internet_address.hpp"
 
 
@@ -39,14 +40,14 @@ namespace netlib {
 
             //get ipv4 address
             if (ai->ai_family == AF_INET && (af == 0 || af == AF_INET)) {
-                memcpy(addr, &reinterpret_cast<const SOCKADDR_IN*>(ai->ai_addr)->sin_addr, sizeof(in_addr));
+                std::memcpy(addr, &reinterpret_cast<const SOCKADDR_IN*>(ai->ai_addr)->sin_addr, sizeof(in_addr));
                 freeaddrinfo(start_ai);
                 return AF_INET;
             }
 
             //get ipv6 address
             if (ai->ai_family == AF_INET6 && (af == 0 || af == AF_INET6)) {
-                memcpy(addr, &reinterpret_cast<const SOCKADDR_IN6*>(ai->ai_addr)->sin6_addr, sizeof(in6_addr));
+                std::memcpy(addr, &reinterpret_cast<const SOCKADDR_IN6*>(ai->ai_addr)->sin6_addr, sizeof(in6_addr));
                 ipv6_scope_id = reinterpret_cast<const SOCKADDR_IN6*>(ai->ai_addr)->sin6_scope_id;
                 freeaddrinfo(start_ai);
                 return AF_INET6;
@@ -178,10 +179,10 @@ namespace netlib {
         , m_ipv6_scope_id(ipv6_scope_id)
     {
         if (af == AF_INET) {
-            memcpy(m_data, data, sizeof(in_addr));
+            std::memcpy(m_data, data, sizeof(in_addr));
         }
 
-        memcpy(m_data, data, data_size);
+        std::memcpy(m_data, data, data_size);
     }
 
 
@@ -374,13 +375,13 @@ namespace netlib {
         //prepare the socket address
         switch (m_address_family) {
         case AF_INET:
-            memcpy(&sa4.sin_addr, m_data, sizeof(in_addr));
+            std::memcpy(&sa4.sin_addr, m_data, sizeof(in_addr));
             sa4.sin_family = AF_INET;
             sa_size = sizeof(sa4);
             break;
 
         case AF_INET6:
-            memcpy(&sa6.sin6_addr, m_data, sizeof(in6_addr));
+            std::memcpy(&sa6.sin6_addr, m_data, sizeof(in6_addr));
             sa6.sin6_family = AF_INET6;
             sa6.sin6_scope_id = m_ipv6_scope_id;
             sa_size = sizeof(sa6);

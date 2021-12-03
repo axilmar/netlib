@@ -225,6 +225,11 @@ namespace netlib {
         handle_type read_handle() const override { return m_handle; }
 
         /**
+         * Returns true if the socket is stream-oriented, false otherwise.
+         */
+        bool is_stream_oriented() const override;
+
+        /**
          * Receives data from the socket.
          * @param buffer destination buffer.
          * @param size number of bytes to read.

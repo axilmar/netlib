@@ -2,7 +2,6 @@
 #define NETLIB_SERIALIZATION_HPP
 
 
-#include <type_traits>
 #include <utility>
 #include <tuple>
 #include <optional>
@@ -19,16 +18,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <limits>
-
-
-/**
- * Network endianess.
- * If true, the network endianess shall be little endian, otherwise network endianess shall be big endian.
- * The default is true, i.e. data are sent to the network with little endian order.
- */
-#ifndef NETLIB_NETWORK_ENDIANESS_LITTLE
-#define NETLIB_NETWORK_ENDIANESS_LITTLE true
-#endif
+#include "endianess.hpp"
 
 
 namespace netlib {
@@ -73,15 +63,6 @@ namespace netlib {
 
 
     /**
-     * Checks if this platform is little endian.
-     * @return true if this platform is little endian, false otherwise.
-     */
-    inline constexpr bool is_little_endian() noexcept {
-        return static_cast<const unsigned char&>(static_cast<const unsigned short>(0x0201)) == 0x01;
-    }
-
-
-    /**
      * Serializes a trivial value into a buffer.
      * It copies the bytes of the value into the buffer, either in little endian or in big endian order,
      * depending on configuration and platform endianess.
@@ -107,7 +88,7 @@ namespace netlib {
                 auto* write_pos = buffer.data() + write_index;
 
                 //copy without endianess change
-                if constexpr (is_little_endian() == (NETLIB_NETWORK_ENDIANESS_LITTLE)) {
+                if constexpr (can_copy_bytes_without_endianess_swap()) {
                     *reinterpret_cast<T*>(write_pos) = value;
                 }
 
@@ -136,7 +117,7 @@ namespace netlib {
             const auto* read_pos = &buffer.at(pos);
 
             //copy without endianess change or if the size of T is 1
-            if constexpr (is_little_endian() == (NETLIB_NETWORK_ENDIANESS_LITTLE) || sizeof(T) == 1) {
+            if constexpr (can_copy_bytes_without_endianess_swap() || sizeof(T) == 1) {
                 value = *reinterpret_cast<const T*>(read_pos);
             }
 
@@ -172,8 +153,8 @@ namespace netlib {
             auto* write_pos = buffer.data() + write_index;
 
             //copy without endianess change
-            if constexpr (is_little_endian() == (NETLIB_NETWORK_ENDIANESS_LITTLE) || sizeof(T) == 1) {
-                memcpy(write_pos, values, sizeof(T) * array_size);
+            if constexpr (can_copy_bytes_without_endianess_swap() || sizeof(T) == 1) {
+                std::memcpy(write_pos, values, sizeof(T) * array_size);
             }
 
             //else copy data with endianess change
@@ -208,8 +189,8 @@ namespace netlib {
             const auto* read_pos = &buffer[pos];
 
             //copy without endianess change
-            if constexpr (is_little_endian() == (NETLIB_NETWORK_ENDIANESS_LITTLE) || sizeof(T) == 1) {
-                memcpy(values, read_pos, sizeof(T) * array_size);
+            if constexpr (can_copy_bytes_without_endianess_swap() || sizeof(T) == 1) {
+                std::memcpy(values, read_pos, sizeof(T) * array_size);
             }
 
             //else copy data with endianess change

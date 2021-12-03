@@ -194,7 +194,7 @@ namespace netlib {
 
     //move assignment
     socket& socket::operator = (socket&& src) {
-        uintptr_t temp = m_handle;
+        uintptr_t temp = src.m_handle;
         src.m_handle = invalid_socket_handle;
         m_handle = temp;
         return *this;
@@ -286,6 +286,23 @@ namespace netlib {
     //Checks if this socket is valid.
     socket::operator bool() const noexcept {
         return m_handle != invalid_socket_handle;
+    }
+
+
+    //Returns true if the socket is stream-oriented, false otherwise.
+    bool socket::is_stream_oriented() const {
+        //get option
+        int optval;
+        int optlen = sizeof(optval);
+        int error = getsockopt(m_handle, SOL_SOCKET, SO_TYPE, reinterpret_cast<char*>(&optval), &optlen);
+
+        //if no error, check if the socket is stream
+        if (!error) {
+            return optval == SOCK_STREAM ? true : false;
+        }
+
+        //error
+        throw std::runtime_error(get_last_error_message());
     }
 
 

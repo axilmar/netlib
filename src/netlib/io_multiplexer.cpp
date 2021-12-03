@@ -21,20 +21,16 @@ namespace netlib {
     //constructor.
     io_multiplexer::io_multiplexer(size_t max_resource_count)
         : m_max_resource_count(max_resource_count)
-        , m_resource_count{}
+        , m_resources_changed{false}
+        , m_resource_count{0}
+        , m_stop{false}
     {
     }
 
 
     //destructor.
     io_multiplexer::~io_multiplexer() {
-        //notify polling thread to stop
-        {
-            std::lock_guard lock(m_mutex);
-            m_stop = true;
-        }
-        char buffer;
-        m_resources_changed_pipe.write(&buffer, 0);
+        stop();
     }
 
 
@@ -97,6 +93,35 @@ namespace netlib {
     }
 
 
+    //Adds an array of resources.
+    bool io_multiplexer::add(const std::vector<io_resource*>& resources, const callback_type& cb, operation_type operation) {
+        size_t add_index = 0;
+        bool added_all_resources = true;
+
+        //add the resources
+        for (; add_index < resources.size(); ++add_index) {
+            if (!add(*resources[add_index], cb, operation)) {
+                added_all_resources = false;
+                break;
+            }
+        }
+
+        //if added all resources, return true
+        if (added_all_resources) {
+            return true;
+        }
+
+        //remove the added resources
+        for (size_t i = 0; i < add_index; ++i) {
+            remove(*resources[i]);
+        }
+
+        //could not add all resources
+        return false;
+    }
+
+
+
     //removes a resource.
     void io_multiplexer::remove(io_resource& resource) {
         std::lock_guard lock(m_mutex);
@@ -143,8 +168,8 @@ namespace netlib {
             }
         }
 
-        //wait for data
-        int result = ::poll(reinterpret_cast<pollfd*>(m_pollfd.data()), static_cast<nfds_t>(m_max_resource_count), timeout);
+        //wait for data; add one to the resource count to account for the internal pipe
+        int result = ::poll(reinterpret_cast<pollfd*>(m_pollfd.data()), static_cast<nfds_t>(m_resource_table.size()), timeout);
 
         //check if stopped after waking up
         {
@@ -170,6 +195,26 @@ namespace netlib {
     }
 
 
+    //Sets the multiplexer in stopped state, if it is not stopped yet.
+    void io_multiplexer::stop() {
+        {
+            std::lock_guard lock(m_mutex);
+
+            //already stopped; do nothing else
+            if (m_stop) {
+                return;
+            }
+
+            //set the stop flag
+            m_stop = true;
+        }
+
+        //notify the polling thread
+        char buffer[1];
+        m_resources_changed_pipe.write(buffer, 0);
+    }
+
+
     //sets the resources changed, if not yet changed
     void io_multiplexer::set_resources_changed() {
         if (!m_resources_changed) {
@@ -182,11 +227,11 @@ namespace netlib {
 
     //builds the pollfd data
     void io_multiplexer::build_pollfd() {
-        //clear
+        //clear arrays
         m_resource_table.clear();
         m_pollfd.clear();
 
-        //set the appropriate size; add 1 for the internal pipe
+        //set the appropriate size for arrays; add 1 for the internal pipe
         m_resource_table.resize(m_resource_count + 1);
         m_pollfd.resize(sizeof(pollfd) * (m_resource_count + 1));
 
@@ -235,7 +280,7 @@ namespace netlib {
 
     //process resources
     void io_multiplexer::process_resources(size_t resource_count) {
-        //if the internal pipe is signalled, reduce the resource count by one
+        //if the internal pipe has data, reduce the resource count by one
         pollfd* pfd_first = reinterpret_cast<pollfd*>(m_pollfd.data());
         if (pfd_first->revents) {
             --resource_count;

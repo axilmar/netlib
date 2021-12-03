@@ -121,6 +121,28 @@ namespace netlib {
         bool add(io_resource& resource, const std::initializer_list<std::pair<callback_type, operation_type>>& operations);
 
         /**
+         * Adds a resource for a single operation.
+         * @param resource resource to add.
+         * @param cb callback.
+         * @param operation operation type; default is 'read'.
+         * @return false if no more resources can be added to this multiplexer.
+         * @exception std::invalid_argument thrown if the resource is already added or if the callback is empty or the operations list contains the same operations.
+         */
+        bool add(io_resource& resource, const callback_type& cb, operation_type operation = read) {
+            return add(resource, {std::make_pair(cb, operation)});
+        }
+
+        /**
+         * Adds an array of resources to the multiplexer. 
+         * @param resources resources to add.
+         * @param cb callback.
+         * @param operation operation type; default is 'read'.
+         * @return false if the resources could not be added to this multiplexer.
+         * @exception std::invalid_argument thrown if the resource is already added or if the callback is empty or the operations list contains the same operations.
+         */
+        bool add(const std::vector<io_resource*>& resources, const callback_type& cb, operation_type operation = read);
+
+        /**
          * Removes a resource.
          * @param resource resource to remove.
          * @exception std::invalid_argument thrown if the resource has not been added to this multiplexer.
@@ -136,6 +158,12 @@ namespace netlib {
          * @exception std::runtime_error thrown if there was an error.
          */
         poll_result_type poll(int milliseconds = -1);
+
+        /**
+         * Sets the multiplexer in stopped state, if it is not stopped yet.
+         * Also called from the destructor.
+         */
+        void stop();
 
     private:
         //resource info

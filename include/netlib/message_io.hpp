@@ -35,58 +35,196 @@ namespace netlib {
     }
 
 
+    /**
+     * Sends data over a stream.
+     * @param data data to send.
+     * @param size number of bytes to send.
+     * @param nsize the value for 'no-size' that indicates the resource is closed.
+     * @param send send function; must return size of sent data or 'nsize' if the resource is closed.
+     * @return true if the data were sent, false if the connection was closed.
+     */
+    template <class F> bool stream_send(const void* data, size_t size, const size_t nsize, F&& send) {
+        while (size) {
+            //send data
+            const size_t bytes_sent = send(data, size);
+
+            //if there was no error, send the rest of the data
+            if (bytes_sent != nsize) {
+                size -= bytes_sent;
+                reinterpret_cast<const char*&>(data) += bytes_sent;
+                continue;
+            }
+
+            //error
+            return false;
+        }
+
+        return true;
+    }
+
+
+    /**
+     * Receives data over a stream.
+     * @param data destination buffer.
+     * @param size number of bytes to receive.
+     * @param nsize the value for 'no-size' that indicates the resource is closed.
+     * @param receive the receive function; returns size of received data or 'nsize' if the resource is closed.
+     * @return true if the data were received, false if the connection was closed.
+     */
+    template <class F> bool stream_receive(void* data, size_t size, const size_t nsize, F&& receive) {
+        while (size) {
+            //receive bytes
+            const size_t bytes_received = receive(data, size);
+
+            //if there was no error, receive the rest of the data
+            if (bytes_received != nsize) {
+                size -= bytes_received;
+                reinterpret_cast<char*&>(data) += bytes_received;
+                continue;
+            }
+
+            //error
+            return false;
+        }
+
+        return true;
+    }
+
+
+    /**
+     * Serializes the given message's size along with the message,
+     * in order to send it over a stream-oriented connection (for example, a tcp socket or a pipe).
+     * The size is required so as that the receive routine knows how exactly many bytes to extract
+     * from the stream. This is not needed for packet-oriented connections, such as udp,
+     * because the packet itself contains the size.
+     * @param msg message to send.
+     * @param encrypt the encrypt function.
+     * @param buffer intermediate buffer.
+     * @param send function to use for sending the data.
+     * @return what the send function returns.
+     */
+    template <class Encrypt, class F, class... T> bool stream_send_message(const message<T...>& msg, Encrypt&& encrypt, std::vector<char>& buffer, F&& send) {
+        buffer.clear();
+
+        //leave room for the message size
+        buffer.resize(sizeof(message_size));
+
+        //serialize the message
+        msg.serialize(buffer);
+
+        //check the size
+        if (buffer.size() > std::numeric_limits<message_size>::max()) {
+            throw std::out_of_range("Buffer size too big for message size type.");
+        }
+
+        //set the size in the start of the buffer
+        const message_size size = static_cast<message_size>(buffer.size() - sizeof(size));
+        swap_endianess(buffer.data(), size);
+
+        //encrypt the size
+        encrypt(buffer.data(), sizeof(size));
+
+        //encrypt the data
+        encrypt(buffer.data() + sizeof(size), buffer.size() - sizeof(size));
+
+        //send the data
+        return send(buffer.data(), buffer.size());
+    }
+
+
+    /**
+     * Receives a message over a stream.
+     * The message to be received must have been registered with the message registry (automatic when using message<T...>).
+     * @param decrypt decrypt function.
+     * @param buffer intermediate buffer.
+     * @param memory_resource memory resource to use for allocating memory for the message.
+     * @param receive the receive function; must return true if data are sent, or false if the resource is closed.
+     * @return pointer to message or a null ptr if the io_resource is closed.
+     */
+    template <class Decrypt, class F> message_ptr stream_receive_message(Decrypt&& decrypt, std::vector<char>& buffer, std::pmr::memory_resource& memory_resource, F&& receive) {
+        //receive the size
+        message_size size;
+        if (!receive(&size, sizeof(size))) {
+            return nullptr;
+        }
+
+        //decrypt the size
+        decrypt(&size, sizeof(size));
+
+        //swap endianess of size
+        swap_endianess(size);
+
+        //resize the buffer to the received size
+        buffer.resize(size);
+
+        //receive the data in the buffer
+        if (!receive(buffer.data(), buffer.size())) {
+            return nullptr;
+        }
+
+        //decrypt the data
+        decrypt(buffer.data(), buffer.size());
+
+        //create the message
+        return message_registry::deserialize(buffer, memory_resource);
+    }
+
+
+    /**
+     * Serializes the message, in order to send it over a packet-oriented connection (for example, a udp socket).
+     * @param msg message to send.
+     * @param encrypt the encrypt function.
+     * @param buffer intermediate buffer.
+     * @param send function to use for sending the data.
+     * @return what the send function returns.
+     */
+    template <class Encrypt, class F, class... T> bool packet_send_message(const message<T...>& msg, Encrypt&& encrypt, std::vector<char>& buffer, F&& send) {
+        buffer.clear();
+
+        //serialize the message
+        msg.serialize(buffer);
+
+        //encrypt the data
+        encrypt(buffer.data(), buffer.size());
+
+        //send the data
+        return send(buffer.data(), buffer.size());
+    }
+
+
+    /**
+     * Receives a message over a packet-oriented connection.
+     * The message to be received must have been registered with the message registry (automatic when using message<T...>).
+     * @param decrypt decrypt function.
+     * @param buffer intermediate buffer.
+     * @param memory_resource memory resource to use for allocating memory for the message.
+     * @param receive the receive function; must return true if data are sent, or false if the resource is closed.
+     * @return pointer to message or a null ptr if the io_resource is closed.
+     */
+    template <class Decrypt, class F> message_ptr packet_receive_message(Decrypt&& decrypt, std::vector<char>& buffer, std::pmr::memory_resource& memory_resource, F&& receive) {
+        //resize the buffer to hold enough data
+        buffer.resize(NETLIB_MAX_MESSAGE_SIZE);
+
+        //receive the data in the buffer
+        size_t packet_size;
+        if (!receive(buffer.data(), buffer.size(), packet_size)) {
+            return nullptr;
+        }
+
+        //resize the buffer to the packet size
+        buffer.resize(packet_size);
+
+        //decrypt the data
+        decrypt(buffer.data(), buffer.size());
+
+        //create the message
+        return message_registry::deserialize(buffer, memory_resource);
+    }
+
+
     ///////////////////////////////////////////////////////////////////////////
     // socket functions
     ///////////////////////////////////////////////////////////////////////////
-
-
-    /**
-     * Sends data over a tcp socket.
-     * It sends all the data.
-     * If there is not enough space in the system buffer, then it blocks until there is.
-     * @param socket socket to use for sending data.
-     * @param data data to send.
-     * @param size number of bytes to send.
-     * @return true if the data were sent, false if the connection was closed.
-     */
-    inline bool tcp_send(socket& s, const void* data, size_t size) {
-        while (size) {
-            const size_t bytes_sent = s.send(data, size);
-            
-            if (bytes_sent == socket::nsize) {
-                return false;
-            }
-
-            size -= bytes_sent;
-            reinterpret_cast<const char*&>(data) += bytes_sent;
-        }
-
-        return true;
-    }
-
-
-    /**
-     * Receives data over a tcp socket.
-     * If the system buffer is empty, then it blocks until it has some data.
-     * @param s socket to receive data from.
-     * @param data destination buffer.
-     * @param size number of bytes to receive.
-     * @return true if the data were received, false if the connection was closed.
-     */
-    inline bool tcp_receive(socket& s, void* data, size_t size) {
-        while (size) {
-            const size_t bytes_received = s.receive(data, size);
-
-            if (bytes_received == socket::nsize) {
-                return false;
-            }
-
-            size -= bytes_received;
-            reinterpret_cast<char*&>(data) += bytes_received;
-        }
-
-        return true;
-    }
 
 
     /**
@@ -100,26 +238,11 @@ namespace netlib {
      * @exception std::out_of_range thrown if the message is too big for the current message size.
      */
     template <class Encrypt, class... T> bool tcp_send_message(socket& s, const message<T...>& msg, Encrypt&& encrypt, std::vector<char>& buffer = intermediate_buffer()) {
-        buffer.clear();
-
-        //serialize the message
-        msg.serialize(buffer);
-
-        //check the size
-        if (buffer.size() > std::numeric_limits<message_size>::max()) {
-            throw std::out_of_range("Buffer size too big for message size type.");
-        }
-
-        //send the size
-        message_size size = static_cast<message_size>(buffer.size());
-        encrypt(&size, sizeof(size));
-        if (!tcp_send(s, &size, sizeof(size))) {
-            return false;
-        }
-
-        //send the data
-        encrypt(buffer.data(), buffer.size());
-        return tcp_send(s, buffer.data(), buffer.size());
+        return stream_send_message(msg, std::forward<Encrypt>(encrypt), buffer, [&](const void* buffer, const size_t size) {
+            return stream_send(buffer, size, socket::nsize, [&](const void* data, const size_t size) {
+                return s.send(data, size);
+                });
+            });
     }
 
 
@@ -146,22 +269,11 @@ namespace netlib {
      * @return pointer to message or a null ptr if the socket is closed.
      */
     template <class Decrypt> message_ptr tcp_receive_message(socket& s, Decrypt&& decrypt, std::vector<char>& buffer = intermediate_buffer(), std::pmr::memory_resource& memory_resource = *std::pmr::get_default_resource()) {
-        //receive the size
-        message_size size;
-        if (!tcp_receive(s, &size, sizeof(size))) {
-            return nullptr;
-        }
-        decrypt(&size, sizeof(size));
-
-        //receive the data
-        buffer.resize(size);
-        if (!tcp_receive(s, buffer.data(), buffer.size())) {
-            return nullptr;
-        }
-        decrypt(buffer.data(), buffer.size());
-
-        //create the message
-        return message_registry::deserialize(buffer, memory_resource);
+        return stream_receive_message(std::forward<Decrypt>(decrypt), buffer, memory_resource, [&](void* buffer, const size_t size) {
+            return stream_receive(buffer, size, socket::nsize, [&](void* data, size_t size) {
+                return s.receive(data, size);
+                });
+            });
     }
 
 
@@ -189,16 +301,9 @@ namespace netlib {
      * @exception std::out_of_range thrown if the message is too big for the current message size.
      */
     template <class Encrypt, class... T> bool udp_send_message(socket& s, const message<T...>& msg, Encrypt&& encrypt, std::vector<char>& buffer = intermediate_buffer()) {
-        buffer.clear();
-
-        //serialize the message
-        msg.serialize(buffer);
-
-        //encrypt the data
-        encrypt(buffer.data(), buffer.size());
-
-        //send the data
-        return s.send(buffer.data(), buffer.size()) == buffer.size();
+        return packet_send_message(msg, std::forward<Encrypt>(encrypt), buffer, [&](const void* buffer, const size_t size) {
+            return s.send(buffer, size) == size;
+            });
     }
 
 
@@ -226,23 +331,10 @@ namespace netlib {
      * @return pointer to message or a null ptr if the socket is closed.
      */
     template <class Decrypt> message_ptr udp_receive_message(socket& s, Decrypt&& decrypt, std::vector<char>& buffer = intermediate_buffer(), std::pmr::memory_resource& memory_resource = *std::pmr::get_default_resource(), const size_t max_message_size = NETLIB_MAX_MESSAGE_SIZE) {
-        //receive the data
-        buffer.resize(max_message_size);
-        const size_t received_bytes = s.receive(buffer.data(), buffer.size());
-
-        //if no bytes where received, return null
-        if (received_bytes == socket::nsize) {
-            return nullptr;
-        }
-
-        //make sure the buffer contains the appropriate number of bytes
-        buffer.resize(received_bytes);
-
-        //decrypt the data
-        decrypt(buffer.data(), buffer.size());
-
-        //create the message
-        return message_registry::deserialize(buffer, memory_resource);
+        return packet_receive_message(std::forward<Decrypt>(decrypt), buffer, memory_resource, [&](void* buffer, const size_t size, size_t& packet_size) {
+            packet_size = s.receive(buffer, size);
+            return packet_size != socket::nsize;
+            });
     }
 
 
@@ -272,16 +364,9 @@ namespace netlib {
      * @exception std::out_of_range thrown if the message is too big for the current message size.
      */
     template <class Encrypt, class... T> bool udp_send_message(socket& s, const socket_address& addr, const message<T...>& msg, Encrypt&& encrypt, std::vector<char>& buffer = intermediate_buffer()) {
-        buffer.clear();
-
-        //serialize the message
-        msg.serialize(buffer);
-
-        //encrypt the data
-        encrypt(buffer.data(), buffer.size());
-
-        //send the data
-        return s.send(buffer.data(), buffer.size(), addr) == buffer.size();
+        return packet_send_message(msg, std::forward<Encrypt>(encrypt), buffer, [&](const void* buffer, const size_t size) {
+            return s.send(buffer, size, addr) == size;
+            });
     }
 
 
@@ -311,23 +396,10 @@ namespace netlib {
      * @return pointer to message or a null ptr if the socket is closed.
      */
     template <class Decrypt> message_ptr udp_receive_message(socket& s, socket_address& addr, Decrypt&& decrypt, std::vector<char>& buffer = intermediate_buffer(), std::pmr::memory_resource& memory_resource = *std::pmr::get_default_resource(), const size_t max_message_size = NETLIB_MAX_MESSAGE_SIZE) {
-        //receive the data
-        buffer.resize(max_message_size);
-        const size_t received_bytes = s.receive(buffer.data(), buffer.size(), addr);
-
-        //if no bytes where received, return null
-        if (received_bytes == socket::nsize) {
-            return nullptr;
-        }
-
-        //make sure the buffer contains the appropriate number of bytes
-        buffer.resize(received_bytes);
-
-        //decrypt the data
-        decrypt(buffer.data(), buffer.size());
-
-        //create the message
-        return message_registry::deserialize(buffer, memory_resource);
+        return packet_receive_message(std::forward<Decrypt>(decrypt), buffer, memory_resource, [&](void* buffer, const size_t size, size_t& packet_size) {
+            packet_size = s.receive(buffer, size, addr);
+            return packet_size != socket::nsize;
+            });
     }
 
 
@@ -352,55 +424,6 @@ namespace netlib {
 
 
     /**
-     * Sends data over a pipe.
-     * It sends all the data.
-     * If there is not enough space in the system buffer, then it blocks until there is.
-     * @param pipe pipe to use for sending data.
-     * @param data data to send.
-     * @param size number of bytes to send.
-     * @return true if the data were sent, false if the connection was closed.
-     */
-    inline bool pipe_send(pipe& p, const void* data, size_t size) {
-        while (size) {
-            const auto [bytes_sent, open] = p.write(data, size);
-
-            if (!open) {
-                return false;
-            }
-
-            size -= bytes_sent;
-            reinterpret_cast<const char*&>(data) += bytes_sent;
-        }
-
-        return true;
-    }
-
-
-    /**
-     * Receives data over a pipe.
-     * If the system buffer is empty, then it blocks until it has some data.
-     * @param p pipe to receive data from.
-     * @param data destination buffer.
-     * @param size number of bytes to receive.
-     * @return true if the data were received, false if the connection was closed.
-     */
-    inline bool pipe_receive(pipe& p, void* data, size_t size) {
-        while (size) {
-            const auto [bytes_received, open] = p.read(data, size);
-
-            if (!open) {
-                return false;
-            }
-
-            size -= bytes_received;
-            reinterpret_cast<char*&>(data) += bytes_received;
-        }
-
-        return true;
-    }
-
-
-    /**
      * Sends a message over a pipe.
      * It sends the message size, before the message, and waits for all the data to be send, before returning.
      * @param p pipe to send the message over.
@@ -411,26 +434,12 @@ namespace netlib {
      * @exception std::out_of_range thrown if the message is too big for the current message size.
      */
     template <class Encrypt, class... T> bool pipe_send_message(pipe& p, const message<T...>& msg, Encrypt&& encrypt, std::vector<char>& buffer = intermediate_buffer()) {
-        buffer.clear();
-
-        //serialize the message
-        msg.serialize(buffer);
-
-        //check the size
-        if (buffer.size() > std::numeric_limits<message_size>::max()) {
-            throw std::out_of_range("Buffer size too big for message size type.");
-        }
-
-        //send the size
-        message_size size = static_cast<message_size>(buffer.size());
-        encrypt(&size, sizeof(size));
-        if (!pipe_send(p, &size, sizeof(size))) {
-            return false;
-        }
-
-        //send the data
-        encrypt(buffer.data(), buffer.size());
-        return pipe_send(p, buffer.data(), buffer.size());
+        return stream_send_message(msg, std::forward<Encrypt>(encrypt), buffer, [&](const void* buffer, const size_t size) {
+            return stream_send(buffer, size, pipe::nsize, [&](const void* data, const size_t size) {
+                const auto [sent_size, ok] = p.write(data, size);
+                return sent_size;
+                });
+            });
     }
 
 
@@ -457,22 +466,12 @@ namespace netlib {
      * @return pointer to message or a null ptr if the pipe is closed.
      */
     template <class Decrypt> message_ptr pipe_receive_message(pipe& p, Decrypt&& decrypt, std::vector<char>& buffer = intermediate_buffer(), std::pmr::memory_resource& memory_resource = *std::pmr::get_default_resource()) {
-        //receive the size
-        message_size size;
-        if (!pipe_receive(p, &size, sizeof(size))) {
-            return nullptr;
-        }
-        decrypt(&size, sizeof(size));
-
-        //receive the data
-        buffer.resize(size);
-        if (!pipe_receive(p, buffer.data(), buffer.size())) {
-            return nullptr;
-        }
-        decrypt(buffer.data(), buffer.size());
-
-        //create the message
-        return message_registry::deserialize(buffer, memory_resource);
+        return stream_receive_message(std::forward<Decrypt>(decrypt), buffer, memory_resource, [&](void* buffer, size_t size) {
+            return stream_receive(buffer, size, pipe::nsize, [&](void* data, size_t size) {
+                const auto [received_size, ok] = p.read(data, size);
+                return received_size;
+                });
+            });
     }
 
 
@@ -495,52 +494,6 @@ namespace netlib {
 
 
     /**
-     * Sends data over an io_resource.
-     * @param io_resource io_resource to use for sending data.
-     * @param data data to send.
-     * @param size number of bytes to send.
-     * @return true if the data were sent, false if the connection was closed.
-     */
-    inline bool io_resource_write(io_resource& r, const void* data, size_t size) {
-        while (size) {
-            const auto [bytes_sent, open] = r.write(data, size);
-
-            if (!open) {
-                return false;
-            }
-
-            size -= bytes_sent;
-            reinterpret_cast<const char*&>(data) += bytes_sent;
-        }
-
-        return true;
-    }
-
-
-    /**
-     * Receives data over a io_resource.
-     * @param r io_resource to receive data from.
-     * @param data destination buffer.
-     * @param size number of bytes to receive.
-     * @return true if the data were received, false if the connection was closed.
-     */
-    inline bool io_resource_read(io_resource& r, void* data, size_t size) {
-        while (size) {
-            const auto [bytes_received, open] = r.read(data, size);
-
-            if (!open) {
-                return false;
-            }
-
-            size -= bytes_received;
-            reinterpret_cast<char*&>(data) += bytes_received;
-        }
-
-        return true;
-    }
-
-
-    /**
      * Sends a message over a io_resource.
      * It sends the message size, before the message, and waits for all the data to be send, before returning.
      * @param r io_resource to send the message over.
@@ -551,26 +504,21 @@ namespace netlib {
      * @exception std::out_of_range thrown if the message is too big for the current message size.
      */
     template <class Encrypt, class... T> bool io_resource_write_message(io_resource& r, const message<T...>& msg, Encrypt&& encrypt, std::vector<char>& buffer = intermediate_buffer()) {
-        buffer.clear();
-
-        //serialize the message
-        msg.serialize(buffer);
-
-        //check the size
-        if (buffer.size() > std::numeric_limits<message_size>::max()) {
-            throw std::out_of_range("Buffer size too big for message size type.");
+        //send stream
+        if (r.is_stream_oriented()) {
+            return stream_send_message(msg, std::forward<Encrypt>(encrypt), buffer, [&](const void* buffer, const size_t size) {
+                return stream_send(buffer, size, ~size_t(0), [&](const void* data, const size_t size) {
+                    const auto [sent_size, ok] = r.write(data, size);
+                    return ok ? sent_size : ~size_t(0);
+                    });
+                });
         }
 
-        //send the size
-        message_size size = static_cast<message_size>(buffer.size());
-        encrypt(&size, sizeof(size));
-        if (!io_resource_write(r, &size, sizeof(size))) {
-            return false;
-        }
-
-        //send the data
-        encrypt(buffer.data(), buffer.size());
-        return io_resource_write(r, buffer.data(), buffer.size());
+        //send packet
+        return packet_send_message(msg, std::forward<Encrypt>(encrypt), buffer, [&](const void* buffer, const size_t size) {
+            const auto [sent_size, ok] = r.write(buffer, size);
+                return ok;
+            });
     }
 
 
@@ -597,22 +545,22 @@ namespace netlib {
      * @return pointer to message or a null ptr if the io_resource is closed.
      */
     template <class Decrypt> message_ptr io_resource_read_message(io_resource& r, Decrypt&& decrypt, std::vector<char>& buffer = intermediate_buffer(), std::pmr::memory_resource& memory_resource = *std::pmr::get_default_resource()) {
-        //receive the size
-        message_size size;
-        if (!io_resource_read(r, &size, sizeof(size))) {
-            return nullptr;
+        //stream receive
+        if (r.is_stream_oriented()) {
+            return stream_receive_message(std::forward<Decrypt>(decrypt), buffer, memory_resource, [&](void* buffer, size_t size) {
+                return stream_receive(buffer, size, ~size_t(0), [&](void* data, size_t size) {
+                    const auto [received_size, ok] = r.read(data, size);
+                    return ok ? received_size : ~size_t(0);
+                    });
+                });
         }
-        decrypt(&size, sizeof(size));
 
-        //receive the data
-        buffer.resize(size);
-        if (!io_resource_read(r, buffer.data(), buffer.size())) {
-            return nullptr;
-        }
-        decrypt(buffer.data(), buffer.size());
-
-        //create the message
-        return message_registry::deserialize(buffer, memory_resource);
+        //packet receive
+        return packet_receive_message(std::forward<Decrypt>(decrypt), buffer, memory_resource, [&](void *buffer, const size_t size, size_t& packet_size) {
+            const auto [received_size, ok] = r.read(buffer, size);
+            packet_size = received_size;
+            return ok;
+            });
     }
 
 

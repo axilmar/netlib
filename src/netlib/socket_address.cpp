@@ -1,6 +1,7 @@
 #include "netlib/platform.hpp"
 #include <stdexcept>
 #include <algorithm>
+#include <cstring>
 #include "netlib/socket_address.hpp"
 
 
@@ -16,13 +17,13 @@ namespace netlib {
     {
         switch (address.address_family()) {
         case AF_INET:
-            memcpy(&reinterpret_cast<sockaddr_in*>(m_data)->sin_addr, address.data(), sizeof(in_addr));
+            std::memcpy(&reinterpret_cast<sockaddr_in*>(m_data)->sin_addr, address.data(), sizeof(in_addr));
             reinterpret_cast<sockaddr_in*>(m_data)->sin_family = AF_INET;
             reinterpret_cast<sockaddr_in*>(m_data)->sin_port = htons(port);
             break;
 
         case AF_INET6:
-            memcpy(&reinterpret_cast<sockaddr_in6*>(m_data)->sin6_addr, address.data(), sizeof(in6_addr));
+            std::memcpy(&reinterpret_cast<sockaddr_in6*>(m_data)->sin6_addr, address.data(), sizeof(in6_addr));
             reinterpret_cast<sockaddr_in6*>(m_data)->sin6_family = AF_INET6;
             reinterpret_cast<sockaddr_in6*>(m_data)->sin6_port = htons(port);
             reinterpret_cast<sockaddr_in6*>(m_data)->sin6_scope_id = address.m_ipv6_scope_id;
