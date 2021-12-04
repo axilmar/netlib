@@ -131,9 +131,18 @@ namespace netlib {
 
     //move assignment
     socket& socket::operator = (socket&& src) {
-        uintptr_t temp = src.m_handle;
-        src.m_handle = invalid_socket_handle;
-        m_handle = temp;
+        if (&src != this) {
+            //close this socket
+            if (m_handle != invalid_socket_handle) {
+                closesocket(m_handle);
+            }
+
+            //copy the handle of the source socket
+            m_handle = src.m_handle;
+
+            //set the source socket to invalid state
+            src.m_handle = invalid_socket_handle;
+        }
         return *this;
     }
 
