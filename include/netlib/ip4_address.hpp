@@ -8,13 +8,13 @@
 #include <string>
 
 
-namespace netlib {
+namespace netlib::ip4 {
 
 
     /**
      * Internet protocol 4 address. 
      */
-    class ip4_address {
+    class address {
     public:
         /**
          * value type.
@@ -29,32 +29,32 @@ namespace netlib {
         /**
          * Any address. 
          */
-        static const ip4_address any;
+        static const address any;
 
         /**
          * The loopback address.
          */
-        static const ip4_address loopback;
+        static const address loopback;
 
         /**
          * The default constructor.
          * It zeroes all bytes.
          */
-        ip4_address() : m_value{} {
+        address() : m_value{} {
         }
 
         /**
          * Constructor from value.
          * @param value value.
          */
-        ip4_address(value_type value) : m_value(value) {
+        address(value_type value) : m_value(value) {
         }
 
         /**
          * Constructor from byte array. 
          * @param bytes bytes.
          */
-        ip4_address(const bytes_type& bytes) : m_bytes{bytes} {
+        address(const bytes_type& bytes) : m_bytes{bytes} {
         }
 
         /**
@@ -64,7 +64,7 @@ namespace netlib {
          * @param b2 byte at position 2.
          * @param b3 byte at position 3.
          */
-        ip4_address(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3) : m_bytes{ b0, b1, b2, b3 } {
+        address(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3) : m_bytes{ b0, b1, b2, b3 } {
         }
 
         /**
@@ -76,21 +76,21 @@ namespace netlib {
          * @exception std::invalid_argument thrown if the given string is not a valid hostname/ip address.
          * @exception std::runtime_error thrown if the localhost's name or ip address could not be retrieved.
          */
-        ip4_address(const char* hostname) : m_value{} {
+        address(const char* hostname) : m_value{} {
             set(hostname);
         }
 
         /**
-         * @copydoc ip4_address(const char*). 
+         * @copydoc address(const char*). 
          */
-        explicit ip4_address(const std::string& hostname) : ip4_address(hostname.c_str()) {
+        explicit address(const std::string& hostname) : address(hostname.c_str()) {
         }
 
         /**
          * Assignment from value.
          * @param value value, in network byte order.
          */
-        ip4_address& operator = (value_type value) {
+        address& operator = (value_type value) {
             m_value = value;
             return *this;
         }
@@ -100,18 +100,18 @@ namespace netlib {
          * @param bytes bytes.
          * @return reference to this.
          */
-        ip4_address& operator = (const bytes_type& bytes) {
+        address& operator = (const bytes_type& bytes) {
             m_bytes = bytes;
             return *this;
         }
 
         /**
          * Assignment from hostname/ip address. 
-         * Same as ip4_address(const char*).
+         * Same as address(const char*).
          * @exception std::invalid_argument thrown if the given string is not a valid hostname/ip address.
          * @exception std::runtime_error thrown if the localhost's name or ip address could not be retrieved.
          */
-        ip4_address& operator = (const char* hostname) {
+        address& operator = (const char* hostname) {
             set(hostname);
             return *this;
         }
@@ -119,7 +119,7 @@ namespace netlib {
         /**
          * @copydoc operator = (const char*).
          */
-        ip4_address& operator = (const std::string& hostname) {
+        address& operator = (const std::string& hostname) {
             return operator = (hostname.c_str());
         }
 
@@ -157,7 +157,7 @@ namespace netlib {
     };
 
 
-} //namespace netlib
+} //namespace netlib::ip4
 
 
 #endif //NETLIB_IP4_ADDRESS_HPP

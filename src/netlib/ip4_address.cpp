@@ -4,16 +4,16 @@
 #include "netlib/ip4_address.hpp"
 
 
-namespace netlib {
+namespace netlib::ip4 {
 
 
     //constants
-    const ip4_address ip4_address::any = INADDR_ANY;
-    const ip4_address ip4_address::loopback = INADDR_LOOPBACK;
+    const address address::any = INADDR_ANY;
+    const address address::loopback = INADDR_LOOPBACK;
 
 
     //set address from hostname/ip address
-    void ip4_address::set(const char* hostname) {
+    void address::set(const char* hostname) {
         if (!hostname || strlen(hostname) == 0) {
             char hostname[256];
             if (gethostname(hostname, sizeof(hostname))) {
@@ -53,11 +53,11 @@ namespace netlib {
     }
 
 
-    std::string ip4_address::to_string() const {
+    std::string address::to_string() const {
         char buf[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &m_value, buf, sizeof(buf));
         return buf;
     }
 
 
-} //netlib
+} //namespace netlib::ip4
