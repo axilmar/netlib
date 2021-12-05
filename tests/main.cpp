@@ -156,6 +156,43 @@ static void test_ip4_address() {
     test("ip4_address(<localhost name>)::to_string()", [&]() {
         check(ip4_address(localhost_name).to_string() == localhost_address_string);
         });
+
+    test("ip4_address = value_type; to_string()", []() {
+        ip4_address a;
+        a = htonl(0xc0a80102);
+        check(a.to_string() == "192.168.1.2");
+        });
+
+    test("ip4_address = bytes_type; to_string()", []() {
+        ip4_address a;
+        a = ip4_address::bytes_type{ 192, 168, 1, 2 };
+        check(a.to_string() == "192.168.1.2");
+        });
+
+    test("ip4_address = nullptr; to_string()", [&]() {
+        ip4_address a;
+        a = nullptr;
+        check(a.to_string() == localhost_address_string);
+        });
+
+    test("ip4_address = \"\"; to_string()", [&]() {
+        ip4_address a;
+        a = "";
+        check(a.to_string() == localhost_address_string);
+        });
+
+    test("ip4_address = \"192.168.1.2\"; to_string()", [&]() {
+        ip4_address a;
+        a = "192.168.1.2";
+        check(a.to_string() == "192.168.1.2");
+        });
+
+    test("ip4_address = <localhost name>; to_string()", [&]() {
+        ip4_address a;
+        a = localhost_name;
+        check(a.to_string() == localhost_address_string);
+        });
+
 };
 
 
