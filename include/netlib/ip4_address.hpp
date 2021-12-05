@@ -83,7 +83,7 @@ namespace netlib::ip4 {
         /**
          * @copydoc address(const char*). 
          */
-        explicit address(const std::string& hostname) : address(hostname.c_str()) {
+        address(const std::string& hostname) : address(hostname.c_str()) {
         }
 
         /**
