@@ -73,7 +73,7 @@ namespace netlib::ip4 {
          *  - a null or empty string; the ip address of the localhost is discovered and stored in this object.
          *  - a hostname; the ip address of the given host is discovered and stored in this object.
          *  - an ip address string.
-         * @exception std::invalid_argument thrown if the given string is not a valid hostname/ip address.
+         * @exception std::runtime_error thrown if the given string is not a valid hostname/ip address.
          * @exception std::runtime_error thrown if the localhost's name or ip address could not be retrieved.
          */
         address(const char* hostname) : m_value{} {
@@ -108,7 +108,7 @@ namespace netlib::ip4 {
         /**
          * Assignment from hostname/ip address. 
          * Same as address(const char*).
-         * @exception std::invalid_argument thrown if the given string is not a valid hostname/ip address.
+         * @exception std::runtime_error thrown if the given string is not a valid hostname/ip address.
          * @exception std::runtime_error thrown if the localhost's name or ip address could not be retrieved.
          */
         address& operator = (const char* hostname) {

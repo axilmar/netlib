@@ -10,6 +10,10 @@
 #include <ws2tcpip.h>
 
 
+#undef min
+#undef max
+
+
 //else linux or macos
 #elif defined(linux) || defined(__APPLE__)
 
@@ -53,7 +57,7 @@ template <class F> bool get_address_info(const char* name, F&& func) {
     int error = getaddrinfo(name, nullptr, nullptr, &ai);
 
     if (error) {
-        throw std::invalid_argument(get_getaddrinfo_error_message(error));
+        throw std::runtime_error(get_getaddrinfo_error_message(error));
     }
 
     bool result = false;

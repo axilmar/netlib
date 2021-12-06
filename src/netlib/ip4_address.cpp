@@ -48,7 +48,7 @@ namespace netlib::ip4 {
             });
 
         if (!found) {
-            throw std::invalid_argument("Hostname string is not a valid hostname/ip4 address.");
+            throw std::runtime_error("Hostname string is not a valid hostname/ip4 address.");
         }
     }
 

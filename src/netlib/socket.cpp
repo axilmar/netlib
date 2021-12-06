@@ -1,4 +1,5 @@
 #include "platform.hpp"
+#include "numeric_cast.hpp"
 #include "netlib/socket.hpp"
 
 
@@ -25,14 +26,9 @@ namespace netlib {
     }
 
 
-    //The move assignment operator.
-    socket& socket::operator = (socket&& src) {
-        if (&src != this) {
-            close();
-            m_handle = src.m_handle;
-            src.m_handle = invalid_socket_handle;
-        }
-        return *this;
+    //check validity.
+    socket::operator bool() const {
+        return m_handle != invalid_socket_handle;
     }
 
 
@@ -41,7 +37,12 @@ namespace netlib {
     ///////////////////////////////////////////////////////////////////////////
 
 
-    //The constructor.
+    //the invalid constructor.
+    socket::socket() : m_handle(invalid_socket_handle) {
+    }
+
+
+    //The constructor from handle.
     socket::socket(socket_handle handle) : m_handle(handle) {
     }
 
@@ -49,6 +50,17 @@ namespace netlib {
     //The move constructor.
     socket::socket(socket&& src) : m_handle(src.m_handle) {
         src.m_handle = invalid_socket_handle;
+    }
+
+
+    //The move assignment operator.
+    socket& socket::operator = (socket&& src) {
+        if (&src != this) {
+            close();
+            m_handle = src.m_handle;
+            src.m_handle = invalid_socket_handle;
+        }
+        return *this;
     }
 
 

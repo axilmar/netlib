@@ -79,7 +79,7 @@ static void test_ip4_address() {
         });
 
     test("ip4::address::address(\"192.168.A.2\")", []() {
-        check_exception(ip4::address("192.168.A.2"), std::invalid_argument);
+        check_exception(ip4::address("192.168.A.2"), std::runtime_error);
         });
 
     test("ip4::address::operator = (value_type)", []() {
@@ -122,7 +122,7 @@ static void test_ip4_address() {
 
     test("ip4::address::operator = (\"192.168.A.2\")", []() {
         ip4::address a;
-        check_exception(a = "192.168.A.2", std::invalid_argument);
+        check_exception(a = "192.168.A.2", std::runtime_error);
         });
 
     test("ip4::address()::to_string()", []() {
