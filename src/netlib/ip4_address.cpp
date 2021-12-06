@@ -8,8 +8,8 @@ namespace netlib::ip4 {
 
 
     //constants
-    const address address::any = INADDR_ANY;
-    const address address::loopback = INADDR_LOOPBACK;
+    const address address::any = htonl(INADDR_ANY);
+    const address address::loopback = htonl(INADDR_LOOPBACK);
 
 
     //set address from hostname/ip address

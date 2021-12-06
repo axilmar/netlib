@@ -21,8 +21,24 @@ namespace netlib {
      *
      * The buffer uses an unsynchronized memory resource,
      * since each thread has its own version of the buffer.
+     * 
+     * @param size required buffer size.
+     * @return the buffer.
      */
-    inline byte_buffer& temp_byte_buffer();
+    byte_buffer& temp_byte_buffer(size_t size = 0);
+
+
+    /**
+     * Returns a temp byte buffer with the specific content.
+     * @param begin begin of content.
+     * @param end end of content.
+     * @return buffer.
+     */
+    template <class T> byte_buffer& temp_byte_buffer(const T& begin, const T& end) {
+        byte_buffer& buffer = temp_byte_buffer(0);
+        buffer.insert(buffer.end(), begin, end);
+        return buffer;
+    }
 
 
 } //namespace netlib

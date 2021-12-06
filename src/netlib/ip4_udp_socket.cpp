@@ -23,7 +23,7 @@ namespace netlib::ip4::udp {
         a.sin_port = htons(addr.port_number());
 
         //send data
-        int bytes_sent = ::send(handle(), buffer.data(), numeric_cast<int>(buffer.size()), 0);
+        int bytes_sent = ::sendto(handle(), buffer.data(), numeric_cast<int>(buffer.size()), 0, reinterpret_cast<const sockaddr*>(&a), sizeof(a));
 
         //if there was an error, throw
         if (bytes_sent < 0) {
