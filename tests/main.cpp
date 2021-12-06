@@ -37,28 +37,35 @@ static void test_ip4_address() {
     char localhost_address_string[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &localhost_address, localhost_address_string, sizeof(localhost_address_string));
 
-    test("ip4::address::address()", []() {
+    const std::string test_addr_string = "192.168.1.2";
+    const std::string error_test_addr_string = "192.168.I.2";
+    in_addr test_addr;
+    inet_pton(AF_INET, test_addr_string.c_str(), &test_addr);
+    const std::string test_addr_param_str = std::to_string(test_addr.S_un.S_un_b.s_b1) + ", " + std::to_string(test_addr.S_un.S_un_b.s_b2) + ", " + std::to_string(test_addr.S_un.S_un_b.s_b3) + ", " + std::to_string(test_addr.S_un.S_un_b.s_b4);
+    const ip4::address::bytes_type test_addr_bytes{ test_addr.S_un.S_un_b.s_b1, test_addr.S_un.S_un_b.s_b2, test_addr.S_un.S_un_b.s_b3, test_addr.S_un.S_un_b.s_b4 };
+
+    test("ip4::address::address()", [&]() {
         ip4::address a;
         check(a.value() == 0);
         check(a.bytes() == ip4::address::bytes_type{});
         });
 
-    test("ip4::address::address(value_type)", []() {
-        ip4::address a(htonl(0xc0a80102));
-        check(a.value() == htonl(0xc0a80102));
-        check((a.bytes() == ip4::address::bytes_type{192, 168, 1, 2}));
+    test("ip4::address::address(value_type)", [&]() {
+        ip4::address a(test_addr.S_un.S_addr);
+        check(a.value() == test_addr.S_un.S_addr);
+        check((a.bytes() == test_addr_bytes));
         });
 
-    test("ip4::address::address(bytes_type)", []() {
-        ip4::address a(ip4::address::bytes_type{ 192, 168, 1, 2 });
-        check(a.value() == htonl(0xc0a80102));
-        check((a.bytes() == ip4::address::bytes_type{ 192, 168, 1, 2 }));
+    test("ip4::address::address(bytes_type)", [&]() {
+        ip4::address a(test_addr_bytes);
+        check(a.value() == test_addr.S_un.S_addr);
+        check((a.bytes() == test_addr_bytes));
         });
 
-    test("ip4::address::address(192, 168, 1, 2)", []() {
-        ip4::address a(192, 168, 1, 2);
-        check(a.value() == htonl(0xc0a80102));
-        check((a.bytes() == ip4::address::bytes_type{ 192, 168, 1, 2 }));
+    test("ip4::address::address(" + test_addr_param_str + ")", [&]() {
+        ip4::address a(test_addr.S_un.S_un_b.s_b1, test_addr.S_un.S_un_b.s_b2, test_addr.S_un.S_un_b.s_b3, test_addr.S_un.S_un_b.s_b4);
+        check(a.value() == test_addr.S_un.S_addr);
+        check((a.bytes() == test_addr_bytes));
         });
 
     test("ip4::address::address(nullptr)", [&]() {
@@ -71,9 +78,9 @@ static void test_ip4_address() {
         check(a.value() == localhost_address);
         });
 
-    test("ip4::address::address(\"192.168.1.2\")", []() {
-        ip4::address a("192.168.1.2");
-        check(a.value() == htonl(0xc0a80102));
+    test("ip4::address::address(\"" + std::string(test_addr_string) + "\")", [&]() {
+        ip4::address a(test_addr_string);
+        check(a.value() == test_addr.S_un.S_addr);
         });
 
     test("ip4::address::address(<localhost name>)", [&]() {
@@ -81,22 +88,22 @@ static void test_ip4_address() {
         check(a.value() == localhost_address);
         });
 
-    test("ip4::address::address(\"192.168.A.2\")", []() {
-        check_exception(ip4::address("192.168.A.2"), std::runtime_error);
+    test("ip4::address::address(\"" + error_test_addr_string + "\")", [&]() {
+        check_exception(ip4::address{ error_test_addr_string }, std::runtime_error);
         });
 
-    test("ip4::address::operator = (value_type)", []() {
+    test("ip4::address::operator = (value_type)", [&]() {
         ip4::address a;
-        a = htonl(0xc0a80102);
-        check(a.value() == htonl(0xc0a80102));
-        check((a.bytes() == ip4::address::bytes_type{192, 168, 1, 2}));
+        a = test_addr.S_un.S_addr;
+        check(a.value() == test_addr.S_un.S_addr);
+        check((a.bytes() == test_addr_bytes));
         });
 
-    test("ip4::address::operator = (bytes_type)", []() {
+    test("ip4::address::operator = (bytes_type)", [&]() {
         ip4::address a;
-        a = ip4::address::bytes_type{ 192, 168, 1, 2 };
-        check(a.value() == htonl(0xc0a80102));
-        check((a.bytes() == ip4::address::bytes_type{ 192, 168, 1, 2 }));
+        a = test_addr_bytes;
+        check(a.value() == test_addr.S_un.S_addr);
+        check((a.bytes() == test_addr_bytes));
         });
 
     test("ip4::address::operator = (nullptr)", [&]() {
@@ -111,10 +118,10 @@ static void test_ip4_address() {
         check(a.value() == localhost_address);
         });
 
-    test("ip4::address::operator = (\"192.168.1.2\")", []() {
+    test("ip4::address::operator = (\"" + std::string(test_addr_string) + "\")", [&]() {
         ip4::address a;
-        a = "192.168.1.2";
-        check(a.value() == htonl(0xc0a80102));
+        a = test_addr_string;
+        check(a.value() == test_addr.S_un.S_addr);
         });
 
     test("ip4::address::operator = (<localhost name>)", [&]() {
@@ -123,25 +130,25 @@ static void test_ip4_address() {
         check(a.value() == localhost_address);
         });
 
-    test("ip4::address::operator = (\"192.168.A.2\")", []() {
+    test("ip4::address::operator = (\"" + error_test_addr_string + "\")", [&]() {
         ip4::address a;
-        check_exception(a = "192.168.A.2", std::runtime_error);
+        check_exception(a = error_test_addr_string, std::runtime_error);
         });
 
-    test("ip4::address()::to_string()", []() {
+    test("ip4::address()::to_string()", [&]() {
         check(ip4::address().to_string() == "0.0.0.0");
         });
 
-    test("ip4::address(value_type)::to_string()", []() {
-        check(ip4::address(htonl(0xc0a80102)).to_string() == "192.168.1.2");
+    test("ip4::address(value_type)::to_string()", [&]() {
+        check(ip4::address(test_addr.S_un.S_addr).to_string() == test_addr_string);
         });
 
-    test("ip4::address(bytes_type)::to_string()", []() {
-        check(ip4::address(ip4::address::bytes_type{192, 168, 1, 2}).to_string() == "192.168.1.2");
+    test("ip4::address(bytes_type)::to_string()", [&]() {
+        check(ip4::address(test_addr_bytes).to_string() == test_addr_string);
         });
 
-    test("ip4::address(192, 168, 1, 2)::to_string()", []() {
-        check(ip4::address(192, 168, 1, 2).to_string() == "192.168.1.2");
+    test("ip4::address(" + test_addr_param_str + ")::to_string()", [&]() {
+        check(ip4::address(test_addr.S_un.S_un_b.s_b1, test_addr.S_un.S_un_b.s_b2, test_addr.S_un.S_un_b.s_b3, test_addr.S_un.S_un_b.s_b4).to_string() == test_addr_string);
         });
 
     test("ip4::address(nullptr)::to_string()", [&]() {
@@ -152,24 +159,24 @@ static void test_ip4_address() {
         check(ip4::address("").to_string() == localhost_address_string);
         });
 
-    test("ip4::address(\"192.168.1.2\")::to_string()", [&]() {
-        check(ip4::address("192.168.1.2").to_string() == "192.168.1.2");
+    test("ip4::address(\"" + std::string(test_addr_string) + "\")::to_string()", [&]() {
+        check(ip4::address(test_addr_string).to_string() == test_addr_string);
         });
 
     test("ip4::address(<localhost name>)::to_string()", [&]() {
         check(ip4::address(localhost_name).to_string() == localhost_address_string);
         });
 
-    test("ip4::address = value_type; to_string()", []() {
+    test("ip4::address = value_type; to_string()", [&]() {
         ip4::address a;
-        a = htonl(0xc0a80102);
-        check(a.to_string() == "192.168.1.2");
+        a = test_addr.S_un.S_addr;
+        check(a.to_string() == test_addr_string);
         });
 
-    test("ip4::address = bytes_type; to_string()", []() {
+    test("ip4::address = bytes_type; to_string()", [&]() {
         ip4::address a;
-        a = ip4::address::bytes_type{ 192, 168, 1, 2 };
-        check(a.to_string() == "192.168.1.2");
+        a = test_addr_bytes;
+        check(a.to_string() == test_addr_string);
         });
 
     test("ip4::address = nullptr; to_string()", [&]() {
@@ -184,10 +191,10 @@ static void test_ip4_address() {
         check(a.to_string() == localhost_address_string);
         });
 
-    test("ip4::address = \"192.168.1.2\"; to_string()", [&]() {
+    test("ip4::address = \"" + std::string(test_addr_string) + "\"; to_string()", [&]() {
         ip4::address a;
-        a = "192.168.1.2";
-        check(a.to_string() == "192.168.1.2");
+        a = test_addr_string;
+        check(a.to_string() == test_addr_string);
         });
 
     test("ip4::address = <localhost name>; to_string()", [&]() {
@@ -211,9 +218,8 @@ static void test_ip4_tcp_sockets() {
                 auto client = server.accept();
 
                 for (size_t i = 0; i < message_count; ++i) {
-                    auto& buffer = temp_byte_buffer();
-                    check(client.socket.receive(buffer, msglen) == msglen);
-                    check(strncmp(buffer.data(), message, msglen) == 0);
+                    check(client.socket.receive(temp_byte_buffer(), msglen) == msglen);
+                    check(strncmp(temp_byte_buffer().data(), message, msglen) == 0);
                 }
             }
             catch (const std::exception& ex) {
@@ -226,8 +232,7 @@ static void test_ip4_tcp_sockets() {
                 ip4::tcp::client_socket socket(ip4::socket_address(ip4::address::loopback, 10000));
 
                 for (size_t i = 0; i < message_count; ++i) {
-                    auto& buffer = temp_byte_buffer(message, message + msglen);
-                    check(socket.send(buffer) == msglen);
+                    check(socket.send(temp_byte_buffer(message, message + msglen)) == msglen);
                 }
             }
             catch (const std::exception& ex) {
@@ -248,14 +253,14 @@ static void test_ip4_udp_sockets() {
     const ip4::socket_address test_addr(ip4::address::loopback, 10000);
     ip4::udp::socket socket(test_addr);
 
-    test("tcp sockets", [&]() {
+    test("udp sockets", [&]() {
         std::thread server_thread([&]() {
             try {
                 ip4::socket_address from_addr;
                 for (size_t i = 0; i < message_count; ++i) {
-                    auto& buffer = temp_byte_buffer();
-                    check(socket.receive(buffer, from_addr) == msglen);
-                    check(strncmp(buffer.data(), message, msglen) == 0);
+                    check(socket.receive(temp_byte_buffer(), from_addr) == msglen);
+                    check(temp_byte_buffer().size() == msglen);
+                    check(strncmp(temp_byte_buffer().data(), message, msglen) == 0);
                 }
             }
             catch (const std::exception& ex) {
@@ -266,8 +271,7 @@ static void test_ip4_udp_sockets() {
         std::thread client_thread([&]() {
             try {
                 for (size_t i = 0; i < message_count; ++i) {
-                    auto& buffer = temp_byte_buffer(message, message + msglen);
-                    check(socket.send(buffer, test_addr) == msglen);
+                    check(socket.send(temp_byte_buffer(message, message + msglen), test_addr) == msglen);
                 }
             }
             catch (const std::exception& ex) {

@@ -16,16 +16,27 @@ namespace netlib {
 
     /**
      * Returns a temporary thread-local byte buffer,
-     * which can be used to send and receive data 
+     * which can be used to send and receive data
      * from the current thread.
      *
      * The buffer uses an unsynchronized memory resource,
      * since each thread has its own version of the buffer.
-     * 
+     *
+     * @return the buffer.
+     */
+    byte_buffer& temp_byte_buffer();
+
+
+    /**
+     * Returns a temporary buffer resized to the given size.
      * @param size required buffer size.
      * @return the buffer.
      */
-    byte_buffer& temp_byte_buffer(size_t size = 0);
+    inline byte_buffer& temp_byte_buffer(size_t size) {
+        byte_buffer& buffer = temp_byte_buffer();
+        buffer.resize(size);
+        return buffer;
+    }
 
 
     /**
