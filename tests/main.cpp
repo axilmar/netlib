@@ -15,6 +15,9 @@
 #include "netlib/ip4_tcp_client_socket.hpp"
 #include "netlib/ip4_udp_socket.hpp"
 #include "netlib/ip6_address.hpp"
+#include "netlib/ip6_tcp_server_socket.hpp"
+#include "netlib/ip6_tcp_client_socket.hpp"
+#include "netlib/ip6_udp_socket.hpp"
 
 
 using namespace testlib;
@@ -212,7 +215,7 @@ static void test_ip4_tcp_sockets() {
     const char* message = "hello world!!!";
     const size_t msglen = strlen(message);
 
-    test("tcp sockets", [&]() {
+    test("ip4 tcp sockets", [&]() {
         std::thread server_thread([&]() {
             try {
                 ip4::tcp::server_socket server(ip4::socket_address(ip4::address::loopback, 10000));
@@ -254,7 +257,7 @@ static void test_ip4_udp_sockets() {
     const ip4::socket_address test_addr(ip4::address::loopback, 10000);
     ip4::udp::socket socket(test_addr);
 
-    test("udp sockets", [&]() {
+    test("ip4 udp sockets", [&]() {
         std::thread server_thread([&]() {
             try {
                 ip4::socket_address from_addr;
@@ -489,12 +492,93 @@ static void test_ip6_address() {
 };
 
 
+static void test_ip6_tcp_sockets() {
+    static constexpr size_t message_count = 10;
+    const char* message = "hello world!!!";
+    const size_t msglen = strlen(message);
+
+    test("ip6 tcp sockets", [&]() {
+        std::thread server_thread([&]() {
+            try {
+                ip6::tcp::server_socket server(ip6::socket_address(ip6::address::loopback, 10000));
+                auto client = server.accept();
+
+                for (size_t i = 0; i < message_count; ++i) {
+                    check(client.socket.receive(temp_byte_buffer(), msglen) == msglen);
+                    check(strncmp(temp_byte_buffer().data(), message, msglen) == 0);
+                }
+            }
+            catch (const std::exception& ex) {
+                std::cout << "Server exception: " << ex.what() << std::endl;
+            }
+            });
+
+        std::thread client_thread([&]() {
+            try {
+                ip6::tcp::client_socket socket(ip6::socket_address(ip6::address::loopback, 10000));
+
+                for (size_t i = 0; i < message_count; ++i) {
+                    check(socket.send(temp_byte_buffer(message, message + msglen)) == msglen);
+                }
+            }
+            catch (const std::exception& ex) {
+                std::cout << "Client exception: " << ex.what() << std::endl;
+            }
+            });
+
+        client_thread.join();
+        server_thread.join();
+        });
+}
+
+
+static void test_ip6_udp_sockets() {
+    static constexpr size_t message_count = 10;
+    const char* message = "hello world!!!";
+    const size_t msglen = strlen(message);
+    const ip6::socket_address test_addr(ip6::address::loopback, 10000);
+    ip6::udp::socket socket(test_addr);
+
+    test("ip6 udp sockets", [&]() {
+        std::thread server_thread([&]() {
+            try {
+                ip6::socket_address from_addr;
+                for (size_t i = 0; i < message_count; ++i) {
+                    check(socket.receive(temp_byte_buffer(), from_addr) == msglen);
+                    check(temp_byte_buffer().size() == msglen);
+                    check(strncmp(temp_byte_buffer().data(), message, msglen) == 0);
+                }
+            }
+            catch (const std::exception& ex) {
+                std::cout << "Server exception: " << ex.what() << std::endl;
+            }
+            });
+
+        std::thread client_thread([&]() {
+            try {
+                for (size_t i = 0; i < message_count; ++i) {
+                    check(socket.send(temp_byte_buffer(message, message + msglen), test_addr) == msglen);
+                }
+            }
+            catch (const std::exception& ex) {
+                std::cout << "Client exception: " << ex.what() << std::endl;
+            }
+            });
+
+        client_thread.join();
+        server_thread.join();
+        });
+}
+
+
 int main() {
     init();
-    //test_ip4_address();
-    //test_ip4_tcp_sockets();
-    //test_ip4_udp_sockets();
+    test_ip4_address();
+    test_ip4_tcp_sockets();
+    test_ip4_udp_sockets();
     test_ip6_address();
+    test_ip6_tcp_sockets();
+    test_ip6_udp_sockets();
     cleanup();
     system("pause");
     return static_cast<int>(test_error_count);

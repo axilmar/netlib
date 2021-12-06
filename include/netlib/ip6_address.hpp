@@ -142,7 +142,7 @@ namespace netlib::ip6 {
          * Returns the bytes.
          * @return the bytes.
          */
-        const bytes_type bytes() const {
+        const bytes_type& bytes() const {
             return m_bytes;
         }
 
