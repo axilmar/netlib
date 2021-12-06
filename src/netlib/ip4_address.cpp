@@ -15,7 +15,7 @@ namespace netlib::ip4 {
     //set address from hostname/ip address
     void address::set(const char* hostname) {
         if (!hostname || strlen(hostname) == 0) {
-            char hostname[256];
+            char hostname[257]{};
             if (gethostname(hostname, sizeof(hostname))) {
                 throw std::runtime_error(get_last_error_message());
             }

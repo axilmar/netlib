@@ -1,5 +1,5 @@
-#ifndef NETLIB_IP4_ADDRESS_HPP
-#define NETLIB_IP4_ADDRESS_HPP
+#ifndef NETLIB_IP6_ADDRESS_HPP
+#define NETLIB_IP6_ADDRESS_HPP
 
 
 #include <cstdint>
@@ -7,26 +7,26 @@
 #include <string>
 
 
-namespace netlib::ip4 {
+namespace netlib::ip6 {
 
 
     /**
-     * Internet protocol 4 address. 
+     * Internet protocol 6 address.
      */
     class address {
     public:
         /**
-         * value type.
+         * byte array type.
          */
-        using value_type = uint32_t;
+        using bytes_type = std::array<uint8_t, 16>;
 
         /**
-         * byte array type. 
+         * word array type.
          */
-        using bytes_type = std::array<uint8_t, 4>;
+        using words_type = std::array<uint16_t, 8>;
 
         /**
-         * Any address. 
+         * Any address.
          */
         static const address any;
 
@@ -39,31 +39,27 @@ namespace netlib::ip4 {
          * The default constructor.
          * It zeroes all bytes.
          */
-        address() : m_value{} {
+        address() : m_words{}, m_zone_index{} {
         }
 
         /**
-         * Constructor from value.
-         * @param value value.
+         * Constructor from words array.
+         * @param words words.
+         * @param zone_index zone index.
          */
-        address(value_type value) : m_value(value) {
+        address(const words_type& words, uint32_t zone_index = 0) 
+            : m_words(words), m_zone_index(zone_index)
+        {
         }
 
         /**
-         * Constructor from byte array. 
+         * Constructor from byte array.
          * @param bytes bytes.
+         * @param zone_index zone index.
          */
-        address(const bytes_type& bytes) : m_bytes{bytes} {
-        }
-
-        /**
-         * Constructor from individual bytes.
-         * @param b0 byte at position 0.
-         * @param b1 byte at position 1.
-         * @param b2 byte at position 2.
-         * @param b3 byte at position 3.
-         */
-        address(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3) : m_bytes{ b0, b1, b2, b3 } {
+        address(const bytes_type& bytes, uint32_t zone_index = 0) 
+            : m_bytes{ bytes }, m_zone_index(zone_index)
+        {
         }
 
         /**
@@ -72,7 +68,7 @@ namespace netlib::ip4 {
          *  - a null or empty string; the ip address of the localhost is discovered and stored in this object.
          *  - a hostname; the ip address of the given host is discovered and stored in this object.
          *  - an ip address string.
-         * @exception std::runtime_error thrown 
+         * @exception std::runtime_error thrown
          *  if the given string is not a valid hostname/ip address or
          *  if the localhost's name or ip address could not be retrieved.
          */
@@ -81,17 +77,17 @@ namespace netlib::ip4 {
         }
 
         /**
-         * @copydoc address(const char*). 
+         * @copydoc address(const char*).
          */
         address(const std::string& hostname) : address(hostname.c_str()) {
         }
 
         /**
-         * Assignment from value.
-         * @param value value, in network byte order.
+         * Assignment from words.
+         * @param words words.
          */
-        address& operator = (value_type value) {
-            m_value = value;
+        address& operator = (const words_type& words) {
+            m_words = words;
             return *this;
         }
 
@@ -106,7 +102,7 @@ namespace netlib::ip4 {
         }
 
         /**
-         * Assignment from hostname/ip address. 
+         * Assignment from hostname/ip address.
          * Same as address(const char*).
          * @exception std::runtime_error thrown
          *  if the given string is not a valid hostname/ip address or
@@ -125,11 +121,21 @@ namespace netlib::ip4 {
         }
 
         /**
-         * Returns the value of this address.
-         * @return the value of this address.
+         * Returns the words.
+         * @return the words.
          */
-        value_type value() const {
-            return m_value;
+        const words_type& words() const {
+            return m_words;
+        }
+
+        /**
+         * Sets the words and the zone index.
+         * @param words words.
+         * @param zone_index zone index.
+         */
+        void set(const words_type& words, uint32_t zone_index = 0) {
+            m_words = words;
+            m_zone_index = zone_index;
         }
 
         /**
@@ -141,6 +147,32 @@ namespace netlib::ip4 {
         }
 
         /**
+         * Sets the bytes and the zone index.
+         * @param bytes bytes.
+         * @param zone_index zone index.
+         */
+        void set(const bytes_type& bytes, uint32_t zone_index = 0) {
+            m_bytes = bytes;
+            m_zone_index = zone_index;
+        }
+
+        /**
+         * Returns the zone index.
+         * @return the zone index.
+         */
+        uint32_t zone_index() const {
+            return m_zone_index;
+        }
+
+        /**
+         * Sets the zone index.
+         * @param zone_index zone index.
+         */
+        void set_zone_index(uint32_t zone_index) {
+            m_zone_index = zone_index;
+        }
+
+        /**
          * Converts the address to string.
          * @return a string representation of this address.
          */
@@ -149,16 +181,17 @@ namespace netlib::ip4 {
     private:
         //data
         union {
-            value_type m_value;
+            words_type m_words;
             bytes_type m_bytes;
         };
+        uint32_t m_zone_index;
 
-        //set from hostname/ip4 address.
+        //sets the address from hostname/ip6 address.
         void set(const char* hostname);
     };
 
 
-} //namespace netlib::ip4
+} //namespace netlib::ip6
 
 
-#endif //NETLIB_IP4_ADDRESS_HPP
+#endif //NETLIB_IP6_ADDRESS_HPP

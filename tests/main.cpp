@@ -14,6 +14,7 @@
 #include "netlib/ip4_tcp_server_socket.hpp"
 #include "netlib/ip4_tcp_client_socket.hpp"
 #include "netlib/ip4_udp_socket.hpp"
+#include "netlib/ip6_address.hpp"
 
 
 using namespace testlib;
@@ -21,7 +22,7 @@ using namespace netlib;
 
 
 static void test_ip4_address() {
-    char localhost_name[256];
+    char localhost_name[257]{};
     gethostname(localhost_name, sizeof(localhost_name));
 
     ip4::address::value_type localhost_address;
@@ -285,11 +286,215 @@ static void test_ip4_udp_sockets() {
 }
 
 
+static void test_ip6_address() {
+    char localhost_name[257]{};
+    gethostname(localhost_name, sizeof(localhost_name));
+
+    ip6::address::bytes_type localhost_address_bytes;
+    ip6::address::words_type localhost_address_words;
+    uint32_t localhost_zone_index;
+    bool found = get_address_info(localhost_name, [&](addrinfo* ai) {
+        if (ai->ai_family == AF_INET6) {
+            localhost_address_bytes = reinterpret_cast<const ip6::address::bytes_type&>(reinterpret_cast<sockaddr_in6*>(ai->ai_addr)->sin6_addr);
+            localhost_address_words = reinterpret_cast<const ip6::address::words_type&>(reinterpret_cast<sockaddr_in6*>(ai->ai_addr)->sin6_addr);
+            localhost_zone_index = reinterpret_cast<sockaddr_in6*>(ai->ai_addr)->sin6_scope_id;
+            return true;
+        }
+        return false;
+        });
+    check(found);
+
+    char localhost_address_string_buffer[INET6_ADDRSTRLEN];
+    inet_ntop(AF_INET6, &localhost_address_bytes, localhost_address_string_buffer, sizeof(localhost_address_string_buffer));
+    const std::string localhost_address_string = std::string(localhost_address_string_buffer) + '%' + std::to_string(localhost_zone_index);
+
+    const std::string test_addr_string = "2001:0db8:0000:0000:0000:ff00:0042:8329%1";
+    const std::string test_addr_string_abbreviated = "2001:db8::ff00:42:8329%1";
+    const std::string error_test_addr_string = "2001:0db8:0000:0000:0O00:ff00:0042:8329";
+    in6_addr test_addr;
+    inet_pton(AF_INET6, test_addr_string.c_str(), &test_addr);
+    const ip6::address::bytes_type test_addr_bytes = reinterpret_cast<const ip6::address::bytes_type&>(test_addr);
+    const ip6::address::words_type test_addr_words = reinterpret_cast<const ip6::address::words_type&>(test_addr);
+
+    test("ip6::address::address()", [&]() {
+        ip6::address a;
+        check(a.words() == ip6::address::words_type{});
+        check(a.bytes() == ip6::address::bytes_type{});
+        check(a.zone_index() == 0);
+        });
+
+    test("ip6::address::address(words_type)", [&]() {
+        ip6::address a(test_addr_words, 1);
+        check(a.words() == test_addr_words);
+        check(a.bytes() == test_addr_bytes);
+        check(a.zone_index() == 1);
+        });
+
+    test("ip6::address::address(bytes_type)", [&]() {
+        ip6::address a(test_addr_bytes, 1);
+        check(a.words() == test_addr_words);
+        check(a.bytes() == test_addr_bytes);
+        check(a.zone_index() == 1);
+        });
+
+    test("ip6::address::address(nullptr)", [&]() {
+        ip6::address a(nullptr);
+        check(a.words() == localhost_address_words);
+        check(a.bytes() == localhost_address_bytes);
+        check(a.zone_index() == localhost_zone_index);
+        });
+
+    test("ip6::address::address(\"\")", [&]() {
+        ip6::address a("");
+        check(a.words() == localhost_address_words);
+        check(a.bytes() == localhost_address_bytes);
+        check(a.zone_index() == localhost_zone_index);
+        });
+
+    test("ip6::address::address(\"" + std::string(test_addr_string) + "\")", [&]() {
+        ip6::address a(test_addr_string);
+        check(a.words() == test_addr_words);
+        check(a.bytes() == test_addr_bytes);
+        check(a.zone_index() == 1);
+        });
+
+    test("ip6::address::address(<localhost name>)", [&]() {
+        ip6::address a(localhost_name);
+        check(a.words() == localhost_address_words);
+        check(a.bytes() == localhost_address_bytes);
+        check(a.zone_index() == localhost_zone_index);
+        });
+
+    test("ip6::address::address(\"" + error_test_addr_string + "\")", [&]() {
+        check_exception(ip6::address{ error_test_addr_string }, std::runtime_error);
+        });
+
+    test("ip6::address::operator = (words_type)", [&]() {
+        ip6::address a;
+        a = test_addr_words;
+        check(a.words() == test_addr_words);
+        check(a.bytes() == test_addr_bytes);
+        });
+
+    test("ip6::address::operator = (bytes_type)", [&]() {
+        ip6::address a;
+        a = test_addr_bytes;
+        check(a.words() == test_addr_words);
+        check(a.bytes() == test_addr_bytes);
+        });
+
+    test("ip6::address::operator = (nullptr)", [&]() {
+        ip6::address a;
+        a = nullptr;
+        check(a.words() == localhost_address_words);
+        check(a.bytes() == localhost_address_bytes);
+        check(a.zone_index() == localhost_zone_index);
+        });
+
+    test("ip6::address::operator = (\"\")", [&]() {
+        ip6::address a;
+        a = "";
+        check(a.words() == localhost_address_words);
+        check(a.bytes() == localhost_address_bytes);
+        check(a.zone_index() == localhost_zone_index);
+        });
+
+    test("ip6::address::operator = (\"" + std::string(test_addr_string) + "\")", [&]() {
+        ip6::address a;
+        a = test_addr_string;
+        check(a.words() == test_addr_words);
+        check(a.bytes() == test_addr_bytes);
+        check(a.zone_index() == 1);
+        });
+
+    test("ip6::address::operator = (<localhost name>)", [&]() {
+        ip6::address a;
+        a = localhost_name;
+        check(a.words() == localhost_address_words);
+        check(a.bytes() == localhost_address_bytes);
+        check(a.zone_index() == localhost_zone_index);
+        });
+
+    test("ip6::address::operator = (\"" + error_test_addr_string + "\")", [&]() {
+        ip6::address a;
+        check_exception(a = error_test_addr_string, std::runtime_error);
+        });
+
+    test("ip6::address()::to_string()", [&]() {
+        check(ip6::address().to_string() == "::");
+        });
+
+    test("ip6::address(words_type)::to_string()", [&]() {
+        check(ip6::address(test_addr_words, 1).to_string() == test_addr_string_abbreviated);
+        });
+
+    test("ip6::address(bytes_type)::to_string()", [&]() {
+        check(ip6::address(test_addr_bytes, 1).to_string() == test_addr_string_abbreviated);
+        });
+
+    test("ip6::address(nullptr)::to_string()", [&]() {
+        check(ip6::address(nullptr).to_string() == localhost_address_string);
+        });
+
+    test("ip6::address(\"\")::to_string()", [&]() {
+        check(ip6::address("").to_string() == localhost_address_string);
+        });
+
+    test("ip6::address(\"" + std::string(test_addr_string) + "\")::to_string()", [&]() {
+        check(ip6::address(test_addr_string).to_string() == test_addr_string_abbreviated);
+        });
+
+    test("ip6::address(<localhost name>)::to_string()", [&]() {
+        check(ip6::address(localhost_name).to_string() == localhost_address_string);
+        });
+
+    test("ip6::address = words_type; to_string()", [&]() {
+        ip6::address a;
+        a = test_addr_words;
+        a.set_zone_index(1);
+        check(a.to_string() == test_addr_string_abbreviated);
+        });
+
+    test("ip6::address = bytes_type; to_string()", [&]() {
+        ip6::address a;
+        a = test_addr_bytes;
+        a.set_zone_index(1);
+        check(a.to_string() == test_addr_string_abbreviated);
+        });
+
+    test("ip6::address = nullptr; to_string()", [&]() {
+        ip6::address a;
+        a = nullptr;
+        check(a.to_string() == localhost_address_string);
+        });
+
+    test("ip6::address = \"\"; to_string()", [&]() {
+        ip6::address a;
+        a = "";
+        check(a.to_string() == localhost_address_string);
+        });
+
+    test("ip6::address = \"" + std::string(test_addr_string) + "\"; to_string()", [&]() {
+        ip6::address a;
+        a = test_addr_string;
+        a.set_zone_index(1);
+        check(a.to_string() == test_addr_string_abbreviated);
+        });
+
+    test("ip6::address = <localhost name>; to_string()", [&]() {
+        ip6::address a;
+        a = localhost_name;
+        check(a.to_string() == localhost_address_string);
+        });
+};
+
+
 int main() {
     init();
-    test_ip4_address();
-    test_ip4_tcp_sockets();
-    test_ip4_udp_sockets();
+    //test_ip4_address();
+    //test_ip4_tcp_sockets();
+    //test_ip4_udp_sockets();
+    test_ip6_address();
     cleanup();
     system("pause");
     return static_cast<int>(test_error_count);
