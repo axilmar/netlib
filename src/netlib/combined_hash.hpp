@@ -13,31 +13,22 @@ namespace netlib {
     //then compute its hash as a string view.
 
 
-    #pragma pack(push, 1)
+    template <class H> void fill_array(char* a, const H& h) {
+        memcpy(a, &h, sizeof(H));
+    }
 
 
-    template <class H, class ...T> struct hash_byte_array : hash_byte_array<T...> {
-        char v[sizeof(H)];
-        hash_byte_array(const H& h, const T&... t) : hash_byte_array<T...>(t...) {
-            memcpy(v, &h, sizeof(H));
-        }
-    };
+    template <class H, class... T> void fill_array(char* a, const H& h, const T&... t) {
+        memcpy(a, &h, sizeof(H));
+        fill_array(a + sizeof(H), t...);
+    }
 
 
-    template <class H> struct hash_byte_array<H> {
-        char v[sizeof(H)];
-        hash_byte_array(const H& h) {
-            memcpy(v, &h, sizeof(H));
-        }
-    };
-
-
-    #pragma pack(pop)
-
-
-    template <class...Values> size_t combined_hash(const Values&... values) {
-        const hash_byte_array<Values...> a(values...);        
-        return std::hash<std::string_view>()({ reinterpret_cast<const char*>(&a), sizeof(a) });
+    template <class H, class... T> size_t combined_hash(const H& h, const T&... t) {
+        static constexpr size_t sz = (sizeof(H) + ... + sizeof(T));
+        char a[sz];
+        fill_array(a, h, t...);
+        return std::hash<std::string_view>()({ a, sz });
     }
 
 

@@ -9,6 +9,7 @@
 #include <chrono>
 #include <thread>
 #include <mutex>
+#include <unordered_set>
 #include "testlib.hpp"
 #include "netlib/ip4_address.hpp"
 #include "netlib/ip4_tcp_server_socket.hpp"
@@ -208,6 +209,47 @@ static void test_ip4_address() {
         check(a.to_string() == localhost_address_string);
         });
 
+    test("ip4::address::operator == ", [&]() {
+        check(ip4::address("192.168.1.1") == ip4::address("192.168.1.1"));
+        check(!(ip4::address("192.168.1.1") == ip4::address("192.168.1.2")));
+        });
+
+    test("ip4::address::operator != ", [&]() {
+        check(ip4::address("192.168.1.1") != ip4::address("192.168.1.2"));
+        check(!(ip4::address("192.168.1.1") != ip4::address("192.168.1.1")));
+        });
+
+    test("ip4::address::operator < ", [&]() {
+        check(ip4::address("192.168.1.1") < ip4::address("192.168.1.2"));
+        check(!(ip4::address("192.168.1.1") < ip4::address("192.168.1.1")));
+        check(!(ip4::address("192.168.1.2") < ip4::address("192.168.1.1")));
+        });
+
+    test("ip4::address::operator > ", [&]() {
+        check(ip4::address("192.168.1.2") > ip4::address("192.168.1.1"));
+        check(!(ip4::address("192.168.1.2") > ip4::address("192.168.1.2")));
+        check(!(ip4::address("192.168.1.1") > ip4::address("192.168.1.1")));
+        });
+
+    test("ip4::address::operator <= ", [&]() {
+        check(ip4::address("192.168.1.1") <= ip4::address("192.168.1.1"));
+        check(ip4::address("192.168.1.1") <= ip4::address("192.168.1.2"));
+        check(!(ip4::address("192.168.1.2") <= ip4::address("192.168.1.1")));
+        });
+
+    test("ip4::address::operator >= ", [&]() {
+        check(ip4::address("192.168.1.2") >= ip4::address("192.168.1.2"));
+        check(ip4::address("192.168.1.2") >= ip4::address("192.168.1.1"));
+        check(!(ip4::address("192.168.1.1") >= ip4::address("192.168.1.2")));
+        });
+
+    test("ip4::address::hash()", [&]() {
+        std::unordered_set<ip4::address> set;
+        set.insert(ip4::address("192.168.1.1"));
+        set.insert(ip4::address("192.168.1.2"));
+        set.insert(ip4::address("192.168.1.3"));
+        check(set.size() == 3);
+        });
 };
 
 
@@ -490,6 +532,85 @@ static void test_ip6_address() {
         a = localhost_name;
         check(a.to_string() == localhost_address_string);
         });
+
+    test("ip6::address::operator == ", [&]() {
+        check(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321") == ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321"));
+        check(!(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321") == ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8322")));
+        });
+
+    test("ip6::address::operator != ", [&]() {
+        check(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321") != ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8322"));
+        check(!(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321") != ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321")));
+        });
+
+    test("ip6::address::operator < ", [&]() {
+        check(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321") < ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8322"));
+        check(!(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321") < ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321")));
+        check(!(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8322") < ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321")));
+        });
+
+    test("ip6::address::operator > ", [&]() {
+        check(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8322") > ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321"));
+        check(!(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8322") > ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8322")));
+        check(!(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321") > ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321")));
+        });
+
+    test("ip6::address::operator <= ", [&]() {
+        check(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321") <= ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321"));
+        check(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321") <= ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8322"));
+        check(!(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8322") <= ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321")));
+        });
+
+    test("ip6::address::operator >= ", [&]() {
+        check(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8322") >= ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8322"));
+        check(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8322") >= ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321"));
+        check(!(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321") >= ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8322")));
+        });
+
+    test("ip6::address::operator == ", [&]() {
+        check(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1") == ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1"));
+        check(!(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1") == ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%2")));
+        });
+
+    test("ip6::address::operator != ", [&]() {
+        check(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%2") != ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1"));
+        check(!(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1") != ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1")));
+        });
+
+    test("ip6::address::operator < ", [&]() {
+        check(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1") < ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%2"));
+        check(!(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%2") < ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1")));
+        check(!(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1") < ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1")));
+        });
+
+    test("ip6::address::operator > ", [&]() {
+        check(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%2") > ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1"));
+        check(!(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1") > ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%2")));
+        check(!(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1") > ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1")));
+        });
+
+    test("ip6::address::operator <= ", [&]() {
+        check(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1") <= ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1"));
+        check(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1") <= ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%2"));
+        check(!(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%2") <= ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1")));
+        });
+
+    test("ip6::address::operator >= ", [&]() {
+        check(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%2") >= ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1"));
+        check(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1") >= ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1"));
+        check(!(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1") >= ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%2")));
+        });
+
+    test("ip6::address::hash()", [&]() {
+        std::unordered_set<ip6::address> set;
+        set.insert(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321"));
+        set.insert(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8322"));
+        set.insert(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8323"));
+        set.insert(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8321%1"));
+        set.insert(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8322%1"));
+        set.insert(ip6::address("2001:0db8:0000:0000:0000:ff00:0042:8323%1"));
+        check(set.size() == 6);
+        });
 };
 
 
@@ -629,13 +750,13 @@ static void test_socket_poller() {
 
 int main() {
     init();
-    //test_ip4_address();
-    //test_ip4_tcp_sockets();
-    //test_ip4_udp_sockets();
-    //test_ip6_address();
-    //test_ip6_tcp_sockets();
-    //test_ip6_udp_sockets();
-    //test_socket_poller();
+    test_ip4_address();
+    test_ip4_tcp_sockets();
+    test_ip4_udp_sockets();
+    test_ip6_address();
+    test_ip6_tcp_sockets();
+    test_ip6_udp_sockets();
+    test_socket_poller();
     cleanup();
     system("pause");
     return static_cast<int>(test_error_count);
