@@ -7,6 +7,38 @@ namespace netlib {
 
 
     ///////////////////////////////////////////////////////////////////////////
+    // INTERNALS
+    ///////////////////////////////////////////////////////////////////////////
+
+
+    //manages the poll counter.
+    class poll_counter_manager {
+    public:
+        //constructor; throw std::logic_error if counter is to become 2.
+        poll_counter_manager(std::atomic<size_t>& counter) : m_counter(counter) {
+            //check the counter; if it is to become 2, throw
+            if (m_counter.fetch_add(1, std::memory_order_acquire) == 1) {
+
+                //put the value back to what it was
+                m_counter.fetch_sub(1, std::memory_order_relaxed);
+
+                //throw exception
+                throw std::logic_error("Cannot poll by multiple threads.");
+            }
+        }
+
+        //decrements the counter.
+        ~poll_counter_manager() {
+            m_counter.fetch_sub(1, std::memory_order_relaxed);
+        }
+
+    private:
+        //counter
+        std::atomic<size_t>& m_counter;
+    };
+
+
+    ///////////////////////////////////////////////////////////////////////////
     // PUBLIC
     ///////////////////////////////////////////////////////////////////////////
 
@@ -18,6 +50,7 @@ namespace netlib {
         , m_com_socket_address(m_com_socket.get_assigned_address())
         , m_entries_changed{}
         , m_stop{}
+        , m_poll_counter{0}
     {
         //add entry for the internal com socket.
         m_entries.push_back(entry{ &m_com_socket, event_type::read, [](socket_poller&, socket&, event_type) {} });
@@ -26,11 +59,7 @@ namespace netlib {
 
     //stop polling.
     socket_poller::~socket_poller() {
-        {
-            std::lock_guard lock(m_mutex);
-            m_stop = true;
-        }
-        m_com_socket.send(temp_byte_buffer(0), m_com_socket_address);
+        stop();
     }
 
 
@@ -146,8 +175,8 @@ namespace netlib {
 
     //poll.
     socket_poller::poll_status socket_poller::poll(int timeout_ms) {
-        static thread_local std::vector<entry> entries;
-        static thread_local std::vector<pollfd> pollfds;
+        //use RAII to manage poll counter increments
+        poll_counter_manager manage_poll_counter(m_poll_counter);
 
         {
             std::lock_guard lock(m_mutex);
@@ -157,36 +186,36 @@ namespace netlib {
                 return poll_status::stopped;
             }
 
-            //if there are no entries (besides the com socket)
+            //if there are no m_poll_entries (besides the com socket)
             if (m_entries.size() - 1 == 0) {
                 return poll_status::empty;
             }
 
-            //if changed, rebuild the entries/pollfds
+            //if changed, rebuild the m_poll_entries/m_poll_fds
             if (m_entries_changed) {
                 m_entries_changed = false;
 
-                //make room for new entries
-                entries.resize(m_entries.size());
-                pollfds.resize(m_entries.size());
+                //make room for new m_poll_entries
+                m_poll_entries.resize(m_entries.size());
+                m_poll_fds.resize(m_entries.size());
 
-                //set entries
+                //set m_poll_entries
                 for (size_t i = 0; i < m_entries.size(); ++i) {
-                    entries[i] = m_entries[i];
-                    pollfds[i].events = m_entries[i].event == event_type::read ? POLLIN : POLLOUT;
-                    pollfds[i].fd = m_entries[i].socket->handle();
+                    m_poll_entries[i] = m_entries[i];
+                    m_poll_fds[i].events = m_entries[i].event == event_type::read ? POLLRDNORM : POLLWRNORM;
+                    m_poll_fds[i].fd = m_entries[i].socket->handle();
                 }
             }
         }
 
         //poll
-        int poll_result = ::poll(pollfds.data(), numeric_cast<unsigned int>(pollfds.size()), timeout_ms);
+        int poll_result = ::poll(m_poll_fds.data(), numeric_cast<unsigned int>(m_poll_fds.size()), timeout_ms);
 
         //process events
         if (poll_result > 0) {
-            for (size_t i = 0; i < pollfds.size() && poll_result > 0; ++i) {
-                if (pollfds[i].revents) {
-                    entries[i].callback(*this, *entries[i].socket, entries[i].event);
+            for (size_t i = 0; i < m_poll_fds.size() && poll_result > 0; ++i) {
+                if (m_poll_fds[i].revents) {
+                    m_poll_entries[i].callback(*this, *m_poll_entries[i].socket, m_poll_entries[i].event);
                     --poll_result;
                 }
             }
@@ -221,6 +250,21 @@ namespace netlib {
     void socket_poller::set_on_socket_removed_callback(const std::function<void(const size_t entries_count, socket& s)>& f) {
         std::lock_guard lock(m_mutex);
         m_on_socket_removed = f;
+    }
+
+
+    //Stops the socket poller, if not stopped yet.
+    void socket_poller::stop() {
+        {
+            std::lock_guard lock(m_mutex);
+            
+            if (m_stop) {
+                return;
+            }
+            
+            m_stop = true;
+        }
+        m_com_socket.send(temp_byte_buffer(0), m_com_socket_address);
     }
 
 

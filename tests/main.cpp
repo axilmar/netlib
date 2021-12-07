@@ -18,6 +18,7 @@
 #include "netlib/ip6_tcp_server_socket.hpp"
 #include "netlib/ip6_tcp_client_socket.hpp"
 #include "netlib/ip6_udp_socket.hpp"
+#include "netlib/socket_poller_thread.hpp"
 
 
 using namespace testlib;
@@ -571,14 +572,69 @@ static void test_ip6_udp_sockets() {
 }
 
 
+static void test_socket_poller() {   
+    static constexpr size_t test_message_count = 100;
+    const std::string message("hello world!");
+
+    test("socket polling", [&]() {
+        socket_poller_thread socket_poller;
+
+        const ip4::socket_address test_addr1(ip4::address::loopback, 10000);
+        const ip4::socket_address test_addr2(ip4::address::loopback, 10001);
+        const ip4::socket_address test_addr3(ip4::address::loopback, 10002);
+
+        ip4::udp::socket socket1(test_addr1);
+        ip4::udp::socket socket2(test_addr2);
+        ip4::udp::socket socket3(test_addr3);
+
+        std::array<const ip4::socket_address*, 3> socket_addresses{ &test_addr1, &test_addr2, &test_addr3 };
+        std::array<ip4::udp::socket*, 3> sockets{ &socket1, &socket2, &socket3 };
+
+        std::atomic<size_t> message_counter{ 0 };
+
+        auto callback = [&](netlib::socket_poller& poller, netlib::socket& s, socket_poller::event_type e) {
+            try {
+                ip4::socket_address addr;
+                static_cast<ip4::udp::socket&>(s).receive(temp_byte_buffer(), addr);
+                const std::string msg(temp_byte_buffer().begin(), temp_byte_buffer().end());
+                check(msg == message);
+                message_counter.fetch_add(1, std::memory_order_relaxed);
+            }
+            catch (const std::exception&) {
+            }
+        };
+
+        for (auto* socket : sockets) {
+            socket_poller.add(*socket, callback);
+        }
+
+        //producer thread
+        std::thread producer_thread([&]() {
+            for (size_t i = 0; i < test_message_count; ++i) {
+                sockets[i % sockets.size()]->send(temp_byte_buffer(message.begin(), message.end()), *socket_addresses[i % sockets.size()]);
+            }
+            });
+
+        //wait for the producer thread to sent all its messages
+        producer_thread.join();
+
+        //wait for all messages to be received
+        while (message_counter.load(std::memory_order_acquire) < test_message_count) {
+            std::this_thread::yield();
+        }
+        });
+}
+
+
 int main() {
     init();
-    //test_ip4_address();
-    //test_ip4_tcp_sockets();
-    //test_ip4_udp_sockets();
-    //test_ip6_address();
-    //test_ip6_tcp_sockets();
-    //test_ip6_udp_sockets();
+    test_ip4_address();
+    test_ip4_tcp_sockets();
+    test_ip4_udp_sockets();
+    test_ip6_address();
+    test_ip6_tcp_sockets();
+    test_ip6_udp_sockets();
+    test_socket_poller();
     cleanup();
     system("pause");
     return static_cast<int>(test_error_count);

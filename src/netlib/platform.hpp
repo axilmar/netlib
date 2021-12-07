@@ -14,9 +14,7 @@
 #undef max
 
 
-inline int poll(pollfd* fda, unsigned long fds, int timeout) {
-    return WSAPoll(fda, fds, timeout);
-}
+int poll(pollfd* fda, unsigned long fds, int timeout);
 
 
 //else linux or macos

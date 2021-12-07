@@ -5,7 +5,16 @@
 #include <functional>
 #include <vector>
 #include <mutex>
+#include <atomic>
 #include "ip4_udp_socket.hpp"
+
+
+/**
+ * Socket poller max sockets preprocessor definition.
+ */
+#ifndef NETLIB_SOCKET_POLLER_MAX_SOCKETS
+#define NETLIB_SOCKET_POLLER_MAX_SOCKETS 1024
+#endif
 
 
 namespace netlib {
@@ -47,14 +56,14 @@ namespace netlib {
             stopped = -2,
 
             /**
+             * no sockets were polled.
+             */
+             empty,
+
+             /**
              * timeout.
              */
             timeout,
-
-            /**
-             * no sockets were polled. 
-             */
-            empty,
 
             /**
              * success.
@@ -63,10 +72,15 @@ namespace netlib {
         };
 
         /**
+         * max socket limit.
+         */
+        static constexpr size_t max_sockets = NETLIB_SOCKET_POLLER_MAX_SOCKETS;
+
+        /**
          * Constructor. 
          * @param max_sockets max number of entries.
          */
-        socket_poller(size_t max_sockets = 1024);
+        socket_poller(size_t max_sockets = socket_poller::max_sockets);
 
         /**
          * The object is not copyable. 
@@ -104,6 +118,17 @@ namespace netlib {
         bool add(socket& s, event_type e, const event_callback_type& cb);
 
         /**
+         * Adds a socket for reading.
+         * @param s socket to add.
+         * @param cb callback type.
+         * @return true if the entry is added, false if the poller is full.
+         * @exception std::invalid_argument thrown if any of the parameters is invalid.
+         */
+        bool add(socket& s, const event_callback_type& cb) {
+            return add(s, event_type::read, cb);
+        }
+
+        /**
          * Removes a socket entry.
          * @param s socket to add.
          * @param e event type.
@@ -125,6 +150,7 @@ namespace netlib {
          * @param timeout_ms timeout, in milliseconds. If less than 0, then it blocks until there is an event.
          * @return poll_status poll status.
          * @exception std::runtime_error thrown if there was an error.
+         * @exception std::logic_error thrown if more than one thread attempts to poll.
          */
         poll_status poll(int timeout_ms = -1);
 
@@ -145,6 +171,12 @@ namespace netlib {
          * @param f function to invoke for this callback.
          */
         void set_on_socket_removed_callback(const std::function<void(const size_t entries_count, socket& s)>& f);
+
+        /**
+         * Stops the socket poller, if not stopped yet.
+         * Also invoked in the destructor.
+         */
+        void stop();
 
     private:
         //entry
@@ -183,6 +215,12 @@ namespace netlib {
         std::function<void(const size_t entries_count, socket& s, event_type e, const event_callback_type& cb)> m_on_socket_entry_removed;
         std::function<void(const size_t entries_count, socket& s)> m_on_socket_removed;
 
+        //data used for polling
+        std::vector<entry> m_poll_entries;
+        std::vector<struct pollfd> m_poll_fds;
+
+        //used for detecting multithreaded poll attempts
+        std::atomic<size_t> m_poll_counter;
     };
 
 
