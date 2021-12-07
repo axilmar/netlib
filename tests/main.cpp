@@ -601,6 +601,7 @@ static void test_socket_poller() {
                 message_counter.fetch_add(1, std::memory_order_relaxed);
             }
             catch (const std::exception&) {
+                poller.remove(s);
             }
         };
 
@@ -628,13 +629,13 @@ static void test_socket_poller() {
 
 int main() {
     init();
-    test_ip4_address();
-    test_ip4_tcp_sockets();
-    test_ip4_udp_sockets();
-    test_ip6_address();
-    test_ip6_tcp_sockets();
-    test_ip6_udp_sockets();
-    test_socket_poller();
+    //test_ip4_address();
+    //test_ip4_tcp_sockets();
+    //test_ip4_udp_sockets();
+    //test_ip6_address();
+    //test_ip6_tcp_sockets();
+    //test_ip6_udp_sockets();
+    //test_socket_poller();
     cleanup();
     system("pause");
     return static_cast<int>(test_error_count);
