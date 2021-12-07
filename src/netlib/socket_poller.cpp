@@ -185,7 +185,7 @@ namespace netlib {
         //process events
         if (poll_result > 0) {
             for (size_t i = 0; i < pollfds.size() && poll_result > 0; ++i) {
-                if (pollfds[i].revents & (POLLIN | POLLOUT)) {
+                if (pollfds[i].revents) {
                     entries[i].callback(*this, *entries[i].socket, entries[i].event);
                     --poll_result;
                 }
