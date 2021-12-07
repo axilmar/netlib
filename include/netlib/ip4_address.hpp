@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <array>
 #include <string>
+#include <functional>
 
 
 namespace netlib::ip4 {
@@ -146,6 +147,67 @@ namespace netlib::ip4 {
          */
         std::string to_string() const;
 
+        /**
+         * Checks if this and the given object are equal.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator == (const address& other) const {
+            return m_value == other.m_value;
+        }
+
+        /**
+         * Checks if this and the given object are diferent.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator != (const address& other) const {
+            return !operator ==(other);
+        }
+
+        /**
+         * Checks if this object comes before the given object.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator < (const address& other) const {
+            return m_value < other.m_value;
+        }
+
+        /**
+         * Checks if this object comes after the given object.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator > (const address& other) const {
+            return m_value > other.m_value;
+        }
+
+        /**
+         * Checks if this object comes before the given object or if they are equal.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator <= (const address& other) const {
+            return m_value <= other.m_value;
+        }
+
+        /**
+         * Checks if this object comes after the given object or if they are equal.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator >= (const address& other) const {
+            return m_value >= other.m_value;
+        }
+
+        /**
+         * Returns the hashcode of this address.
+         */
+        size_t hash() const {
+            return std::hash<value_type>()(m_value);
+        }
+
     private:
         //data
         union {
@@ -159,6 +221,15 @@ namespace netlib::ip4 {
 
 
 } //namespace netlib::ip4
+
+
+namespace std {
+    template <> struct hash<netlib::ip4::address> {
+        size_t operator ()(const netlib::ip4::address& addr) const {
+            return addr.hash();
+        }
+    };
+}
 
 
 #endif //NETLIB_IP4_ADDRESS_HPP

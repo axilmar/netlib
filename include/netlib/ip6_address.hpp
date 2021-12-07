@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <array>
 #include <string>
+#include <functional>
 
 
 namespace netlib::ip6 {
@@ -58,7 +59,7 @@ namespace netlib::ip6 {
          * @param zone_index zone index.
          */
         address(const bytes_type& bytes, uint32_t zone_index = 0) 
-            : m_bytes{ bytes }, m_zone_index(zone_index)
+            : m_bytes(bytes), m_zone_index(zone_index)
         {
         }
 
@@ -178,8 +179,67 @@ namespace netlib::ip6 {
          */
         std::string to_string() const;
 
+        /**
+         * Checks if this and the given object are equal.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator == (const address& other) const {
+            return m_words == other.m_words && m_zone_index == other.m_zone_index;
+        }
+
+        /**
+         * Checks if this and the given object are diferent.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator != (const address& other) const {
+            return !operator ==(other);
+        }
+
+        /**
+         * Checks if this object comes before the given object.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator < (const address& other) const {
+            return m_words < other.m_words ? true : m_words > other.m_words ? false : m_zone_index < other.m_zone_index;
+        }
+
+        /**
+         * Checks if this object comes after the given object.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator > (const address& other) const {
+            return m_words > other.m_words ? true : m_words < other.m_words ? false : m_zone_index > other.m_zone_index;
+        }
+
+        /**
+         * Checks if this object comes before the given object or if they are equal.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator <= (const address& other) const {
+            return operator < (other) || operator == (other);
+        }
+
+        /**
+         * Checks if this object comes after the given object or if they are equal.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator >= (const address& other) const {
+            return operator > (other) || operator == (other);
+        }
+
+        /**
+         * Returns the hashcode of this address.
+         */
+        size_t hash() const;
+
     private:
-        //data
+
         union {
             words_type m_words;
             bytes_type m_bytes;
@@ -192,6 +252,15 @@ namespace netlib::ip6 {
 
 
 } //namespace netlib::ip6
+
+
+namespace std {
+    template <> struct hash<netlib::ip6::address> {
+        size_t operator ()(const netlib::ip6::address& addr) const {
+            return addr.hash();
+        }
+    };
+}
 
 
 #endif //NETLIB_IP6_ADDRESS_HPP

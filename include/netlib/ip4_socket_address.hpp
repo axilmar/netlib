@@ -63,6 +63,65 @@ namespace netlib::ip4 {
             m_port_number = port;
         }
 
+        /**
+         * Checks if this and the given object are equal.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator == (const socket_address& other) const {
+            return m_address == other.m_address && m_port_number == other.m_port_number;
+        }
+
+        /**
+         * Checks if this and the given object are diferent.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator != (const socket_address& other) const {
+            return !operator ==(other);
+        }
+
+        /**
+         * Checks if this comes before the given object.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator < (const socket_address& other) const {
+            return m_address < other.m_address ? true : m_address > other.m_address ? false : m_port_number < other.m_port_number;
+        }
+
+        /**
+         * Checks if this comes after the given object.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator > (const socket_address& other) const {
+            return m_address > other.m_address ? true : m_address < other.m_address ? false : m_port_number > other.m_port_number;
+        }
+
+        /**
+         * Checks if this object comes before the given object or if they are equal.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator <= (const socket_address& other) const {
+            return operator < (other) || operator == (other);
+        }
+
+        /**
+         * Checks if this object comes after the given object or if they are equal.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator >= (const socket_address& other) const {
+            return operator > (other) || operator == (other);
+        }
+
+        /**
+         * Returns the hashcode of this address.
+         */
+        size_t hash() const;
+
     private:
         //address and port number.
         ip4::address m_address;
@@ -71,6 +130,15 @@ namespace netlib::ip4 {
 
 
 } //namespace netlib::ip4
+
+
+namespace std {
+    template <> struct hash<netlib::ip4::socket_address> {
+        size_t operator ()(const netlib::ip4::socket_address& addr) const {
+            return addr.hash();
+        }
+    };
+}
 
 
 #endif //NETLIB_IP4_SOCKET_ADDRESS_HPP

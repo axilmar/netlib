@@ -2,6 +2,7 @@
 #include <cstring>
 #include <stdexcept>
 #include "netlib/ip6_address.hpp"
+#include "combined_hash.hpp"
 
 
 namespace netlib::ip6 {
@@ -23,6 +24,12 @@ namespace netlib::ip6 {
     //constants
     const address address::any{ reinterpret_cast<const address::bytes_type&>(in6addr_any) };
     const address address::loopback{ reinterpret_cast<const address::bytes_type&>(in6addr_loopback) };
+
+
+    //Returns the hashcode of this address.
+    size_t address::hash() const {
+        return combined_hash(m_words, m_zone_index);
+    }
 
 
     ///////////////////////////////////////////////////////////////////////////
