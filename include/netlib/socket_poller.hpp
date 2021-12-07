@@ -128,34 +128,23 @@ namespace netlib {
          */
         poll_status poll(int timeout_ms = -1);
 
-    protected:
         /**
-         * Invoked when a socket entry is added. 
-         * @param entries_count number of entries after the addition.
-         * @param s socket that was added.
-         * @param e event type.
-         * @param cb callback.
+         * Sets the callback that is invoked when a socket entry is added.
+         * @param f function to invoke for this callback.
          */
-        void on_socket_entry_added(const size_t entries_count, socket& s, event_type e, const event_callback_type& cb) {
-        }
+        void set_on_socket_entry_added_callback(const std::function<void(const size_t entries_count, socket& s, event_type e, const event_callback_type& cb)>& f);
 
         /**
-         * Invoked when a socket entry is removed.
-         * @param entries_count number of entries after the removal.
-         * @param s socket that was removed.
-         * @param e event type.
-         * @param cb callback.
+         * Sets the callback that is invoked when a socket entry is removed.
+         * @param f function to invoke for this callback.
          */
-        void on_socket_entry_removed(const size_t entries_count, socket& s, event_type e, const event_callback_type& cb) {
-        }
+        void set_on_socket_entry_remmoved_callback(const std::function<void(const size_t entries_count, socket& s, event_type e, const event_callback_type& cb)>& f);
 
         /**
-         * Invoked when a socket is removed.
-         * @param entries_count number of entries after the removal.
-         * @param s socket that was removed.
+         * Sets the callback that is invoked when a socket is removed.
+         * @param f function to invoke for this callback.
          */
-        void on_socket_removed(const size_t entries_count, socket& s) {
-        }
+        void set_on_socket_removed_callback(const std::function<void(const size_t entries_count, socket& s)>& f);
 
     private:
         //entry
@@ -188,6 +177,12 @@ namespace netlib {
 
         //sets the entries as changed
         void set_entries_changed();
+
+        //callbacks
+        std::function<void(const size_t entries_count, socket& s, event_type e, const event_callback_type& cb)> m_on_socket_entry_added;
+        std::function<void(const size_t entries_count, socket& s, event_type e, const event_callback_type& cb)> m_on_socket_entry_removed;
+        std::function<void(const size_t entries_count, socket& s)> m_on_socket_removed;
+
     };
 
 

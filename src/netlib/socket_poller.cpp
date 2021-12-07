@@ -71,8 +71,10 @@ namespace netlib {
         //set the entries to have changed
         set_entries_changed();
 
-        //invoke the added event
-        on_socket_entry_added(m_entries.size() - 1, s, e, cb);
+        //invoke the socket entry added callback
+        if (m_on_socket_entry_added) {
+            m_on_socket_entry_added(m_entries.size() - 1, s, e, cb);
+        }
 
         //success
         return true;
@@ -106,8 +108,10 @@ namespace netlib {
         //set the entries to have changed
         set_entries_changed();
 
-        //invoke the removed event
-        on_socket_entry_removed(m_entries.size() - 1, *en.socket, en.event, en.callback);
+        //invoke the socket entry removed callback
+        if (m_on_socket_entry_removed) {
+            m_on_socket_entry_removed(m_entries.size() - 1, *en.socket, en.event, en.callback);
+        }
     }
 
 
@@ -133,8 +137,10 @@ namespace netlib {
         //set the entries as changed
         set_entries_changed();
 
-        //invoke the removed event
-        on_socket_removed(m_entries.size() - 1, s);
+        //invoke the socket removed callback
+        if (m_on_socket_removed) {
+            m_on_socket_removed(m_entries.size() - 1, s);
+        }
     }
 
 
@@ -194,6 +200,27 @@ namespace netlib {
 
         //error
         throw std::runtime_error(get_last_error_message());
+    }
+
+
+    //Sets the callback that is invoked when a socket entry is added.
+    void socket_poller::set_on_socket_entry_added_callback(const std::function<void(const size_t entries_count, socket& s, event_type e, const event_callback_type& cb)>& f) {
+        std::lock_guard lock(m_mutex);
+        m_on_socket_entry_added = f;
+    }
+
+
+    //Sets the callback that is invoked when a socket entry is removed.
+    void socket_poller::set_on_socket_entry_remmoved_callback(const std::function<void(const size_t entries_count, socket& s, event_type e, const event_callback_type& cb)>& f) {
+        std::lock_guard lock(m_mutex);
+        m_on_socket_entry_removed = f;
+    }
+
+
+    //Sets the callback that is invoked when a socket is removed.
+    void socket_poller::set_on_socket_removed_callback(const std::function<void(const size_t entries_count, socket& s)>& f) {
+        std::lock_guard lock(m_mutex);
+        m_on_socket_removed = f;
     }
 
 
