@@ -14,6 +14,11 @@
 #undef max
 
 
+inline int poll(pollfd* fda, unsigned long fds, int timeout) {
+    return WSAPoll(fda, fds, timeout);
+}
+
+
 //else linux or macos
 #elif defined(linux) || defined(__APPLE__)
 
@@ -25,6 +30,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <errno.h>
+#include <poll.h>
 
 
 inline void closesocket(uintptr_t handle) {

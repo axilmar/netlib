@@ -7,6 +7,11 @@
 namespace netlib::ip6::tcp {
 
 
+    ///////////////////////////////////////////////////////////////////////////
+    // PUBLIC
+    ///////////////////////////////////////////////////////////////////////////
+
+
     //bind and listen
     server_socket::server_socket(const socket_address& bind_addr, int backlog) 
         : ip6::socket(::socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP))

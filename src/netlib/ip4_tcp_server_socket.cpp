@@ -7,6 +7,11 @@
 namespace netlib::ip4::tcp {
 
 
+    ///////////////////////////////////////////////////////////////////////////
+    // PUBLIC
+    ///////////////////////////////////////////////////////////////////////////
+
+
     //bind and listen
     server_socket::server_socket(const socket_address& bind_addr, int backlog) 
         : ip4::socket(::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP))

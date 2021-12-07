@@ -6,6 +6,11 @@
 namespace netlib::ip4::udp {
 
 
+    ///////////////////////////////////////////////////////////////////////////
+    // PUBLIC
+    ///////////////////////////////////////////////////////////////////////////
+
+
     //Creates and binds the socket.
     socket::socket(const socket_address& bind_addr)
         : ip4::socket(::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP))

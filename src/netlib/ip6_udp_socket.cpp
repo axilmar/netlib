@@ -6,6 +6,11 @@
 namespace netlib::ip6::udp {
 
 
+    ///////////////////////////////////////////////////////////////////////////
+    // PUBLIC
+    ///////////////////////////////////////////////////////////////////////////
+
+
     //Creates and binds the socket.
     socket::socket(const socket_address& bind_addr)
         : ip6::socket(::socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP))

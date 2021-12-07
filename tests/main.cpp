@@ -573,12 +573,12 @@ static void test_ip6_udp_sockets() {
 
 int main() {
     init();
-    test_ip4_address();
-    test_ip4_tcp_sockets();
-    test_ip4_udp_sockets();
-    test_ip6_address();
-    test_ip6_tcp_sockets();
-    test_ip6_udp_sockets();
+    //test_ip4_address();
+    //test_ip4_tcp_sockets();
+    //test_ip4_udp_sockets();
+    //test_ip6_address();
+    //test_ip6_tcp_sockets();
+    //test_ip6_udp_sockets();
     cleanup();
     system("pause");
     return static_cast<int>(test_error_count);

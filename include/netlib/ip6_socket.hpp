@@ -13,6 +13,13 @@ namespace netlib::ip6 {
      * Base class for ip6 sockets. 
      */
     class socket : public netlib::socket {
+    public:
+        /**
+         * Returns the assigned address of the socket.
+         * @return the assigned address of the socket.
+         */
+        socket_address get_assigned_address() const;
+
     protected:
         /**
          * The default constructor.
