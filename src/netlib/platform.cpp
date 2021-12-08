@@ -57,23 +57,29 @@ int poll(pollfd* fda, unsigned long fds, int timeout) {
         return result;
     }
 
-    //on linux, all the errors are passed in pollfd.revents;
-    //on windows, the WSAPoll function returns -1 if something 
-    //is not a socket; therefore, special handling is required.
+    //The WSAPoll documentation says: 
+    //
+    //(https://docs.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsapoll)
+    //
+    //Returns one of the following values.
+    //  Return value 	    Description
+    //  Zero 	            No sockets were in the queried state before the timer expired.
+    //  Greater than zero 	THE NUMBER OF ELEMENTS IN FDARRAY FOR WHICH AN REVENTS MEMBER OF THE POLLFD STRUCTURE IS NONZERO.
+    //  SOCKET_ERROR 	    An error occurred.Call the WSAGetLastError function to retrieve the extended error code.
+    //
+    // However, the above (in capital case) is not 100% accurate: when a socket is invalid, 
+    // revents for that socket is set to POLLNVAL, but the return value is SOCKET_ERROR (at least in Windows 10).
+    //
+    // So, when that happens, we compute the return value ourselves: we iterate the pollfd structures
+    // and increment a counter every time we find revents is not zero; and then return that.
+    //
     DWORD windows_error = WSAGetLastError();
     switch (windows_error) {
         case WSAENOTSOCK:
             result = 0;
             for (size_t i = 0; i < fds; ++i) {
-                int error;
-                int errorlen = sizeof(error);
-                getsockopt(fda[i].fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<char*>(&error), &errorlen);
-                if (error != WSAENOTSOCK) {
+                if (fda[i].revents) {
                     ++result;
-                    fda[i].revents = POLLERR | fda[i].events;
-                }
-                else {
-                    fda[i].revents = 0;
                 }
             }
             return result;

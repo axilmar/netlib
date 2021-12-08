@@ -53,7 +53,7 @@ namespace netlib {
         , m_poll_counter{0}
     {
         //add entry for the internal com socket.
-        m_entries.push_back(entry{ &m_com_socket, event_type::read, [](socket_poller&, socket&, event_type) {} });
+        m_entries.push_back(entry{ &m_com_socket, event_type::read, [](socket_poller&, socket&, event_type, status_flags) {} });
     }
 
 
@@ -215,7 +215,16 @@ namespace netlib {
         if (poll_result > 0) {
             for (size_t i = 0; i < m_poll_fds.size() && poll_result > 0; ++i) {
                 if (m_poll_fds[i].revents) {
-                    m_poll_entries[i].callback(*this, *m_poll_entries[i].socket, m_poll_entries[i].event);
+                    //set the flags
+                    status_flags flags;
+                    flags.error              = m_poll_fds[i].revents & POLLERR;
+                    flags.connection_aborted = m_poll_fds[i].revents & POLLHUP;
+                    flags.invalid_socket     = m_poll_fds[i].revents & POLLNVAL;
+
+                    //invoke the callback
+                    m_poll_entries[i].callback(*this, *m_poll_entries[i].socket, m_poll_entries[i].event, flags);
+
+                    //count one less socket to check
                     --poll_result;
                 }
             }

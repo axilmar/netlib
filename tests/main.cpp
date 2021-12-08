@@ -713,7 +713,7 @@ static void test_socket_poller() {
 
         std::atomic<size_t> message_counter{ 0 };
 
-        auto callback = [&](netlib::socket_poller& poller, netlib::socket& s, socket_poller::event_type e) {
+        auto callback = [&](netlib::socket_poller& poller, netlib::socket& s, socket_poller::event_type e, socket_poller::status_flags flags) {
             try {
                 ip4::socket_address addr;
                 static_cast<ip4::udp::socket&>(s).receive(temp_byte_buffer(), addr);
@@ -750,12 +750,12 @@ static void test_socket_poller() {
 
 int main() {
     init();
-    test_ip4_address();
-    test_ip4_tcp_sockets();
-    test_ip4_udp_sockets();
-    test_ip6_address();
-    test_ip6_tcp_sockets();
-    test_ip6_udp_sockets();
+    //test_ip4_address();
+    //test_ip4_tcp_sockets();
+    //test_ip4_udp_sockets();
+    //test_ip6_address();
+    //test_ip6_tcp_sockets();
+    //test_ip6_udp_sockets();
     test_socket_poller();
     cleanup();
     system("pause");

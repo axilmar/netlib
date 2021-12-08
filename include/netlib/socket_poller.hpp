@@ -42,9 +42,29 @@ namespace netlib {
         };
 
         /**
+         * Status flags. 
+         */
+        struct status_flags {
+            /**
+             * An error happened. 
+             */
+            bool error : 1;
+
+            /**
+             * A connection was aborted (for connection-oriented sockets). 
+             */
+            bool connection_aborted : 1;
+
+            /**
+             * Invalid socket. 
+             */
+            bool invalid_socket : 1;
+        };
+
+        /**
          * event callback type. 
          */
-        using event_callback_type = std::function<void(socket_poller&, socket&, event_type)>;
+        using event_callback_type = std::function<void(socket_poller&, socket&, event_type, status_flags flags)>;
 
         /**
          * poll status.
