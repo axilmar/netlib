@@ -22,9 +22,14 @@ namespace netlib::ip4 {
         using value_type = uint32_t;
 
         /**
+         * byte type. 
+         */
+        using byte_type = uint8_t;
+
+        /**
          * byte array type. 
          */
-        using bytes_type = std::array<uint8_t, 4>;
+        using bytes_type = std::array<byte_type, 4>;
 
         /**
          * Any address. 
@@ -64,7 +69,7 @@ namespace netlib::ip4 {
          * @param b2 byte at position 2.
          * @param b3 byte at position 3.
          */
-        address(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3) : m_bytes{ b0, b1, b2, b3 } {
+        address(byte_type b0, byte_type b1, byte_type b2, byte_type b3) : m_bytes{ b0, b1, b2, b3 } {
         }
 
         /**
@@ -148,12 +153,21 @@ namespace netlib::ip4 {
         std::string to_string() const;
 
         /**
+         * Compares this object with the given one.
+         * @param other the other object to compare this to.
+         * @return -1 if this is less than the given object, 0 if they are equal, 1 if this is greater than the given object.
+         */
+        int compare(const address& other) const {
+            return m_value < other.m_value ? -1 : m_value > other.m_value ? 1 : 0;
+        }
+
+        /**
          * Checks if this and the given object are equal.
          * @param other the other object to compare this to.
          * @return true on success, false on failure.
          */
         bool operator == (const address& other) const {
-            return m_value == other.m_value;
+            return compare(other) == 0;
         }
 
         /**
@@ -162,7 +176,7 @@ namespace netlib::ip4 {
          * @return true on success, false on failure.
          */
         bool operator != (const address& other) const {
-            return !operator ==(other);
+            return compare(other) != 0;
         }
 
         /**
@@ -171,7 +185,7 @@ namespace netlib::ip4 {
          * @return true on success, false on failure.
          */
         bool operator < (const address& other) const {
-            return m_value < other.m_value;
+            return compare(other) < 0;
         }
 
         /**
@@ -180,7 +194,7 @@ namespace netlib::ip4 {
          * @return true on success, false on failure.
          */
         bool operator > (const address& other) const {
-            return m_value > other.m_value;
+            return compare(other) > 0;
         }
 
         /**
@@ -189,7 +203,7 @@ namespace netlib::ip4 {
          * @return true on success, false on failure.
          */
         bool operator <= (const address& other) const {
-            return m_value <= other.m_value;
+            return compare(other) <= 0;
         }
 
         /**
@@ -198,7 +212,7 @@ namespace netlib::ip4 {
          * @return true on success, false on failure.
          */
         bool operator >= (const address& other) const {
-            return m_value >= other.m_value;
+            return compare(other) >= 0;
         }
 
         /**

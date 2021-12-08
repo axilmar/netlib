@@ -20,6 +20,7 @@
 #include "netlib/ip6_tcp_client_socket.hpp"
 #include "netlib/ip6_udp_socket.hpp"
 #include "netlib/socket_poller_thread.hpp"
+#include "netlib/socket_address.hpp"
 
 
 using namespace testlib;
@@ -748,15 +749,414 @@ static void test_socket_poller() {
 }
 
 
+static void test_address() {
+    const ip4::address ip4 = "192.168.1.1";
+    const ip4::address ip4_2 = "192.168.1.2";
+    const ip6::address ip6 = "C101:0db8:0000:0000:0000:ff00:0042:8321%1";
+    const ip6::address ip6_2 = "C101:0db8:0000:0000:0000:ff00:0042:8321%2";
+
+    test("adress::address()", [&]() {
+        address a;
+        check(a == ip4::address());
+        });
+
+    test("adress::address(ip4)", [&]() {
+        address a(ip4);
+        check(a == ip4);
+        });
+
+    test("adress::address(ip6)", [&]() {
+        address a(ip6);
+        check(a == ip6);
+        });
+
+    test("adress::to_string()", [&]() {
+        {
+            address a;
+            check(a.to_string() == ip4::address().to_string());
+            check(a.to_string() != ip6::address().to_string());
+        }
+        {
+            address a(ip4);
+            check(a.to_string() == ip4.to_string());
+            check(a.to_string() != ip6.to_string());
+        }
+        {
+            address a(ip6);
+            check(a.to_string() != ip4.to_string());
+            check(a.to_string() == ip6.to_string());
+        }
+        });
+
+    test("adress::operator == (address)", [&]() {
+        {
+            address a(ip4);
+            check(a == ip4);
+            check(!(a == ip6));
+        }
+        {
+            address a(ip6);
+            check(a == ip6);
+            check(!(a == ip4));
+        }
+        });
+
+    test("adress::operator != (address)", [&]() {
+        {
+            address a(ip4);
+            check(a != ip4_2);
+            check(a != ip6);
+            check(!(a != ip4));
+        }
+        {
+            address a(ip6);
+            check(a != ip6_2);
+            check(a != ip4);
+            check(!(a != ip6));
+        }
+        });
+
+    test("adress::operator < (address)", [&]() {
+        {
+            address a1(ip4);
+            address a2(ip4_2);
+            address a3(ip6);
+            address a4(ip6_2);
+            check(a1 < a2);
+            check(a1 < a3);
+            check(a1 < a4);
+            check(a2 < a3);
+            check(a2 < a4);
+            check(a3 < a4);
+            check(!(a1 >= a2));
+            check(!(a1 >= a3));
+            check(!(a1 >= a4));
+            check(!(a2 >= a3));
+            check(!(a2 >= a4));
+            check(!(a3 >= a4));
+        }
+        });
+
+    test("adress::operator > (address)", [&]() {
+        {
+            address a1(ip6_2);
+            address a2(ip6);
+            address a3(ip4_2);
+            address a4(ip4);
+            check(a1 > a2);
+            check(a1 > a3);
+            check(a1 > a4);
+            check(a2 > a3);
+            check(a2 > a4);
+            check(a3 > a4);
+            check(!(a1 <= a2));
+            check(!(a1 <= a3));
+            check(!(a1 <= a4));
+            check(!(a2 <= a3));
+            check(!(a2 <= a4));
+            check(!(a3 <= a4));
+        }
+        });
+
+    test("adress::operator <= (address)", [&]() {
+        {
+            address a1(ip4);
+            address a2(ip4_2);
+            address a3(ip6);
+            address a4(ip6_2);
+            check(a1 <= a2);
+            check(a1 <= a3);
+            check(a1 <= a4);
+            check(a2 <= a3);
+            check(a2 <= a4);
+            check(a3 <= a4);
+            check(!(a1 > a2));
+            check(!(a1 > a3));
+            check(!(a1 > a4));
+            check(!(a2 > a3));
+            check(!(a2 > a4));
+            check(!(a3 > a4));
+        }
+        });
+
+    test("adress::operator >= (address)", [&]() {
+        {
+            address a1(ip6_2);
+            address a2(ip6);
+            address a3(ip4_2);
+            address a4(ip4);
+            check(a1 >= a2);
+            check(a1 >= a3);
+            check(a1 >= a4);
+            check(a2 >= a3);
+            check(a2 >= a4);
+            check(a3 >= a4);
+            check(!(a1 < a2));
+            check(!(a1 < a3));
+            check(!(a1 < a4));
+            check(!(a2 < a3));
+            check(!(a2 < a4));
+            check(!(a3 < a4));
+        }
+        });
+
+}
+
+
+static void test_socket_address() {
+    const ip4::address ip4 = "192.168.1.1";
+    const ip4::address ip4_2 = "192.168.1.2";
+    const ip6::address ip6 = "C101:0db8:0000:0000:0000:ff00:0042:8321%1";
+    const ip6::address ip6_2 = "C101:0db8:0000:0000:0000:ff00:0042:8321%2";
+    const port_number port = 10000;
+
+    test("socket_adress::socket_address()", [&]() {
+        socket_address a;
+        check(a.address() == ip4::address());
+        check(a.port_number() == 0);
+        });
+
+    test("socket_adress::socket_address(ip4::address, port)", [&]() {
+        socket_address a(ip4, port);
+        check(a.address() == ip4);
+        check(a.port_number() == port);
+        });
+
+    test("socket_adress::socket_address(ip6::address, port)", [&]() {
+        socket_address a(ip6, port);
+        check(a.address() == ip6);
+        check(a.port_number() == port);
+        });
+
+    test("socket_adress::socket_address(ip4::socket_address)", [&]() {
+        socket_address a(ip4::socket_address(ip4, port));
+        check(a.address() == ip4);
+        check(a.port_number() == port);
+        });
+
+    test("socket_adress::socket_address(ip6::socket_address)", [&]() {
+        socket_address a(ip6::socket_address(ip6, port));
+        check(a.address() == ip6);
+        check(a.port_number() == port);
+        });
+
+    test("socket_adress::operator = (ip4::socket_address)", [&]() {
+        socket_address a;
+        a = ip4::socket_address(ip4, port);
+        check(a.address() == ip4);
+        check(a.port_number() == port);
+        });
+
+    test("socket_adress::operator = (ip6::socket_address)", [&]() {
+        socket_address a;
+        a = ip6::socket_address(ip6, port);
+        check(a.address() == ip6);
+        check(a.port_number() == port);
+        });
+
+    test("socket_adress::address()", [&]() {
+        {
+            socket_address a(ip4, port);
+            check(a.address() == ip4);
+        }
+        {
+            socket_address a(ip6, port);
+            check(a.address() == ip6);
+        }
+        });
+
+    test("socket_adress::set_address(address)", [&]() {
+        socket_address a;
+        a.set_port_number(port);
+        a.set_address(ip4);
+        check(a.address() == ip4);
+        check(a.port_number() == port);
+        a.set_address(ip6);
+        check(a.address() == ip6);
+        check(a.port_number() == port);
+        });
+
+    test("socket_adress::port_number()", [&]() {
+        {
+            socket_address a;
+            check(a.port_number() == 0);
+        }
+        {
+            socket_address a(ip4, port);
+            check(a.port_number() == port);
+        }
+        {
+            socket_address a;
+            a = ip4::socket_address(ip4, port);
+            check(a.port_number() == port);
+        }
+        {
+            socket_address a;
+            a.set_port_number(port);
+            check(a.port_number() == port);
+        }
+        {
+            socket_address a(ip4);
+            a.set_port_number(port);
+            check(a.port_number() == port);
+        }
+        {
+            socket_address a(ip6, port);
+            check(a.port_number() == port);
+        }
+        {
+            socket_address a;
+            a = ip6::socket_address(ip6, port);
+            check(a.port_number() == port);
+        }
+        {
+            socket_address a;
+            a.set_port_number(port);
+            check(a.port_number() == port);
+        }
+        {
+            socket_address a(ip6);
+            a.set_port_number(port);
+            check(a.port_number() == port);
+        }
+        });
+
+    test("socket_adress::to_string()", [&]() {
+        {
+            socket_address a;
+            check(a.to_string() == ip4::socket_address().to_string());
+        }
+        {
+            socket_address a(ip4, port);
+            check(a.to_string() == ip4::socket_address(ip4, port).to_string());
+        }
+        {
+            socket_address a;
+            a = ip4::socket_address(ip4, port);
+            check(a.to_string() == ip4::socket_address(ip4, port).to_string());
+        }
+        {
+            socket_address a(ip6, port);
+            check(a.to_string() == ip6::socket_address(ip6, port).to_string());
+        }
+        {
+            socket_address a;
+            a = ip6::socket_address(ip6, port);
+            check(a.to_string() == ip6::socket_address(ip6, port).to_string());
+        }
+        });
+
+    test("socket_adress::operator == (socket_address)", [&]() {
+        {
+            socket_address a;
+            check(a == ip4::socket_address());
+            check(!(a == ip4::socket_address(ip4, port)));
+            check(!(a == ip6::socket_address(ip6, port)));
+        }
+        {
+            socket_address a(ip4, port);
+            check(a == ip4::socket_address(ip4, port));
+            check(!(a == ip4::socket_address()));
+            check(!(a == ip6::socket_address(ip6, port)));
+        }
+        {
+            socket_address a(ip6, port);
+            check(a == ip6::socket_address(ip6, port));
+            check(!(a == ip4::socket_address(ip4, port)));
+            check(!(a == ip6::socket_address()));
+        }
+        });
+
+    test("socket_adress::operator != (socket_address)", [&]() {
+        {
+            socket_address a;
+            check(a != ip4::socket_address(ip4, port));
+            check(a != ip6::socket_address(ip6, port));
+            check(!(a != ip4::socket_address()));
+        }
+        {
+            socket_address a(ip4::socket_address(ip4, port));
+            check(a != ip4::socket_address());
+            check(a != ip6::socket_address(ip6, port));
+            check(!(a != ip4::socket_address(ip4, port)));
+        }
+        {
+            socket_address a(ip6::socket_address(ip6, port));
+            check(a != ip4::socket_address(ip4, port));
+            check(a != ip6::socket_address());
+            check(!(a != ip6::socket_address(ip6, port)));
+        }
+        });
+
+    test("socket_adress::operator < (socket_address)", [&]() {
+        check(socket_address(ip4, port) < socket_address(ip4, port + 1));
+        check(socket_address(ip4, port) < socket_address(ip4_2, port - 1));
+        check(socket_address(ip4, port) < socket_address(ip6, port));
+        check(!(socket_address(ip4, port + 1) < socket_address(ip4, port)));
+        check(!(socket_address(ip4_2, port) < socket_address(ip4, port)));
+        check(!(socket_address(ip6, port) < socket_address(ip4, port)));
+        check(socket_address(ip6, port) < socket_address(ip6, port + 1));
+        check(socket_address(ip6, port) < socket_address(ip6_2, port - 1));
+        check(!(socket_address(ip6, port + 1) < socket_address(ip6, port )));
+        check(!(socket_address(ip6_2, port - 1) < socket_address(ip6, port)));
+        });
+
+    test("socket_adress::operator > (socket_address)", [&]() {
+        check(socket_address(ip4, port + 1) > socket_address(ip4, port));
+        check(socket_address(ip4_2, port - 1) > socket_address(ip4, port));
+        check(socket_address(ip6, port) > socket_address(ip4, port));
+        check(!(socket_address(ip4, port) > socket_address(ip4, port + 1)));
+        check(!(socket_address(ip4, port) > socket_address(ip4_2, port - 1)));
+        check(!(socket_address(ip4, port) > socket_address(ip6, port)));
+        check(socket_address(ip6, port + 1) > socket_address(ip6, port));
+        check(socket_address(ip6_2, port - 1) > socket_address(ip6, port));
+        check(!(socket_address(ip6, port) > socket_address(ip6, port + 1)));
+        check(!(socket_address(ip6, port) > socket_address(ip6_2, port - 1)));
+        });
+
+    test("socket_adress::operator <= (socket_address)", [&]() {
+        check(socket_address(ip4, port) <= socket_address(ip4, port));
+        check(socket_address(ip4, port) <= socket_address(ip4, port + 1));
+        check(socket_address(ip4, port) <= socket_address(ip4_2, port - 1));
+        check(socket_address(ip4, port) <= socket_address(ip6, port));
+        check(!(socket_address(ip4, port + 1) <= socket_address(ip4, port)));
+        check(!(socket_address(ip4_2, port - 1) <= socket_address(ip4, port)));
+        check(!(socket_address(ip6, port) <= socket_address(ip4, port)));
+        check(socket_address(ip6, port) <= socket_address(ip6, port));
+        check(socket_address(ip6, port) <= socket_address(ip6, port + 1));
+        check(socket_address(ip6, port) <= socket_address(ip6_2, port - 1));
+        check(!(socket_address(ip6, port + 1) <= socket_address(ip6, port)));
+        check(!(socket_address(ip6_2, port - 1) <= socket_address(ip6, port)));
+        });
+
+    test("socket_adress::operator >= (socket_address)", [&]() {
+        check(socket_address(ip4, port) >= socket_address(ip4, port));
+        check(socket_address(ip4, port + 1) >= socket_address(ip4, port));
+        check(socket_address(ip4_2, port - 1) >= socket_address(ip4, port));
+        check(socket_address(ip6, port) >= socket_address(ip4, port));
+        check(!(socket_address(ip4, port) >= socket_address(ip4, port + 1)));
+        check(!(socket_address(ip4, port) >= socket_address(ip4_2, port - 1)));
+        check(!(socket_address(ip4, port) >= socket_address(ip6, port)));
+        check(socket_address(ip6, port) >= socket_address(ip6, port));
+        check(socket_address(ip6, port + 1) >= socket_address(ip6, port));
+        check(socket_address(ip6_2, port - 1) >= socket_address(ip6, port));
+        check(!(socket_address(ip6, port) >= socket_address(ip6, port + 1)));
+        check(!(socket_address(ip6, port) >= socket_address(ip6_2, port - 1)));
+        });
+}
+
+
 int main() {
     init();
-    //test_ip4_address();
-    //test_ip4_tcp_sockets();
-    //test_ip4_udp_sockets();
-    //test_ip6_address();
-    //test_ip6_tcp_sockets();
-    //test_ip6_udp_sockets();
-    //test_socket_poller();
+    test_ip4_address();
+    test_ip4_tcp_sockets();
+    test_ip4_udp_sockets();
+    test_ip6_address();
+    test_ip6_tcp_sockets();
+    test_ip6_udp_sockets();
+    test_socket_poller();
+    test_address();
+    test_socket_address();
     cleanup();
     system("pause");
     return static_cast<int>(test_error_count);

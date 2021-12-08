@@ -1,74 +1,96 @@
-#ifndef NETLIB_IP6_SOCKET_ADDRESS_HPP
-#define NETLIB_IP6_SOCKET_ADDRESS_HPP
+#ifndef NETLIB_SOCKET_ADDRESS_HPP
+#define NETLIB_SOCKET_ADDRESS_HPP
 
 
-#include "ip6_address.hpp"
-#include "port_number.hpp"
+#include <variant>
+#include "ip4_socket_address.hpp"
+#include "ip6_socket_address.hpp"
+#include "address.hpp"
 
 
-namespace netlib::ip6 {
+namespace netlib {
 
 
     /**
-     * Socket address. 
+     * A generic socket address is either an ip4 address or an ip6 address.
      */
-    class socket_address {
+    class socket_address : public std::variant<ip4::socket_address, ip6::socket_address> {
     public:
         /**
-         * The default constructor. 
+         * Variant type.
+         */
+        using variant_type = std::variant<ip4::socket_address, ip6::socket_address>;
+
+        /**
+         * The default constructor.
          */
         socket_address() {
         }
 
         /**
-         * Constructor from address and port.
+         * Constructor from ip4 address and port number.
          * @param addr address.
          * @param port port number.
          */
-        socket_address(const ip6::address& addr, port_number port = 0)
-            : m_address(addr)
-            , m_port_number(port)
+        socket_address(const ip4::address& addr, netlib::port_number port = 0)
+            : variant_type(ip4::socket_address(addr, port))
         {
         }
 
         /**
-         * Returns the address.
-         * @return the address.
+         * Constructor from ip6 address and port number.
+         * @param addr address.
+         * @param port port number.
          */
-        const ip6::address& address() const {
-            return m_address;
+        socket_address(const ip6::address& addr, netlib::port_number port = 0)
+            : variant_type(ip6::socket_address(addr, port))
+        {
         }
 
         /**
-         * Sets the address.
-         * @param addr the address.
+         * Uses the variant's constructors.
          */
-        void set_address(const ip6::address& addr) {
-            m_address = addr;
-        }
+        using variant_type::variant;
+
+        /**
+         * Uses the variant's assignment operators.
+         */
+        using variant_type::operator =;
+
+        /**
+         * Returns the current address.
+         * @return the current address.
+         */
+        netlib::address address() const;
+
+        /**
+         * Sets this socket address to be an ip4 address.
+         * @param addr address.
+         */
+        void set_address(const ip4::address& addr);
+
+        /**
+         * Sets this socket address to be an ip6 address.
+         * @param addr address.
+         */
+        void set_address(const ip6::address& addr);
 
         /**
          * Returns the port number.
          * @return the port number.
          */
-        netlib::port_number port_number() const {
-            return m_port_number;
-        }
+        netlib::port_number port_number() const;
 
         /**
          * Sets the port number.
-         * @param port the port number.
+         * @param port port number.
          */
-        void set_port_number(netlib::port_number port) {
-            m_port_number = port;
-        }
+        void set_port_number(netlib::port_number port);
 
         /**
-         * Converts this socket address to string.
+         * Converts this address to a string.
          */
-        std::string to_string() const {
-            return '[' + m_address.to_string() + "]:" + std::to_string(m_port_number);
-        }
+        std::string to_string() const;
 
         /**
          * Compares this object with the given one.
@@ -132,27 +154,22 @@ namespace netlib::ip6 {
         }
 
         /**
-         * Returns the hashcode of this address.
+         * Returns the hash value for this object.
          */
         size_t hash() const;
-
-    private:
-        //address and port number.
-        ip6::address m_address;
-        netlib::port_number m_port_number{};
     };
 
 
-} //namespace netlib::ip6
+} //namespace netlib
 
 
 namespace std {
-    template <> struct hash<netlib::ip6::socket_address> {
-        size_t operator ()(const netlib::ip6::socket_address& addr) const {
+    template <> struct hash<netlib::socket_address> {
+        size_t operator ()(const netlib::socket_address& addr) const {
             return addr.hash();
         }
     };
 }
 
 
-#endif //NETLIB_IP6_SOCKET_ADDRESS_HPP
+#endif //NETLIB_SOCKET_ADDRESS_HPP

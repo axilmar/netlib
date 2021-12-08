@@ -26,6 +26,18 @@ namespace netlib::ip6 {
     const address address::loopback{ reinterpret_cast<const address::bytes_type&>(in6addr_loopback) };
 
 
+    //Compares this object with the given one.
+    int address::compare(const address& other) const {
+        int r = memcmp(m_bytes.data(), other.m_bytes.data(), sizeof(m_bytes));
+
+        if (r) {
+            return r;
+        }
+
+        return m_zone_index < other.m_zone_index ? -1 : m_zone_index > other.m_zone_index ? 1 : 0;
+    }
+
+
     //Returns the hashcode of this address.
     size_t address::hash() const {
         return combined_hash(m_words, m_zone_index);

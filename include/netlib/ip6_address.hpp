@@ -17,9 +17,14 @@ namespace netlib::ip6 {
     class address {
     public:
         /**
+         * byte type.
+         */
+        using byte_type = uint8_t;
+
+        /**
          * byte array type.
          */
-        using bytes_type = std::array<uint8_t, 16>;
+        using bytes_type = std::array<byte_type, 16>;
 
         /**
          * word array type.
@@ -180,12 +185,19 @@ namespace netlib::ip6 {
         std::string to_string() const;
 
         /**
+         * Compares this object with the given one.
+         * @param other the other object to compare this to.
+         * @return -1 if this is less than the given object, 0 if they are equal, 1 if this is greater than the given object.
+         */
+        int compare(const address& other) const;
+
+        /**
          * Checks if this and the given object are equal.
          * @param other the other object to compare this to.
          * @return true on success, false on failure.
          */
         bool operator == (const address& other) const {
-            return m_words == other.m_words && m_zone_index == other.m_zone_index;
+            return compare(other) == 0;
         }
 
         /**
@@ -194,7 +206,7 @@ namespace netlib::ip6 {
          * @return true on success, false on failure.
          */
         bool operator != (const address& other) const {
-            return !operator ==(other);
+            return compare(other) != 0;
         }
 
         /**
@@ -203,7 +215,7 @@ namespace netlib::ip6 {
          * @return true on success, false on failure.
          */
         bool operator < (const address& other) const {
-            return m_words < other.m_words ? true : m_words > other.m_words ? false : m_zone_index < other.m_zone_index;
+            return compare(other) < 0;
         }
 
         /**
@@ -212,7 +224,7 @@ namespace netlib::ip6 {
          * @return true on success, false on failure.
          */
         bool operator > (const address& other) const {
-            return m_words > other.m_words ? true : m_words < other.m_words ? false : m_zone_index > other.m_zone_index;
+            return compare(other) > 0;
         }
 
         /**
@@ -221,7 +233,7 @@ namespace netlib::ip6 {
          * @return true on success, false on failure.
          */
         bool operator <= (const address& other) const {
-            return operator < (other) || operator == (other);
+            return compare(other) <= 0;
         }
 
         /**
@@ -230,7 +242,7 @@ namespace netlib::ip6 {
          * @return true on success, false on failure.
          */
         bool operator >= (const address& other) const {
-            return operator > (other) || operator == (other);
+            return compare(other) >= 0;
         }
 
         /**

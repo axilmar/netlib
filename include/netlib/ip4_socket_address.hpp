@@ -64,12 +64,26 @@ namespace netlib::ip4 {
         }
 
         /**
+         * Converts this socket address to string.
+         */
+        std::string to_string() const {
+            return m_address.to_string() + ':' + std::to_string(m_port_number);
+        }
+
+        /**
+         * Compares this object with the given one.
+         * @param other the other object to compare this to.
+         * @return -1 if this is less than the given object, 0 if they are equal, 1 if this is greater than the given object.
+         */
+        int compare(const socket_address& other) const;
+
+        /**
          * Checks if this and the given object are equal.
          * @param other the other object to compare this to.
          * @return true on success, false on failure.
          */
         bool operator == (const socket_address& other) const {
-            return m_address == other.m_address && m_port_number == other.m_port_number;
+            return compare(other) == 0;
         }
 
         /**
@@ -78,25 +92,25 @@ namespace netlib::ip4 {
          * @return true on success, false on failure.
          */
         bool operator != (const socket_address& other) const {
-            return !operator ==(other);
+            return compare(other) != 0;
         }
 
         /**
-         * Checks if this comes before the given object.
+         * Checks if this object comes before the given object.
          * @param other the other object to compare this to.
          * @return true on success, false on failure.
          */
         bool operator < (const socket_address& other) const {
-            return m_address < other.m_address ? true : m_address > other.m_address ? false : m_port_number < other.m_port_number;
+            return compare(other) < 0;
         }
 
         /**
-         * Checks if this comes after the given object.
+         * Checks if this object comes after the given object.
          * @param other the other object to compare this to.
          * @return true on success, false on failure.
          */
         bool operator > (const socket_address& other) const {
-            return m_address > other.m_address ? true : m_address < other.m_address ? false : m_port_number > other.m_port_number;
+            return compare(other) > 0;
         }
 
         /**
@@ -105,7 +119,7 @@ namespace netlib::ip4 {
          * @return true on success, false on failure.
          */
         bool operator <= (const socket_address& other) const {
-            return operator < (other) || operator == (other);
+            return compare(other) <= 0;
         }
 
         /**
@@ -114,7 +128,7 @@ namespace netlib::ip4 {
          * @return true on success, false on failure.
          */
         bool operator >= (const socket_address& other) const {
-            return operator > (other) || operator == (other);
+            return compare(other) >= 0;
         }
 
         /**
