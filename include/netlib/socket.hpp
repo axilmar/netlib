@@ -32,6 +32,76 @@ namespace netlib {
          */
         operator bool() const;
 
+        /**
+         * Compares this object with the given one.
+         * @param other the other object to compare this to.
+         * @return -1 if this is less than the given object, 0 if they are equal, 1 if this is greater than the given object.
+         */
+        int compare(const socket& other) const {
+            return m_handle < other.m_handle ? -1 : m_handle > other.m_handle ? 1 : 0;
+        }
+
+        /**
+         * Checks if this and the given object are equal.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator == (const socket& other) const {
+            return compare(other) == 0;
+        }
+
+        /**
+         * Checks if this and the given object are diferent.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator != (const socket& other) const {
+            return compare(other) != 0;
+        }
+
+        /**
+         * Checks if this object comes before the given object.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator < (const socket& other) const {
+            return compare(other) < 0;
+        }
+
+        /**
+         * Checks if this object comes after the given object.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator > (const socket& other) const {
+            return compare(other) > 0;
+        }
+
+        /**
+         * Checks if this object comes before the given object or if they are equal.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator <= (const socket& other) const {
+            return compare(other) <= 0;
+        }
+
+        /**
+         * Checks if this object comes after the given object or if they are equal.
+         * @param other the other object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator >= (const socket& other) const {
+            return compare(other) >= 0;
+        }
+
+        /**
+         * Returns the hashcode of this address.
+         */
+        size_t hash() const {
+            return std::hash<socket_handle>()(m_handle);
+        }
+
     protected:
         /**
          * The default constructor.
@@ -78,6 +148,15 @@ namespace netlib {
 
 
 } //namespace netlib
+
+
+namespace std {
+    template <> struct hash<netlib::socket> {
+        size_t operator ()(const netlib::socket& s) const {
+            return s.hash();
+        }
+    };
+}
 
 
 #endif //NETLIB_SOCKET_HPP
