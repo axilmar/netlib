@@ -698,8 +698,6 @@ static void test_socket_poller() {
     const std::string message("hello world!");
 
     test("socket polling", [&]() {
-        socket_poller_thread socket_poller;
-
         const ip4::socket_address test_addr1(ip4::address::loopback, 10000);
         const ip4::socket_address test_addr2(ip4::address::loopback, 10001);
         const ip4::socket_address test_addr3(ip4::address::loopback, 10002);
@@ -725,6 +723,8 @@ static void test_socket_poller() {
                 poller.remove(s);
             }
         };
+
+        socket_poller_thread socket_poller;
 
         for (auto* socket : sockets) {
             socket_poller.add(*socket, callback);
@@ -756,7 +756,7 @@ int main() {
     //test_ip6_address();
     //test_ip6_tcp_sockets();
     //test_ip6_udp_sockets();
-    test_socket_poller();
+    //test_socket_poller();
     cleanup();
     system("pause");
     return static_cast<int>(test_error_count);
