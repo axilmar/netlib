@@ -57,7 +57,7 @@ int poll(pollfd* fda, unsigned long fds, int timeout) {
         return result;
     }
 
-    //for certain errors, the result is -1 instead of number of sockets with events
+    //for certain errors, the result is -1 instead of number of sockets with events.
     DWORD windows_error = WSAGetLastError();
     switch (windows_error) {
         case WSAENOTSOCK:
