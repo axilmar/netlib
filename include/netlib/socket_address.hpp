@@ -47,6 +47,13 @@ namespace netlib {
         }
 
         /**
+         * Returns the data.
+         */
+        void* data() {
+            return m_data.data();
+        }
+
+        /**
          * Converts the address to string.
          */
         std::string to_string() const;

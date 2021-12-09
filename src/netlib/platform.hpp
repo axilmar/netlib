@@ -12,6 +12,7 @@
 int get_last_error_number();
 std::string get_error_message(int error);
 std::string get_last_error_message();
+bool is_socket_closed_error(int error);
 #endif
 
 

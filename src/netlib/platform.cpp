@@ -22,7 +22,7 @@ static const struct winsock_library {
 
 
 int get_last_error_number() {
-    return WSAGetLastError();
+    return GetLastError();
 }
 
 
@@ -46,6 +46,16 @@ std::string get_error_message(int error) {
 
 std::string get_last_error_message() {
     return get_error_message(get_last_error_number());
+}
+
+
+bool is_socket_closed_error(int error) {
+    switch (error) {
+    case WSAECONNABORTED:
+    case WSAECONNRESET:
+        return true;
+    }
+    return false;
 }
 
 
