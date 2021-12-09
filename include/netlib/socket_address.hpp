@@ -27,7 +27,7 @@ namespace netlib {
         /**
          * Returns the address type.
          */
-        int address_type() const;
+        int type() const;
 
         /**
          * Returns the address.

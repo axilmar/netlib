@@ -38,7 +38,7 @@ namespace netlib {
 
 
     //Returns the socket address type.
-    int socket_address::address_type() const {
+    int socket_address::type() const {
         return reinterpret_cast<const sockaddr*>(m_data.data())->sa_family;
     }
 
@@ -98,9 +98,9 @@ namespace netlib {
 
     //compare socket addresses
     int socket_address::compare(const socket_address& other) const {
-        switch (address_type()) {
+        switch (type()) {
         case AF_INET:
-            switch (other.address_type()) {
+            switch (other.type()) {
             case AF_INET: 
                 return reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_addr) < reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_addr) ? -1 :
                        reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_addr) > reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_addr) ?  1 : 0;
@@ -111,7 +111,7 @@ namespace netlib {
             }
 
         case AF_INET6:
-            switch (other.address_type()) {
+            switch (other.type()) {
             case AF_INET:
                 return reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_addr) < reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_addr) ? -1 :
                        reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_addr) > reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_addr) ?  1 : 0;
