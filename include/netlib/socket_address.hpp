@@ -25,9 +25,9 @@ namespace netlib {
         socket_address(const ip_address& addr, uint16_t port = 0);
 
         /**
-         * Returns the address family.
+         * Returns the address type.
          */
-        int address_family() const;
+        int address_type() const;
 
         /**
          * Returns the address.

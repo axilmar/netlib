@@ -18,7 +18,7 @@ namespace netlib {
     socket_address::socket_address(const ip_address& addr, uint16_t port) {
         static_assert(sizeof(m_data) >= sizeof(sockaddr_storage));
 
-        switch (addr.address_family()) {
+        switch (addr.type()) {
         case AF_INET:
             reinterpret_cast<uint32_t&>(reinterpret_cast<sockaddr_in*>(m_data.data())->sin_addr) = *reinterpret_cast<const uint32_t*>(addr.data());
             reinterpret_cast<sockaddr_in*>(m_data.data())->sin_family = AF_INET;
@@ -37,8 +37,8 @@ namespace netlib {
     }
 
 
-    //Returns the address family.
-    int socket_address::address_family() const {
+    //Returns the socket address type.
+    int socket_address::address_type() const {
         return reinterpret_cast<const sockaddr*>(m_data.data())->sa_family;
     }
 
@@ -98,9 +98,9 @@ namespace netlib {
 
     //compare socket addresses
     int socket_address::compare(const socket_address& other) const {
-        switch (address_family()) {
+        switch (address_type()) {
         case AF_INET:
-            switch (other.address_family()) {
+            switch (other.address_type()) {
             case AF_INET: 
                 return reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_addr) < reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_addr) ? -1 :
                        reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_addr) > reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_addr) ?  1 : 0;
@@ -111,7 +111,7 @@ namespace netlib {
             }
 
         case AF_INET6:
-            switch (other.address_family()) {
+            switch (other.address_type()) {
             case AF_INET:
                 return reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_addr) < reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_addr) ? -1 :
                        reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_addr) > reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_addr) ?  1 : 0;
