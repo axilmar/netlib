@@ -207,6 +207,7 @@ static void test_ip_address() {
         check(s.size() == 2);
         check(s.find(ip_address(ip4_string)) != s.end());
         check(s.find(ip_address(ip6_string)) != s.end());
+        check(s.find(ip_address(ip4_string)) != s.find(ip_address(ip6_string)));
         });
 }
 
