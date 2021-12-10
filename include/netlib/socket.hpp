@@ -3,6 +3,7 @@
 
 
 #include <cstdint>
+#include "socket_address.hpp"
 
 
 namespace netlib {
@@ -23,6 +24,11 @@ namespace netlib {
          * Returns true if the socket is valid, false otherwise. 
          */
         explicit operator bool() const;
+
+        /**
+         * Returns the address this socket is bound to.
+         */
+        socket_address bound_address() const;
 
     protected:
         /**
@@ -62,6 +68,8 @@ namespace netlib {
 
     private:
         uintptr_t m_handle;
+
+        friend class socket_poller;
     };
 
 

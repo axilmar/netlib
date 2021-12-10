@@ -17,34 +17,44 @@ namespace netlib {
     class ip_address {
     public:
         /**
-         * Internet prococol 4 address type.
+         * ip4 constants.
          */
-        static const int ip4;
+        static const struct ip4 {
+            /**
+             * any address.
+             */
+            static const ip_address any;
+
+            /**
+             * loopback address.
+             */
+            static const ip_address loopback;
+
+            /**
+             * address family constant.
+             */
+            operator int() const;
+        } ip4;
 
         /**
-         * Internet prococol 6 address type.
+         * ip6 constants.
          */
-        static const int ip6;
+        static const struct ip6 {
+            /**
+             * any address.
+             */
+            static const ip_address any;
 
-        /**
-         * Any address for ip4.
-         */
-        static const ip_address ip4_any;
+            /**
+             * loopback address.
+             */
+            static const ip_address loopback;
 
-        /**
-         * loopback address for ip4.
-         */
-        static const ip_address ip4_loopback;
-
-        /**
-         * Any address for ip6.
-         */
-        static const ip_address ip6_any;
-
-        /**
-         * loopback address for ip6.
-         */
-        static const ip_address ip6_loopback;
+            /**
+             * address family constant.
+             */
+            operator int() const;
+        } ip6;
 
         /**
          * The default constructor.

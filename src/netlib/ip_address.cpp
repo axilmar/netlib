@@ -8,6 +8,7 @@
 namespace netlib {
 
 
+    /*
     //constants
     const int ip_address::ip4 = AF_INET;
     const int ip_address::ip6 = AF_INET6;
@@ -18,6 +19,31 @@ namespace netlib {
     const ip_address ip_address::ip4_loopback(INADDR_LOOPBACK);
     const ip_address ip_address::ip6_any(reinterpret_cast<const std::array<char, 16>&>(in6addr_any));
     const ip_address ip_address::ip6_loopback(reinterpret_cast<const std::array<char, 16>&>(in6addr_loopback));
+    */
+
+
+    //ip4 family address constant
+    ip_address::ip4::operator int() const {
+        return AF_INET;
+    }
+
+
+    //ip4 constant addresses
+    const struct ip_address::ip4 ip_address::ip4;
+    const ip_address ip_address::ip4::any(static_cast<uint32_t>(INADDR_ANY));
+    const ip_address ip_address::ip4::loopback(INADDR_LOOPBACK);
+
+
+    //ip6 family address constant
+    ip_address::ip6::operator int() const {
+        return AF_INET6;
+    }
+
+
+    //ip6 constant addresses
+    const struct ip_address::ip6 ip_address::ip6;
+    const ip_address ip_address::ip6::any(reinterpret_cast<const std::array<char, 16>&>(in6addr_any));
+    const ip_address ip_address::ip6::loopback(reinterpret_cast<const std::array<char, 16>&>(in6addr_loopback));
 
 
     //the default constructor.

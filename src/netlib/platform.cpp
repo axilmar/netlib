@@ -59,4 +59,27 @@ bool is_socket_closed_error(int error) {
 }
 
 
+int poll(pollfd* fda, unsigned long fds, int timeout) {
+    int result = WSAPoll(fda, fds, timeout);
+
+    if (result >= 0) {
+        return result;
+    }
+
+    DWORD windows_error = WSAGetLastError();
+    switch (windows_error) {
+    case WSAENOTSOCK:
+        result = 0;
+        for (size_t i = 0; i < fds; ++i) {
+            if (fda[i].revents) {
+                ++result;
+            }
+        }
+        return result;
+    }
+
+    return result;
+}
+
+
 #endif

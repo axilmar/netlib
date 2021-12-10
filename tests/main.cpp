@@ -9,6 +9,7 @@
 #include "netlib/tcp_server_socket.hpp"
 #include "netlib/udp_server_socket.hpp"
 #include "netlib/udp_client_socket.hpp"
+#include "netlib/socket_poller_thread.hpp"
 
 
 using namespace testlib;
@@ -328,7 +329,7 @@ static void test_socket_address() {
 
 
 static void test_tcp_sockets() {
-    socket_address server_address(ip_address::ip4_loopback, 10000);
+    socket_address server_address(ip_address::ip4::loopback, 10000);
     const std::string message = "hello world!";
     static constexpr size_t message_count = 10;
 
@@ -370,7 +371,7 @@ static void test_tcp_sockets() {
 
 
 static void test_udp_sockets() {
-    socket_address server_address(ip_address::ip4_loopback, 10000);
+    socket_address server_address(ip_address::ip4::loopback, 10000);
     const std::string message = "hello world!";
     static constexpr size_t message_count = 10;
 
@@ -410,12 +411,20 @@ static void test_udp_sockets() {
 }
 
 
+static void test_socket_polling() {
+    test("socket polling", [&]() {
+        udp::client_socket socket1(socket_address(ip_address::ip4::loopback, 10000));
+        });
+}
+
+
 int main() {
     init();
     //test_ip_address();
     //test_socket_address();
     //test_tcp_sockets();
     //test_udp_sockets();
+    //test_socket_polling();
     cleanup();
     system("pause");
     return static_cast<int>(test_error_count);
