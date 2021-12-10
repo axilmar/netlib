@@ -2,6 +2,7 @@
 #include <unordered_set>
 #include "testlib.hpp"
 #include "netlib/ip_address.hpp"
+#include "netlib/socket_address.hpp"
 
 
 using namespace testlib;
@@ -212,9 +213,115 @@ static void test_ip_address() {
 }
 
 
+static void test_socket_address() {
+    const std::string ip4_string = "10.11.12.13";
+    const std::string ip6_string("1:203:405:607:809:a0b:c0d:e0f%1");
+    const uint16_t port = 10000;
+
+    test("socket_address::socket_address()", [&]() {
+        socket_address a;
+        check(a.type() == AF_INET);
+        check(a.address() == ip_address());
+        check(a.port() == 0);
+        });
+
+    test("socket_address::socket_address(ip_address, port)", [&]() {
+        {
+            socket_address a(ip4_string, port);
+            check(a.type() == AF_INET);
+            check(a.address() == ip_address(ip4_string));
+            check(a.port() == port);
+        }
+        {
+            socket_address a(ip6_string, port);
+            check(a.type() == AF_INET6);
+            check(a.address() == ip_address(ip6_string));
+            check(a.port() == port);
+        }
+        });
+
+    test("socket_address::to_string()", [&]() {
+        check(socket_address(ip4_string, port).to_string() == ip4_string + ':' + std::to_string(port));
+        check(socket_address(ip6_string, port).to_string() == '[' + ip6_string + "]:" + std::to_string(port));
+        });
+
+    test("socket_address::compare()", [&]() {
+        {
+            check(socket_address("10.11.12.13", 10000) == socket_address("10.11.12.13", 10000));
+            check(socket_address("10.11.12.14", 10000) != socket_address("10.11.12.13", 10000));
+            check(socket_address("10.11.12.13", 10001) != socket_address("10.11.12.13", 10000));
+            check(socket_address("10.11.12.12", 10000) < socket_address("10.11.12.13", 10000));
+            check(socket_address("10.11.12.13", 9999) < socket_address("10.11.12.13", 10000));
+            check(socket_address("10.11.12.14", 10000) > socket_address("10.11.12.13", 10000));
+            check(socket_address("10.11.12.13", 10001) > socket_address("10.11.12.13", 10000));
+            check(socket_address("10.11.12.12", 10000) <= socket_address("10.11.12.13", 10000));
+            check(socket_address("10.11.12.13", 9999) <= socket_address("10.11.12.13", 10000));
+            check(socket_address("10.11.12.13", 10000) <= socket_address("10.11.12.13", 10000));
+            check(socket_address("10.11.12.14", 10000) >= socket_address("10.11.12.13", 10000));
+            check(socket_address("10.11.12.13", 10001) >= socket_address("10.11.12.13", 10000));
+            check(socket_address("10.11.12.13", 10000) >= socket_address("10.11.12.13", 10000));
+        }
+        {
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f", 10000) == socket_address("1:203:405:607:809:a0b:c0d:e0f", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:f0f", 10000) != socket_address("1:203:405:607:809:a0b:c0d:e0f", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f", 10001) != socket_address("1:203:405:607:809:a0b:c0d:e0f", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0e", 10000) < socket_address("1:203:405:607:809:a0b:c0d:e0f", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f", 9999) < socket_address("1:203:405:607:809:a0b:c0d:e0f", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:f0f", 10000) > socket_address("1:203:405:607:809:a0b:c0d:e0f", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f", 10001) > socket_address("1:203:405:607:809:a0b:c0d:e0f", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0e", 10000) <= socket_address("1:203:405:607:809:a0b:c0d:e0f", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f", 9999) <= socket_address("1:203:405:607:809:a0b:c0d:e0f", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f", 10000) <= socket_address("1:203:405:607:809:a0b:c0d:e0f", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:f0f", 10000) >= socket_address("1:203:405:607:809:a0b:c0d:e0f", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f", 10001) >= socket_address("1:203:405:607:809:a0b:c0d:e0f", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f", 10000) >= socket_address("1:203:405:607:809:a0b:c0d:e0f", 10000));
+        }
+        {
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10000) == socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f%2", 10000) != socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10001) != socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f%0", 10000) < socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 9999) < socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f%2", 10000) > socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10001) > socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f%0", 10000) <= socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 9999) <= socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10000) <= socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f%2", 10000) >= socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10001) >= socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10000));
+            check(socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10000) >= socket_address("1:203:405:607:809:a0b:c0d:e0f%1", 10000));
+        }
+        });
+
+    test("socket_address::hash()", [&]() {
+        std::unordered_set<socket_address> s;
+        s.insert(socket_address("10.11.12.13", port));
+        s.insert(socket_address("10.11.12.13", port + 1));
+        s.insert(socket_address("10.11.12.12", port));
+        s.insert(socket_address("1:203:405:607:809:a0b:c0d:e0f", port));
+        s.insert(socket_address("1:203:405:607:809:a0b:c0d:e0f", port + 1));
+        s.insert(socket_address("1:203:405:607:809:a0b:c0d:e0e", port));
+        s.insert(socket_address("1:203:405:607:809:a0b:c0d:e0f%1", port));
+        s.insert(socket_address("1:203:405:607:809:a0b:c0d:e0f%1", port + 1));
+        s.insert(socket_address("1:203:405:607:809:a0b:c0d:e0e%1", port));
+        check(s.size() == 9);
+        check(s.find(socket_address("10.11.12.13", port)) != s.end());
+        check(s.find(socket_address("10.11.12.13", port + 1)) != s.end());
+        check(s.find(socket_address("10.11.12.12", port)) != s.end());
+        check(s.find(socket_address("1:203:405:607:809:a0b:c0d:e0f", port)) != s.end());
+        check(s.find(socket_address("1:203:405:607:809:a0b:c0d:e0f", port + 1)) != s.end());
+        check(s.find(socket_address("1:203:405:607:809:a0b:c0d:e0e", port)) != s.end());
+        check(s.find(socket_address("1:203:405:607:809:a0b:c0d:e0f%1", port)) != s.end());
+        check(s.find(socket_address("1:203:405:607:809:a0b:c0d:e0f%1", port + 1)) != s.end());
+        check(s.find(socket_address("1:203:405:607:809:a0b:c0d:e0e%1", port)) != s.end());
+        });
+}
+
+
 int main() {
     init();
-    test_ip_address();
+    //test_ip_address();
+    //test_socket_address();
     cleanup();
     system("pause");
     return static_cast<int>(test_error_count);

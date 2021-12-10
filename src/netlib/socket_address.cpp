@@ -78,16 +78,19 @@ namespace netlib {
 
         switch (reinterpret_cast<const sockaddr*>(m_data.data())->sa_family) {
         case AF_INET:
-            if (inet_ntop(AF_INET, m_data.data(), buffer, sizeof(buffer))) {
-                return buffer;
+            if (inet_ntop(AF_INET, &reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_addr, buffer, sizeof(buffer))) {
+                return std::string(buffer) + ':' + std::to_string(ntohs(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_port));
             }
             throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
 
         case AF_INET6:
-            if (inet_ntop(AF_INET6, m_data.data(), buffer, sizeof(buffer))) {
-                return reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_scope_id != 0 ? 
+            if (inet_ntop(AF_INET6, &reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_addr, buffer, sizeof(buffer))) {
+                return '[' + 
+                       std::string(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_scope_id != 0 ? 
                        std::string(buffer) + '%' + std::to_string(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_scope_id) : 
-                       buffer;
+                       std::string(buffer)) + 
+                       "]:" + 
+                       std::to_string(ntohs(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_port));
             }
             throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
         }
@@ -103,24 +106,36 @@ namespace netlib {
             switch (other.type()) {
             case AF_INET: 
                 return reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_addr) < reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_addr) ? -1 :
-                       reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_addr) > reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_addr) ?  1 : 0;
+                       reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_addr) > reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_addr) ?  1 : 
+                       ntohs(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_port) < ntohs(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_port) ? -1 : 
+                       ntohs(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_port) > ntohs(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_port) ?  1 : 
+                       0;
 
             case AF_INET6:
                 return reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_addr) < reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in6*>(other.m_data.data())->sin6_addr) ? -1 :
-                       reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_addr) > reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in6*>(other.m_data.data())->sin6_addr) ?  1 : 0;
+                       reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_addr) > reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in6*>(other.m_data.data())->sin6_addr) ?  1 :
+                       ntohs(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_port) < ntohs(reinterpret_cast<const sockaddr_in6*>(other.m_data.data())->sin6_port) ? -1 :
+                       ntohs(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_port) > ntohs(reinterpret_cast<const sockaddr_in6*>(other.m_data.data())->sin6_port) ? 1 :
+                       0;
             }
 
         case AF_INET6:
             switch (other.type()) {
             case AF_INET:
                 return reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_addr) < reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_addr) ? -1 :
-                       reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_addr) > reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_addr) ?  1 : 0;
+                       reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_addr) > reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_addr) ?  1 :
+                       ntohs(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_port) < ntohs(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_port) ? -1 :
+                       ntohs(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_port) > ntohs(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_port) ? 1 :
+                       0;
 
             case AF_INET6:
                 return reinterpret_cast<const std::array<char, 16>&>(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_addr) < reinterpret_cast<const std::array<char, 16>&>(reinterpret_cast<const sockaddr_in6*>(other.m_data.data())->sin6_addr) ? -1 :
                        reinterpret_cast<const std::array<char, 16>&>(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_addr) > reinterpret_cast<const std::array<char, 16>&>(reinterpret_cast<const sockaddr_in6*>(other.m_data.data())->sin6_addr) ?  1 : 
                        reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_scope_id < reinterpret_cast<const sockaddr_in6*>(other.m_data.data())->sin6_scope_id ? -1 :
-                       reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_scope_id > reinterpret_cast<const sockaddr_in6*>(other.m_data.data())->sin6_scope_id ?  1 : 0;
+                       reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_scope_id > reinterpret_cast<const sockaddr_in6*>(other.m_data.data())->sin6_scope_id ?  1 :
+                       ntohs(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_port) < ntohs(reinterpret_cast<const sockaddr_in6*>(other.m_data.data())->sin6_port) ? -1 :
+                       ntohs(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_port) > ntohs(reinterpret_cast<const sockaddr_in6*>(other.m_data.data())->sin6_port) ? 1 :
+                       0;
             }
         }
 
