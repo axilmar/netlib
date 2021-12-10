@@ -369,11 +369,53 @@ static void test_tcp_sockets() {
 }
 
 
+static void test_udp_sockets() {
+    socket_address server_address(ip_address::ip4_loopback, 10000);
+    const std::string message = "hello world!";
+    static constexpr size_t message_count = 10;
+
+    test("udp sockets", [&]() {
+        std::thread server_thread([&]() {
+            try {
+                udp::server_socket server_socket(server_address);
+                socket_address client_address;
+                std::vector<char> buffer;
+                for (size_t i = 0; i < message_count; ++i) {
+                    server_socket.receive(buffer, client_address);
+                    std::string str(buffer.begin(), buffer.end());
+                    check(str == message);
+                }
+            }
+            catch (const std::exception& ex) {
+                printf("\nserver exception: %s\n", ex.what());
+            }
+            });
+
+        std::thread client_thread([&]() {
+            try {
+                udp::client_socket client_socket(server_address);
+                std::vector<char> buffer(message.begin(), message.end());
+                for (size_t i = 0; i < message_count; ++i) {
+                    client_socket.send(buffer);
+                }
+            }
+            catch (const std::exception& ex) {
+                printf("\nclient exception: %s\n", ex.what());
+            }
+            });
+
+        server_thread.join();
+        client_thread.join();
+        });
+}
+
+
 int main() {
     init();
-    test_ip_address();
-    test_socket_address();
-    test_tcp_sockets();
+    //test_ip_address();
+    //test_socket_address();
+    //test_tcp_sockets();
+    //test_udp_sockets();
     cleanup();
     system("pause");
     return static_cast<int>(test_error_count);
