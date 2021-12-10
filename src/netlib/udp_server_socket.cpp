@@ -41,7 +41,7 @@ namespace netlib::udp {
     //Receives data.
     bool server_socket::receive(std::vector<char>& data, socket_address& src, uint16_t max_message_size) {
         //resize data for max udp packet
-        data.resize(max_message_size == 0 ? 65536 : max_message_size);
+        data.resize(max_message_size);
 
         //send
         int srclen = sizeof(sockaddr_storage);

@@ -40,11 +40,11 @@ namespace netlib::udp {
          * Receives data.
          * @param data reception buffer.
          * @param src sender address.
-         * @param max_message_size maximum message size; if 0, then the max size is used.
+         * @param max_message_size number of bytes to allocate for the buffer.
          * @return true on success, false if the socket is closed.
          * @exception std::system_error thrown if there was an error.
          */
-        bool receive(std::vector<char>& data, socket_address& src, uint16_t max_message_size = 0);
+        bool receive(std::vector<char>& data, socket_address& src, uint16_t max_message_size = 65535);
     };
 
 
