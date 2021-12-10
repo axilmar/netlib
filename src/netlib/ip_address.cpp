@@ -14,10 +14,10 @@ namespace netlib {
 
 
     //standard addresses
-    const ip_address ip4_any(INADDR_ANY);
-    const ip_address ip4_loopback(INADDR_LOOPBACK);
-    const ip_address ip6_any(reinterpret_cast<const std::array<char, 16>&>(in6addr_any));
-    const ip_address ip6_loopback(reinterpret_cast<const std::array<char, 16>&>(in6addr_loopback));
+    const ip_address ip_address::ip4_any(static_cast<uint32_t>(INADDR_ANY));
+    const ip_address ip_address::ip4_loopback(INADDR_LOOPBACK);
+    const ip_address ip_address::ip6_any(reinterpret_cast<const std::array<char, 16>&>(in6addr_any));
+    const ip_address ip_address::ip6_loopback(reinterpret_cast<const std::array<char, 16>&>(in6addr_loopback));
 
 
     //the default constructor.
@@ -32,7 +32,7 @@ namespace netlib {
     ip_address::ip_address(uint32_t addr) 
         : m_address_type(AF_INET)
     {
-        reinterpret_cast<uint32_t&>(m_data) = addr;
+        reinterpret_cast<uint32_t&>(m_data) = htonl(addr);
     }
 
 
@@ -58,7 +58,9 @@ namespace netlib {
         : m_address_type(AF_INET6)
         , m_zone_index(zone_index)
     {
-        reinterpret_cast<std::array<uint16_t, 8>&>(m_data) = addr;
+        for (size_t i = 0; i < 8; ++i) {
+            reinterpret_cast<std::array<uint16_t, 8>&>(m_data)[i] = htons(addr[i]);
+        }
     }
 
 
@@ -171,6 +173,26 @@ namespace netlib {
         }
 
         static_assert(sizeof(m_data) >= sizeof(in6_addr));
+    }
+
+
+    /**
+     * Returns the ip4 value.
+     */
+    uint32_t ip_address::ip4_value() const {
+        return ntohl(reinterpret_cast<const uint32_t&>(m_data));
+    }
+
+
+    //Returns the words of the ip6 address.
+    std::array<uint16_t, 8> ip_address::ip6_words() const {
+        std::array<uint16_t, 8> r;
+
+        for (size_t i = 0; i < 8; ++i) {
+            r[i] = ntohs(reinterpret_cast<const std::array<uint16_t, 8>&>(m_data)[i]);
+        }
+
+        return r;
     }
 
 

@@ -54,7 +54,7 @@ namespace netlib {
 
         /**
          * Constructor from ip4 address.
-         * @param addr address (in network byte order).
+         * @param addr address as an uint32_t.
          */
         ip_address(uint32_t addr);
 
@@ -115,9 +115,7 @@ namespace netlib {
         /**
          * Returns the ip4 value. 
          */
-        const uint32_t& ip4_value() const {
-            return reinterpret_cast<const uint32_t&>(m_data);
-        }
+        uint32_t ip4_value() const;
 
         /**
          * Returns the bytes of the ip6 address. 
@@ -129,9 +127,7 @@ namespace netlib {
         /**
          * Returns the words of the ip6 address.
          */
-        const std::array<uint16_t, 8>& ip6_words() const {
-            return reinterpret_cast<const std::array<uint16_t, 8>&>(m_data);
-        }
+        std::array<uint16_t, 8> ip6_words() const;
 
         /**
          * Returns the address data.

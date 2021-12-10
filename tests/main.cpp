@@ -1,8 +1,14 @@
 #include "../src/netlib/platform.hpp"
 #include <unordered_set>
+#include <thread>
+#include <atomic>
+#include <vector>
 #include "testlib.hpp"
 #include "netlib/ip_address.hpp"
 #include "netlib/socket_address.hpp"
+#include "netlib/tcp_server_socket.hpp"
+#include "netlib/udp_server_socket.hpp"
+#include "netlib/udp_client_socket.hpp"
 
 
 using namespace testlib;
@@ -10,11 +16,11 @@ using namespace netlib;
 
 
 static void test_ip_address() {
-    const uint32_t ip4_value = 0x0d0c0b0a;
+    const uint32_t ip4_value = 0x0a0b0c0d;
     const std::string ip4_string = "10.11.12.13";
     const std::array<char, 4> ip4_bytes{0x0a, 0x0b, 0x0c, 0x0d};
     const std::array<char, 16> ip6_bytes{ 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f };
-    const std::array<uint16_t, 8> ip6_words{ 0x0100, 0x0302, 0x0504, 0x0706, 0x0908, 0x0b0a, 0x0d0c, 0x0f0e };
+    const std::array<uint16_t, 8> ip6_words{ 0x0001, 0x0203, 0x0405, 0x0607, 0x0809, 0x0a0b, 0x0c0d, 0x0e0f };
     const std::string ip6_string("0001:0203:0405:0607:0809:0a0b:0c0d:0e0f");
     const std::string ip6_string_1("0001:0203:0405:0607:0809:0a0b:0c0d:0e0f%1");
 
@@ -36,7 +42,7 @@ static void test_ip_address() {
             if (!ip4_found) {
                 ip4_found = true;
                 localhost_ip4_bytes = reinterpret_cast<const std::array<char, 4>&>(reinterpret_cast<const sockaddr_in*>(tai->ai_addr)->sin_addr);
-                localhost_ip4_value = reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(tai->ai_addr)->sin_addr);
+                localhost_ip4_value = ntohl(reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(tai->ai_addr)->sin_addr));
                 char buffer[256];
                 inet_ntop(AF_INET, &reinterpret_cast<const sockaddr_in*>(tai->ai_addr)->sin_addr, buffer, sizeof(buffer));
                 localhost_ip4_string = buffer;
@@ -47,6 +53,9 @@ static void test_ip_address() {
                 ip6_found = true;
                 localhost_ip6_bytes = reinterpret_cast<const std::array<char, 16>&>(reinterpret_cast<const sockaddr_in6*>(tai->ai_addr)->sin6_addr);
                 localhost_ip6_words = reinterpret_cast<const std::array<uint16_t, 8>&>(reinterpret_cast<const sockaddr_in6*>(tai->ai_addr)->sin6_addr);
+                for (size_t i = 0; i < 8; ++i) {
+                    localhost_ip6_words[i] = ntohs(localhost_ip6_words[i]);
+                }
                 localhost_zone_index = reinterpret_cast<const sockaddr_in6*>(tai->ai_addr)->sin6_scope_id;
                 char buffer[256];
                 inet_ntop(AF_INET6, &reinterpret_cast<const sockaddr_in6*>(tai->ai_addr)->sin6_addr, buffer, sizeof(buffer));
@@ -318,10 +327,53 @@ static void test_socket_address() {
 }
 
 
+static void test_tcp_sockets() {
+    socket_address server_address(ip_address::ip4_loopback, 10000);
+    const std::string message = "hello world!";
+    static constexpr size_t message_count = 10;
+
+    test("tcp sockets", [&]() {
+        std::thread server_thread([&]() {
+            try {
+                tcp::server_socket server(server_address);
+                socket_address client_address;
+                tcp::client_socket client_socket = server.accept(client_address);
+                std::vector<char> buffer;
+                for (size_t i = 0; i < message_count; ++i) {
+                    client_socket.receive(buffer);
+                    std::string str(buffer.begin(), buffer.end());
+                    check(str == message);
+                }
+            }
+            catch (const std::exception& ex) {
+                printf("\nserver exception: %s\n", ex.what());
+            }
+            });
+
+        std::thread client_thread([&]() {
+            try {
+                tcp::client_socket client_socket(server_address);
+                std::vector<char> buffer(message.begin(), message.end());
+                for (size_t i = 0; i < message_count; ++i) {
+                    client_socket.send(buffer);
+                }
+            }
+            catch (const std::exception& ex) {
+                printf("\nclient exception: %s\n", ex.what());
+            }
+            });
+
+        server_thread.join();
+        client_thread.join();
+        });
+}
+
+
 int main() {
     init();
-    //test_ip_address();
-    //test_socket_address();
+    test_ip_address();
+    test_socket_address();
+    test_tcp_sockets();
     cleanup();
     system("pause");
     return static_cast<int>(test_error_count);

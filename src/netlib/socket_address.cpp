@@ -47,7 +47,7 @@ namespace netlib {
     ip_address socket_address::address() const {
         switch (reinterpret_cast<const sockaddr*>(m_data.data())->sa_family) {
         case AF_INET:
-            return ip_address(reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_addr));
+            return ip_address(ntohl(reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_addr)));
 
         case AF_INET6:
             return ip_address(reinterpret_cast<const std::array<char, 16>&>(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_addr), reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_scope_id);
