@@ -174,6 +174,24 @@ namespace netlib {
     }
 
 
+    //Converts the address to string.
+    std::string ip_address::to_string() const {
+        char buffer[256];
+
+        switch (m_address_type) {
+        case AF_INET:
+            return inet_ntop(AF_INET, m_data.data(), buffer, sizeof(buffer));
+
+        case AF_INET6: {
+            std::string result = inet_ntop(AF_INET6, m_data.data(), buffer, sizeof(buffer));
+            return m_zone_index == 0 ? result : result + '%' + std::to_string(m_zone_index);
+        }
+        }
+
+        throw std::logic_error("Invalid address family.");
+    }
+
+
     //compare ip addresses
     int ip_address::compare(const ip_address& other) const {
         int r = memcmp(m_data.data(), other.m_data.data(), m_address_type == AF_INET ? 4 : 16);
