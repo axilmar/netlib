@@ -19,12 +19,12 @@ namespace netlib {
         /**
          * Internet prococol 4 address type.
          */
-        static const int IP4;
+        static const int ip4;
 
         /**
          * Internet prococol 6 address type.
          */
-        static const int IP6;
+        static const int ip6;
 
         /**
          * Any address for ip4.
@@ -103,6 +103,34 @@ namespace netlib {
          */
         int type() const {
             return m_address_type;
+        }
+
+        /**
+         * Returns the bytes of the ip4 address.
+         */
+        const std::array<char, 4>& ip4_bytes() const {
+            return reinterpret_cast<const std::array<char, 4>&>(m_data);
+        }
+
+        /**
+         * Returns the ip4 value. 
+         */
+        const uint32_t& ip4_value() const {
+            return reinterpret_cast<const uint32_t&>(m_data);
+        }
+
+        /**
+         * Returns the bytes of the ip6 address. 
+         */
+        const std::array<char, 16>& ip6_bytes() const {
+            return m_data;
+        }
+
+        /**
+         * Returns the words of the ip6 address.
+         */
+        const std::array<uint16_t, 8>& ip6_words() const {
+            return reinterpret_cast<const std::array<uint16_t, 8>&>(m_data);
         }
 
         /**

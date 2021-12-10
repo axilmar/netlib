@@ -9,8 +9,8 @@ namespace netlib {
 
 
     //constants
-    const int ip_address::IP4 = AF_INET;
-    const int ip_address::IP6 = AF_INET6;
+    const int ip_address::ip4 = AF_INET;
+    const int ip_address::ip6 = AF_INET6;
 
 
     //standard addresses
