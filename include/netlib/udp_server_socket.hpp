@@ -16,6 +16,12 @@ namespace netlib::udp {
     class server_socket : public socket {
     public:
         /**
+         * The default constructor.
+         */
+        server_socket() : socket() {
+        }
+
+        /**
          * Constructor.
          * @param addr address to bind this server socket to.
          */
@@ -34,10 +40,11 @@ namespace netlib::udp {
          * Receives data.
          * @param data reception buffer.
          * @param src sender address.
+         * @param max_message_size maximum message size; if 0, then the max size is used.
          * @return true on success, false if the socket is closed.
          * @exception std::system_error thrown if there was an error.
          */
-        bool receive(std::vector<char>& data, socket_address& src);
+        bool receive(std::vector<char>& data, socket_address& src, uint16_t max_message_size = 0);
     };
 
 

@@ -39,21 +39,21 @@ namespace netlib::udp {
 
 
     //Receives data from the server.
-    bool client_socket::receive(std::vector<char>& data) {
+    bool client_socket::receive(std::vector<char>& data, uint16_t max_message_size) {
         //resize data for max udp packet size
-        data.resize(65536);
+        data.resize(max_message_size == 0 ? 65536 : max_message_size);
 
         //receive
         int s = ::recv(handle(), data.data(), numeric_cast<int>(data.size()), 0);
 
         //success
-        if (s > 0) {
+        if (s >= 0) {
             data.resize(s);
             return true;
         }
 
-        //special case/if closed
-        if (s == 0 || is_socket_closed_error(get_last_error_number())) {
+        //if closed
+        if (is_socket_closed_error(get_last_error_number())) {
             return false;
         }
 

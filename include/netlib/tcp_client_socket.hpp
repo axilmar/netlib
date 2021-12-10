@@ -16,6 +16,12 @@ namespace netlib::tcp {
     class client_socket : public socket {
     public:
         /**
+         * The default constructor.
+         */
+        client_socket() : socket() {
+        }
+
+        /**
          * Constructor.
          * @param addr address of server.
          */

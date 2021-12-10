@@ -64,7 +64,7 @@ namespace netlib {
         /**
          * event callback type. 
          */
-        using event_callback_type = std::function<void(socket_poller&, socket&, event_type, status_flags flags)>;
+        using event_callback_type = std::function<void(socket_poller&, socket&, event_type, status_flags)>;
 
         /**
          * poll status.

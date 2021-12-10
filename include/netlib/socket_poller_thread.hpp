@@ -27,10 +27,18 @@ namespace netlib {
         ~socket_poller_thread();
 
         /**
-         * Wait for socket poller thread to terminate.
+         * Signals the thread to stop, 
+         * then waits for the socket poller thread to terminate.
          * Also called from the destructor.
          */
         void stop();
+
+        /**
+         * Waits for the socket poller thread to terminate.
+         */
+        void join() {
+            m_thread.join();
+        }
 
         /**
          * do not wait for socket poller thread to terminate.

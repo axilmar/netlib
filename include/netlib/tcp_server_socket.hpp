@@ -14,6 +14,12 @@ namespace netlib::tcp {
     class server_socket : public socket {
     public:
         /**
+         * The default constructor.
+         */
+        server_socket() : socket() {
+        }
+
+        /**
          * Creates a socket, binds it to the given address, and listens for connections.
          * @param addr address to bind the socket to.
          * @param backlog backlog; if 0, SOMAXCONN is used.

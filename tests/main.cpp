@@ -411,20 +411,111 @@ static void test_udp_sockets() {
 }
 
 
-static void test_socket_polling() {
-    test("socket polling", [&]() {
-        udp::client_socket socket1(socket_address(ip_address::ip4::loopback, 10000));
+static void test_udp_socket_polling() {
+    test("udp socket polling", [&]() {
+        static constexpr size_t server_socket_count = 10;
+        static constexpr size_t client_count = 10;
+        static constexpr size_t per_client_message_count = 10;
+        static constexpr size_t total_message_count = client_count * per_client_message_count;
+        const std::string message = "hello server!!!";
+
+        //server socket addresses
+        std::array<socket_address, server_socket_count> server_socket_addresses;
+        for (size_t i = 0; i < server_socket_count; ++i) {
+            server_socket_addresses[i] = socket_address(ip_address::ip4::loopback, uint16_t(10000 + i));
+        }
+
+        //the server sockets
+        std::array<udp::server_socket, server_socket_count> server_sockets;
+
+        //init the server sockets (which they are also client sockets in this example)
+        for (size_t i = 0; i < server_socket_count; ++i) {
+            server_sockets[i] = udp::server_socket{ server_socket_addresses[i] };
+        }
+
+        std::atomic<size_t> server_message_count{};
+
+        //init server
+        std::thread server_thread{ [&, &sss = server_sockets]() {  
+            try {
+                //a socket poller thread
+                socket_poller_thread poller;
+
+                //server callback
+                auto callback = [&](socket_poller& sp, netlib::socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
+                    try {
+                        std::vector<char> buffer;
+                        socket_address src;
+                        static_cast<udp::server_socket&>(s).receive(buffer, src);
+                        std::string str{ buffer.begin(), buffer.end() };
+                        check(str == message);
+                        ++server_message_count;
+                        if (server_message_count == total_message_count) {
+                            sp.stop();
+                        }
+                    }
+                    catch (const std::exception&) {
+                    }
+                };
+
+                //add server sockets
+                for (size_t i = 0; i < server_socket_count; ++i) {
+                    poller.add(sss[i], callback);
+                }
+
+                //poll until stopped
+                poller.join();
+            }
+            catch (const std::exception& ex) {
+                printf("server exception: %s\n", ex.what());
+            }
+            } };
+
+        std::array<std::thread, client_count> client_threads;
+        std::atomic<size_t> client_message_count{};
+
+        //start the clients
+        for (size_t i = 0; i < client_count; ++i) {
+            socket_address& server_addr = server_socket_addresses[i % server_socket_addresses.size()];
+            client_threads[i] = std::thread{ [&, &socket1 = server_sockets[(i + server_sockets.size() / 2) % server_sockets.size()]]() {
+                try {
+                    //buffer to send
+                    std::vector<char> buffer(message.begin(), message.end());
+
+                    //send the data
+                    for (size_t i = 0; i < per_client_message_count; ++i) {
+                        check(socket1.send(buffer, server_addr));
+                        ++client_message_count;
+                    }
+                }
+                catch (const std::exception& ex) {
+                    printf("client exception: %s\n", ex.what());
+                }
+                } };
+        }
+
+        //wait for clients to send all their messages
+        for (std::thread& client_thread : client_threads) {
+            client_thread.join();
+        }
+
+        //wait for server to stop
+        server_thread.join();
+
+        //check the data
+        check(client_message_count == total_message_count);
+        check(server_message_count == client_message_count);
         });
 }
 
 
 int main() {
     init();
-    //test_ip_address();
-    //test_socket_address();
-    //test_tcp_sockets();
-    //test_udp_sockets();
-    //test_socket_polling();
+    test_ip_address();
+    test_socket_address();
+    test_tcp_sockets();
+    test_udp_sockets();
+    test_udp_socket_polling();
     cleanup();
     system("pause");
     return static_cast<int>(test_error_count);
