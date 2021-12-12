@@ -373,12 +373,15 @@ static void test_tcp_sockets() {
 static void test_udp_sockets() {
     socket_address server_address(ip_address::ip4::loopback, 10000);
     const std::string message = "hello world!";
-    static constexpr size_t message_count = 10;
+    static constexpr size_t message_count = 100;
+
+    std::atomic<bool> server_started{ false };
 
     test("udp sockets", [&]() {
         std::thread server_thread([&]() {
             try {
                 udp::server_socket server_socket(server_address);
+                server_started = true;
                 socket_address client_address;
                 std::vector<char> buffer;
                 for (size_t i = 0; i < message_count; ++i) {
@@ -394,6 +397,9 @@ static void test_udp_sockets() {
 
         std::thread client_thread([&]() {
             try {
+                while (!server_started) {
+                    std::this_thread::yield();
+                }
                 udp::client_socket client_socket(server_address);
                 std::vector<char> buffer(message.begin(), message.end());
                 for (size_t i = 0; i < message_count; ++i) {
@@ -425,20 +431,23 @@ static void test_udp_socket_polling() {
             server_socket_addresses[i] = socket_address(ip_address::ip4::loopback, uint16_t(10000 + i));
         }
 
-        //the server sockets
-        std::array<udp::server_socket, server_socket_count> server_sockets;
-
-        //init the server sockets (which they are also client sockets in this example)
-        for (size_t i = 0; i < server_socket_count; ++i) {
-            server_sockets[i] = udp::server_socket{ server_socket_addresses[i] };
-        }
-
         std::atomic<size_t> server_message_count{};
 
+        //synchronize server/clients
+        std::atomic<bool> server_started{ false };
+
         //init server
-        std::thread server_thread{ [&, &sss = server_sockets]() {  
+        std::thread server_thread{ [&, &ssa = server_socket_addresses]() {  
             try {
-                //a socket poller thread
+                //the server sockets
+                std::array<udp::server_socket, server_socket_count> server_sockets;
+
+                //init the server sockets
+                for (size_t i = 0; i < server_socket_count; ++i) {
+                    server_sockets[i] = udp::server_socket{ ssa[i] };
+                }
+
+                //a threaded socket poller
                 socket_poller_thread poller;
 
                 //server callback
@@ -446,7 +455,7 @@ static void test_udp_socket_polling() {
                     try {
                         std::vector<char> buffer;
                         socket_address src;
-                        s.receive(buffer, src);
+                        s.receive(buffer, src, 256);
                         std::string str{ buffer.begin(), buffer.end() };
                         check(str == message);
                         ++server_message_count;
@@ -460,10 +469,11 @@ static void test_udp_socket_polling() {
 
                 //add server sockets
                 for (size_t i = 0; i < server_socket_count; ++i) {
-                    poller.add(sss[i], callback);
+                    poller.add(server_sockets[i], callback);
                 }
 
                 //poll until stopped
+                server_started = true;
                 poller.join();
             }
             catch (const std::exception& ex) {
@@ -476,15 +486,26 @@ static void test_udp_socket_polling() {
 
         //start the clients
         for (size_t i = 0; i < client_count; ++i) {
-            socket_address& server_addr = server_socket_addresses[i % server_socket_addresses.size()];
-            client_threads[i] = std::thread{ [&, &socket1 = server_sockets[(i + server_sockets.size() / 2) % server_sockets.size()]]() {
+            client_threads[i] = std::thread{ [&, i, server_addr = server_socket_addresses[i % server_socket_addresses.size()]]() {
                 try {
+                    //required because if the server has not been started,
+                    //the messages will be lost and the test will not finish;
+                    //not required for tcp because the tcp client will wait
+                    //for a reply that it was successfully connected on the server
+                    while (!server_started)
+                    {
+                        std::this_thread::yield();
+                    }
+
+                    //client socket
+                    udp::client_socket client_socket(server_addr);
+
                     //buffer to send
                     std::vector<char> buffer(message.begin(), message.end());
 
                     //send the data
                     for (size_t i = 0; i < per_client_message_count; ++i) {
-                        check(socket1.send(buffer, server_addr));
+                        check(client_socket.send(buffer));
                         ++client_message_count;
                     }
                 }
@@ -570,7 +591,6 @@ static void test_tcp_socket_polling() {
 
                         //keep the socket
                         clients.push_back(std::move(client_socket));
-                        //printf("client count = %Ii\n", clients.size());
 
                         //add the socket to the socket poller
                         sp.add(clients.back(), receive_callback);
@@ -638,11 +658,11 @@ static void test_tcp_socket_polling() {
 
 int main() {
     init();
-    //test_ip_address();
-    //test_socket_address();
-    //test_tcp_sockets();
-    //test_udp_sockets();
-    //test_udp_socket_polling();
+    test_ip_address();
+    test_socket_address();
+    test_tcp_sockets();
+    test_udp_sockets();
+    test_udp_socket_polling();
     test_tcp_socket_polling();
     cleanup();
     system("pause");

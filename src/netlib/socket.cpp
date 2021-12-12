@@ -8,7 +8,7 @@ namespace netlib {
 
 
     //close socket.
-    static void socket_close(uintptr_t handle) {
+    static void close_socket(uintptr_t handle) {
         if (handle != ~uintptr_t(0)) {
             closesocket(handle);
         }
@@ -17,7 +17,7 @@ namespace netlib {
 
     //closes the socket.
     socket::~socket() {
-        socket_close(m_handle);
+        close_socket(m_handle);
     }
 
 
@@ -62,7 +62,7 @@ namespace netlib {
     //The move assignment operator.
     socket& socket::operator = (socket&& src) {
         if (&src != this) {
-            socket_close(m_handle);
+            close_socket(m_handle);
             m_handle = src.m_handle;
             src.m_handle = ~uintptr_t(0);
         }
