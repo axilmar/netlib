@@ -638,11 +638,11 @@ static void test_tcp_socket_polling() {
 
 int main() {
     init();
-    test_ip_address();
-    test_socket_address();
-    test_tcp_sockets();
-    test_udp_sockets();
-    test_udp_socket_polling();
+    //test_ip_address();
+    //test_socket_address();
+    //test_tcp_sockets();
+    //test_udp_sockets();
+    //test_udp_socket_polling();
     test_tcp_socket_polling();
     cleanup();
     system("pause");

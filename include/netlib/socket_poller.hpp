@@ -7,7 +7,6 @@
 #include <mutex>
 #include <atomic>
 #include "udp_server_socket.hpp"
-#include "type_traits.hpp"
 
 
 /**
@@ -156,10 +155,9 @@ namespace netlib {
          * @return true if the entry is added, false if the poller is full.
          * @exception std::invalid_argument thrown if any of the parameters is invalid.
          */
-        template <class F>bool add(socket& s, const F& cb) {
-            using socket_type = arg_n_t<1, decltype(&F::operator ())>;
-            return add(s, event_callback_type([cb](socket_poller& sp, socket& s, event_type e, status_flags f) {
-                return cb(sp, static_cast<socket_type&>(s), e, f);
+        template <class S, class F> bool add(S& s, const F& cb) {
+            return add(static_cast<socket&>(s), event_callback_type([cb](socket_poller& sp, socket& s, event_type e, status_flags f) {
+                return cb(sp, static_cast<S&>(s), e, f);
                 }));
         }
 
