@@ -44,7 +44,7 @@ namespace netlib::tcp {
         bool receive(std::vector<char>& data);
 
     private:
-        client_socket(uintptr_t handle) : socket(handle) {}
+        client_socket(handle_type handle) : socket(handle) {}
         friend class server_socket;
     }; 
 
