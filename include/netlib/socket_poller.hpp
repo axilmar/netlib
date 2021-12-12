@@ -7,6 +7,7 @@
 #include <mutex>
 #include <atomic>
 #include "udp_server_socket.hpp"
+#include "type_traits.hpp"
 
 
 /**
@@ -140,12 +141,26 @@ namespace netlib {
         /**
          * Adds a socket for reading.
          * @param s socket to add.
-         * @param cb callback type.
+         * @param cb callback.
          * @return true if the entry is added, false if the poller is full.
          * @exception std::invalid_argument thrown if any of the parameters is invalid.
          */
         bool add(socket& s, const event_callback_type& cb) {
             return add(s, event_type::read, cb);
+        }
+
+        /**
+         * Adds a socket for reading.
+         * @param s socket to add.
+         * @param cb callback lambda; the socket type can be anything derived from class socket.
+         * @return true if the entry is added, false if the poller is full.
+         * @exception std::invalid_argument thrown if any of the parameters is invalid.
+         */
+        template <class F>bool add(socket& s, const F& cb) {
+            using socket_type = arg_n_t<1, decltype(&F::operator ())>;
+            return add(s, event_callback_type([cb](socket_poller& sp, socket& s, event_type e, status_flags f) {
+                return cb(sp, static_cast<socket_type&>(s), e, f);
+                }));
         }
 
         /**

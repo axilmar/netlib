@@ -442,11 +442,11 @@ static void test_udp_socket_polling() {
                 socket_poller_thread poller;
 
                 //server callback
-                auto callback = [&](socket_poller& sp, netlib::socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
+                auto callback = [&](socket_poller& sp, udp::server_socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
                     try {
                         std::vector<char> buffer;
                         socket_address src;
-                        static_cast<udp::server_socket&>(s).receive(buffer, src);
+                        s.receive(buffer, src);
                         std::string str{ buffer.begin(), buffer.end() };
                         check(str == message);
                         ++server_message_count;
@@ -509,6 +509,133 @@ static void test_udp_socket_polling() {
 }
 
 
+static void test_tcp_socket_polling() {
+    test("tcp socket polling", [&]() {
+        static constexpr size_t server_socket_count = 10;
+        static constexpr size_t client_count = 10;
+        static constexpr size_t per_client_message_count = 10;
+        static constexpr size_t total_message_count = client_count * per_client_message_count;
+        const std::string message = "hello server!!!";
+
+        //server socket addresses
+        std::array<socket_address, server_socket_count> server_socket_addresses;
+        for (size_t i = 0; i < server_socket_count; ++i) {
+            server_socket_addresses[i] = socket_address(ip_address::ip4::loopback, uint16_t(10000 + i));
+        }
+
+        std::atomic<size_t> server_message_count{};
+
+        //init server
+        std::thread server_thread{ [&, &ssa = server_socket_addresses]() {
+            try {
+                //the server sockets
+                std::array<tcp::server_socket, server_socket_count> server_sockets;
+
+                //init the server sockets (which they are also client sockets in this example)
+                for (size_t i = 0; i < server_socket_count; ++i) {
+                    server_sockets[i] = tcp::server_socket{ ssa[i] };
+                }
+
+                //server receive callback
+                auto receive_callback = [&](socket_poller& sp, tcp::client_socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
+                    try {
+                        std::vector<char> buffer;
+                        socket_address src;
+                        if (!s.receive(buffer)) {
+                            return;
+                        }
+                        std::string str{ buffer.begin(), buffer.end() };
+                        check(str == message);
+                        ++server_message_count;
+                        if (server_message_count == total_message_count) {
+                            sp.stop();
+                        }
+                    }
+                    catch (const std::exception&) {
+                    }
+                };
+
+                //client sockets of server
+                std::vector<tcp::client_socket> clients;
+
+                //reserve space upfront so as that the clients vector is not resized while the sockets are being used
+                clients.reserve(client_count);
+
+                //server accept callback
+                auto accept_callback = [&](socket_poller& sp, tcp::server_socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
+                    try {
+                        //accept client
+                        socket_address src;
+                        tcp::client_socket client_socket = s.accept(src);
+
+                        //keep the socket
+                        clients.push_back(std::move(client_socket));
+                        //printf("client count = %Ii\n", clients.size());
+
+                        //add the socket to the socket poller
+                        sp.add(clients.back(), receive_callback);
+                    }
+                    catch (const std::exception&) {
+                    }
+                };
+
+                //a socket poller thread
+                socket_poller_thread poller;
+
+                //add the server sockets
+                for (size_t i = 0; i < server_socket_count; ++i) {
+                    poller.add(server_sockets[i], accept_callback);
+                }
+
+                //poll until stopped
+                poller.join();
+            }
+            catch (const std::exception& ex) {
+                printf("server exception: %s\n", ex.what());
+            }
+            } };
+
+        std::array<std::thread, client_count> client_threads;
+        std::atomic<size_t> client_message_count{};
+
+        //start the clients
+        for (size_t i = 0; i < client_count; ++i) {
+            socket_address& server_addr = server_socket_addresses[i % server_socket_addresses.size()];
+            client_threads[i] = std::thread{ [&, sa = server_addr] () {
+                try {
+                    //the client socket
+                    tcp::client_socket client_socket(sa);
+
+                    //buffer to send
+                    std::vector<char> buffer(message.begin(), message.end());
+
+                    //send the data
+                    for (size_t i = 0; i < per_client_message_count; ++i) {
+                        check(client_socket.send(buffer));
+                        ++client_message_count;
+                    }
+                }
+                catch (const std::exception& ex) {
+                    printf("client exception: %s\n", ex.what());
+                }
+                } };
+        }
+
+        //wait for clients to send all their messages
+        for (std::thread& client_thread : client_threads) {
+            client_thread.join();
+        }
+
+        //wait for server to stop
+        server_thread.join();
+
+        //check the data
+        check(client_message_count == total_message_count);
+        check(server_message_count == client_message_count);
+        });
+}
+
+
 int main() {
     init();
     test_ip_address();
@@ -516,6 +643,7 @@ int main() {
     test_tcp_sockets();
     test_udp_sockets();
     test_udp_socket_polling();
+    test_tcp_socket_polling();
     cleanup();
     system("pause");
     return static_cast<int>(test_error_count);
