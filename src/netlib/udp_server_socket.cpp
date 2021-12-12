@@ -19,7 +19,7 @@ namespace netlib::udp {
 
 
     //Sends data.
-    bool server_socket::send(const std::vector<char>& data, const socket_address& dst) {
+    bool server_socket::send(const std::vector<char>& data, const socket_address& dst) const {
         //send
         int s = ::sendto(handle(), data.data(), numeric_cast<int>(data.size()), 0, reinterpret_cast<const sockaddr*>(dst.data()), sizeof(sockaddr_storage));
 
@@ -39,7 +39,7 @@ namespace netlib::udp {
 
 
     //Receives data.
-    bool server_socket::receive(std::vector<char>& data, socket_address& src, uint16_t max_message_size) {
+    bool server_socket::receive(std::vector<char>& data, socket_address& src, uint16_t max_message_size) const {
         //resize data for max udp packet
         data.resize(max_message_size);
 

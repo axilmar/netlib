@@ -33,7 +33,7 @@ namespace netlib::tcp {
          * @return client socket.
          * @exception std::system_error thrown if there is an error.
          */
-        client_socket accept(socket_address& addr);
+        client_socket accept(socket_address& addr) const;
     };
 
 

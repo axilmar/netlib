@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <atomic>
+#include <functional>
 #include "socket_address.hpp"
 
 
@@ -18,7 +19,8 @@ namespace netlib {
      * used in many complex multithreaded scenarios.
      * 
      * The class is not thread safe when updated via operator =,
-     * following std::shared_ptr semantics.
+     * following std::shared_ptr semantics. (Internally, it does not use 
+     * std::shared_ptr, in order to keep the socket size equal to the handle's size.)
      */
     class socket {
     public:
@@ -85,6 +87,74 @@ namespace netlib {
          */
         socket_address bound_address() const;
 
+        /**
+         * Compares the socket handles.
+         * @param other the other object to compare this to.
+         * @return less than zero if this comes before the given object, 
+         *  greater than zero if this comes after the given object,
+         *  0 if the handles are equal.
+         */
+        int compare(const socket& other) const;
+
+        /**
+         * Checks if the two objects are equal.
+         * @return other the object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator == (const socket& other) const {
+            return compare(other) == 0;
+        }
+
+        /**
+         * Checks if the two objects are different.
+         * @return other the object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator != (const socket& other) const {
+            return compare(other) != 0;
+        }
+
+        /**
+         * Checks if this object is less than the given one.
+         * @return other the object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator < (const socket& other) const {
+            return compare(other) < 0;
+        }
+
+        /**
+         * Checks if this object is greater than the given one.
+         * @return other the object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator > (const socket& other) const {
+            return compare(other) > 0;
+        }
+
+        /**
+         * Checks if this object is less than or equal to the given one.
+         * @return other the object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator <= (const socket& other) const {
+            return compare(other) <= 0;
+        }
+
+        /**
+         * Checks if this object is greater than or equal to the given one.
+         * @return other the object to compare this to.
+         * @return true on success, false on failure.
+         */
+        bool operator >= (const socket& other) const {
+            return compare(other) >= 0;
+        }
+
+        /**
+         * Returns the hash code for this object.
+         */
+        size_t hash() const;
+
     private:
         //internal reference-counted socket handle structure
         struct data;
@@ -93,14 +163,35 @@ namespace netlib {
         data* m_data;
 
         //increments the ref count
-        void ref();
+        void ref() const;
 
         //decrements the ref count and deletes the socket/data block if ref count reaches 0
-        void unref();
+        void unref() const;
     };
 
 
 } //namespace netlib
+
+
+namespace std {
+
+
+    /**
+     * Specialization of std::hash for netlib::socket.
+     */
+    template <> struct hash<netlib::socket> {
+        /**
+         * Returns addr.hash().
+         * @param addr object to get the hash of.
+         * @return the object's hash.
+         */
+        size_t operator ()(const netlib::socket& addr) const {
+            return addr.hash();
+        }
+    };
+
+
+} //namespace std
 
 
 #endif //NETLIB_SOCKET_HPP

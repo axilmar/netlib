@@ -34,7 +34,7 @@ namespace netlib::udp {
          * @return true on success, false if the socket is closed.
          * @exception std::system_error thrown if there was an error.
          */
-        bool send(const std::vector<char>& data, const socket_address& dst);
+        bool send(const std::vector<char>& data, const socket_address& dst) const;
 
         /**
          * Receives data.
@@ -44,7 +44,7 @@ namespace netlib::udp {
          * @return true on success, false if the socket is closed.
          * @exception std::system_error thrown if there was an error.
          */
-        bool receive(std::vector<char>& data, socket_address& src, uint16_t max_message_size = 65535);
+        bool receive(std::vector<char>& data, socket_address& src, uint16_t max_message_size = 65535) const;
     };
 
 

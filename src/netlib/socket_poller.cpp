@@ -43,10 +43,10 @@ namespace netlib {
         , m_poll_counter{0}
     {
         //add entry for the internal com socket.
-        m_entries.push_back(entry{ &m_com_socket, event_type::read, [](socket_poller&, socket& s, event_type, status_flags) {
+        m_entries.push_back(entry{ m_com_socket, event_type::read, [](socket_poller&, const socket& s, event_type, status_flags) {
             std::vector<char> buffer;
             socket_address src;
-            static_cast<udp::server_socket&>(s).receive(buffer, src, 0);
+            static_cast<const udp::server_socket&>(s).receive(buffer, src, 0);
             } });
     }
 
@@ -58,7 +58,7 @@ namespace netlib {
 
 
     //add entry.
-    bool socket_poller::add(socket& s, event_type e, const event_callback_type& cb) {
+    bool socket_poller::add(const socket& s, event_type e, const event_callback_type& cb) {
         //check the socket
         if (!s) {
             throw std::invalid_argument("Invalid socket.");
@@ -83,13 +83,13 @@ namespace netlib {
 
         //check if the given socket and event is already added
         for (entry& en : m_entries) {
-            if (en.socket == &s && en.event == e) {
+            if (en.socket == s && en.event == e) {
                 throw std::invalid_argument("Socket entry already added.");
             }
         }
 
         //add the socket
-        m_entries.push_back(entry{&s, e, cb});
+        m_entries.push_back(entry{s, e, cb});
 
         //set the entries to have changed
         set_entries_changed();
@@ -105,14 +105,14 @@ namespace netlib {
 
 
     //remove entry
-    void socket_poller::remove(socket& s, event_type e) {
+    void socket_poller::remove(const socket& s, event_type e) {
         std::lock_guard lock(m_mutex);
 
         //locate the entry
         auto it = m_entries.begin();
         for (; it != m_entries.end(); ++it) {
             entry& en = *it;
-            if (en.socket == &s && en.event == e) {
+            if (en.socket == s && en.event == e) {
                 break;
             }
         }
@@ -133,20 +133,20 @@ namespace netlib {
 
         //invoke the socket entry removed callback
         if (m_on_socket_entry_removed) {
-            m_on_socket_entry_removed(m_entries.size() - 1, *en.socket, en.event, en.callback);
+            m_on_socket_entry_removed(m_entries.size() - 1, en.socket, en.event, en.callback);
         }
     }
 
 
     //remove all entries.
-    void socket_poller::remove(socket& s) {
+    void socket_poller::remove(const socket& s) {
         std::lock_guard lock(m_mutex);
 
         //find and remove entries; iterate backwards so as that index is not invalidated
         size_t remove_count{};
         for (size_t index = m_entries.size(); index > 0; --index) {
             entry& en = m_entries[index - 1];
-            if (en.socket == &s) {
+            if (en.socket == s) {
                 m_entries.erase(m_entries.begin() + index - 1);
                 ++remove_count;
             }
@@ -197,7 +197,7 @@ namespace netlib {
                 for (size_t i = 0; i < m_entries.size(); ++i) {
                     m_poll_entries[i] = m_entries[i];
                     m_poll_fds[i].events = m_entries[i].event == event_type::read ? POLLRDNORM : POLLWRNORM;
-                    m_poll_fds[i].fd = m_entries[i].socket->handle();
+                    m_poll_fds[i].fd = m_entries[i].socket.handle();
                 }
             }
         }
@@ -216,7 +216,7 @@ namespace netlib {
                     flags.invalid_socket     = m_poll_fds[i].revents & POLLNVAL;
 
                     //invoke the callback
-                    m_poll_entries[i].callback(*this, *m_poll_entries[i].socket, m_poll_entries[i].event, flags);
+                    m_poll_entries[i].callback(*this, m_poll_entries[i].socket, m_poll_entries[i].event, flags);
 
                     //count one less socket to check
                     --poll_result;
@@ -236,21 +236,21 @@ namespace netlib {
 
 
     //Sets the callback that is invoked when a socket entry is added.
-    void socket_poller::set_on_socket_entry_added_callback(const std::function<void(const size_t entries_count, socket& s, event_type e, const event_callback_type& cb)>& f) {
+    void socket_poller::set_on_socket_entry_added_callback(const std::function<void(const size_t entries_count, const socket& s, event_type e, const event_callback_type& cb)>& f) {
         std::lock_guard lock(m_mutex);
         m_on_socket_entry_added = f;
     }
 
 
     //Sets the callback that is invoked when a socket entry is removed.
-    void socket_poller::set_on_socket_entry_remmoved_callback(const std::function<void(const size_t entries_count, socket& s, event_type e, const event_callback_type& cb)>& f) {
+    void socket_poller::set_on_socket_entry_remmoved_callback(const std::function<void(const size_t entries_count, const socket& s, event_type e, const event_callback_type& cb)>& f) {
         std::lock_guard lock(m_mutex);
         m_on_socket_entry_removed = f;
     }
 
 
     //Sets the callback that is invoked when a socket is removed.
-    void socket_poller::set_on_socket_removed_callback(const std::function<void(const size_t entries_count, socket& s)>& f) {
+    void socket_poller::set_on_socket_removed_callback(const std::function<void(const size_t entries_count, const socket& s)>& f) {
         std::lock_guard lock(m_mutex);
         m_on_socket_removed = f;
     }

@@ -439,19 +439,11 @@ static void test_udp_socket_polling() {
         //init server
         std::thread server_thread{ [&, &ssa = server_socket_addresses]() {  
             try {
-                //the server sockets
-                std::array<udp::server_socket, server_socket_count> server_sockets;
-
-                //init the server sockets
-                for (size_t i = 0; i < server_socket_count; ++i) {
-                    server_sockets[i] = udp::server_socket{ ssa[i] };
-                }
-
                 //a threaded socket poller
                 socket_poller_thread poller;
 
                 //server callback
-                auto callback = [&](socket_poller& sp, udp::server_socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
+                auto callback = [&](socket_poller& sp, const udp::server_socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
                     try {
                         std::vector<char> buffer;
                         socket_address src;
@@ -469,7 +461,7 @@ static void test_udp_socket_polling() {
 
                 //add server sockets
                 for (size_t i = 0; i < server_socket_count; ++i) {
-                    poller.add(server_sockets[i], callback);
+                    poller.add(udp::server_socket{ ssa[i] }, callback);
                 }
 
                 //poll until stopped
@@ -549,16 +541,8 @@ static void test_tcp_socket_polling() {
         //init server
         std::thread server_thread{ [&, &ssa = server_socket_addresses]() {
             try {
-                //the server sockets
-                std::array<tcp::server_socket, server_socket_count> server_sockets;
-
-                //init the server sockets (which they are also client sockets in this example)
-                for (size_t i = 0; i < server_socket_count; ++i) {
-                    server_sockets[i] = tcp::server_socket{ ssa[i] };
-                }
-
                 //server receive callback
-                auto receive_callback = [&](socket_poller& sp, tcp::client_socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
+                auto receive_callback = [&](socket_poller& sp, const tcp::client_socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
                     try {
                         std::vector<char> buffer;
                         socket_address src;
@@ -583,7 +567,7 @@ static void test_tcp_socket_polling() {
                 clients.reserve(client_count);
 
                 //server accept callback
-                auto accept_callback = [&](socket_poller& sp, tcp::server_socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
+                auto accept_callback = [&](socket_poller& sp, const tcp::server_socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
                     try {
                         //accept client
                         socket_address src;
@@ -604,7 +588,7 @@ static void test_tcp_socket_polling() {
 
                 //add the server sockets
                 for (size_t i = 0; i < server_socket_count; ++i) {
-                    poller.add(server_sockets[i], accept_callback);
+                    poller.add(tcp::server_socket{ ssa[i] }, accept_callback);
                 }
 
                 //poll until stopped

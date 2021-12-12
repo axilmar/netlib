@@ -22,7 +22,7 @@ namespace netlib::tcp {
 
 
     //Accepts a socket connection.
-    client_socket server_socket::accept(socket_address& addr) {
+    client_socket server_socket::accept(socket_address& addr) const {
         //accept
         int addrlen = sizeof(sockaddr_storage);
         uintptr_t handle = ::accept(this->handle(), reinterpret_cast<sockaddr*>(addr.data()), &addrlen);

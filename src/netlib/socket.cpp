@@ -21,7 +21,7 @@ namespace netlib {
         {
         }
 
-        //destructor
+        //destructor; closes the socket
         ~data() {
             if (handle != invalid_handle) {
                 closesocket(handle);
@@ -61,11 +61,9 @@ namespace netlib {
 
     //The copy assignment operator.
     socket& socket::operator = (const socket& src) {
-        if (&src != this) {
-            unref();
-            m_data = src.m_data;
-            ref();
-        }
+        src.ref();
+        unref();
+        m_data = src.m_data;
         return *this;
     }
 
@@ -73,6 +71,7 @@ namespace netlib {
     //The move assignment operator.
     socket& socket::operator = (socket&& src) {
         if (&src != this) {
+            unref();
             m_data = src.m_data;
             src.m_data = new data{};
         }
@@ -88,7 +87,7 @@ namespace netlib {
 
     //if socket is initialized
     socket::operator bool() const {
-        return handle() != invalid_handle;
+        return m_data->handle != invalid_handle;
     }
 
 
@@ -97,7 +96,7 @@ namespace netlib {
         sockaddr_storage s;
         int namelen = sizeof(s);
 
-        if (getsockname(handle(), reinterpret_cast<sockaddr*>(&s), &namelen)) {
+        if (getsockname(m_data->handle, reinterpret_cast<sockaddr*>(&s), &namelen)) {
             throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
         }
 
@@ -113,14 +112,28 @@ namespace netlib {
     }
 
 
+    //compare sockets.
+    int socket::compare(const socket& other) const {
+        return m_data->handle < other.m_data->handle ? -1 : m_data->handle > other.m_data->handle ? 1 : 0;
+    }
+
+
+    /**
+     * Returns the hash code for this object.
+     */
+    size_t socket::hash() const {
+        return std::hash<handle_type>()(m_data->handle);
+    }
+
+
     //increments the ref count
-    void socket::ref() {
+    void socket::ref() const {
         m_data->ref_count.fetch_add(1, std::memory_order_relaxed);
     }
 
 
-    //decrements the ref count and deletes the socket/data block if ref count reaches 0
-    void socket::unref() {
+    //decrements the ref count and closes the socket/deletes the data block if ref count reaches 0
+    void socket::unref() const {
         if (m_data->ref_count.fetch_sub(1, std::memory_order_acquire) == 1) {
             delete m_data;
         }
