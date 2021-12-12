@@ -42,14 +42,14 @@ namespace netlib {
         /**
          * Returns the data.
          */
-        const void* data() const {
+        const char* data() const {
             return m_data.data();
         }
 
         /**
          * Returns the data.
          */
-        void* data() {
+        char* data() {
             return m_data.data();
         }
 
