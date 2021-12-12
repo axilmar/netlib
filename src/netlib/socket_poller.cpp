@@ -43,10 +43,10 @@ namespace netlib {
         , m_poll_counter{0}
     {
         //add entry for the internal com socket.
-        m_entries.push_back(entry{ m_com_socket, event_type::read, [](socket_poller&, const socket& s, event_type, status_flags) {
+        m_entries.push_back(entry{ m_com_socket, event_type::read, [](socket_poller&, socket& s, event_type, status_flags) {
             std::vector<char> buffer;
             socket_address src;
-            static_cast<const udp::server_socket&>(s).receive(buffer, src, 0);
+            static_cast<udp::server_socket&>(s).receive(buffer, src, 0);
             } });
     }
 

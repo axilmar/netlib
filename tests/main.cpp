@@ -443,7 +443,7 @@ static void test_udp_socket_polling() {
                 socket_poller_thread poller;
 
                 //server callback
-                auto callback = [&](socket_poller& sp, const udp::server_socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
+                auto callback = [&](socket_poller& sp, udp::server_socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
                     try {
                         std::vector<char> buffer;
                         socket_address src;
@@ -542,7 +542,7 @@ static void test_tcp_socket_polling() {
         std::thread server_thread{ [&, &ssa = server_socket_addresses]() {
             try {
                 //server receive callback
-                auto receive_callback = [&](socket_poller& sp, const tcp::client_socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
+                auto receive_callback = [&](socket_poller& sp, tcp::client_socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
                     try {
                         std::vector<char> buffer;
                         socket_address src;
@@ -567,7 +567,7 @@ static void test_tcp_socket_polling() {
                 clients.reserve(client_count);
 
                 //server accept callback
-                auto accept_callback = [&](socket_poller& sp, const tcp::server_socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
+                auto accept_callback = [&](socket_poller& sp, tcp::server_socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
                     try {
                         //accept client
                         socket_address src;

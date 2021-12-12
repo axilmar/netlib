@@ -74,7 +74,7 @@ namespace netlib::tcp {
 
 
     //Sends data to the server.
-    bool client_socket::send(const std::vector<char>& data) const {
+    bool client_socket::send(const std::vector<char>& data) {
         size_t size = data.size();
 
         //send size
@@ -89,7 +89,7 @@ namespace netlib::tcp {
 
 
     //Receives data from the server.
-    bool client_socket::receive(std::vector<char>& data) const {
+    bool client_socket::receive(std::vector<char>& data) {
         size_t size;
 
         //receive size

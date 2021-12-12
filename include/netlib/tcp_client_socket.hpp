@@ -33,7 +33,7 @@ namespace netlib::tcp {
          * @return true on success, false if the socket is closed.
          * @exception std::system_error thrown if there was an error.
          */
-        bool send(const std::vector<char>& data) const;
+        bool send(const std::vector<char>& data);
 
         /**
          * Receives data from the server.
@@ -41,7 +41,7 @@ namespace netlib::tcp {
          * @return true on success, false if the socket is closed.
          * @exception std::system_error thrown if there was an error.
          */
-        bool receive(std::vector<char>& data) const;
+        bool receive(std::vector<char>& data);
 
     private:
         client_socket(handle_type handle) : socket(handle) {}

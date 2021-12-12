@@ -64,7 +64,7 @@ namespace netlib {
         /**
          * event callback type. 
          */
-        using event_callback_type = std::function<void(socket_poller&, const socket&, event_type, status_flags)>;
+        using event_callback_type = std::function<void(socket_poller&, socket&, event_type, status_flags)>;
 
         /**
          * poll status.
@@ -156,8 +156,8 @@ namespace netlib {
          * @exception std::invalid_argument thrown if any of the parameters is invalid.
          */
         template <class S, class F> bool add(const S& s, const F& cb) {
-            return add(static_cast<const socket&>(s), event_callback_type([cb](socket_poller& sp, const socket& s, event_type e, status_flags f) {
-                return cb(sp, static_cast<const S&>(s), e, f);
+            return add(static_cast<const socket&>(s), event_callback_type([cb](socket_poller& sp, socket& s, event_type e, status_flags f) {
+                return cb(sp, static_cast<S&>(s), e, f);
                 }));
         }
 
