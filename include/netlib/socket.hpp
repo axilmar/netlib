@@ -13,14 +13,6 @@ namespace netlib {
 
     /**
      * Base class for sockets.
-     * 
-     * It internally uses reference count to manage the socket lifetime.
-     * This means the socket class is a value class, and can be easily
-     * used in many complex multithreaded scenarios.
-     * 
-     * The class is not thread safe when updated via operator =,
-     * following std::shared_ptr semantics. (Internally, it does not use 
-     * std::shared_ptr, in order to keep the socket size equal to the handle's size.)
      */
     class socket {
     public:
@@ -42,9 +34,9 @@ namespace netlib {
 
         /**
          * The copy constructor. 
-         * @param src source object.
+         * Sockets are not copyable.
          */
-        socket(const socket& src);
+        socket(const socket&) = delete;
 
         /**
          * The move constructor. 
@@ -56,14 +48,13 @@ namespace netlib {
          * The destructor.
          * closes the socket if its reference count drops to 0.
          */
-        ~socket();
+        virtual ~socket();
 
         /**
          * The copy assignment operator. 
-         * @param src source object.
-         * @return reference to this.
+         * Sockets are not copyable.
          */
-        socket& operator = (const socket& src);
+        socket& operator = (const socket&) = delete;
 
         /**
          * The move assignment operator. 
@@ -156,17 +147,8 @@ namespace netlib {
         size_t hash() const;
 
     private:
-        //internal reference-counted socket handle structure
-        struct data;
-
-        //data
-        data* m_data;
-
-        //increments the ref count
-        void ref() const;
-
-        //decrements the ref count and deletes the socket/data block if ref count reaches 0
-        void unref() const;
+        //handle
+        handle_type m_handle;
     };
 
 

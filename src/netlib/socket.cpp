@@ -7,87 +7,47 @@
 namespace netlib {
 
 
-    //internal reference-counted socket handle structure
-    struct socket::data {
-        //ref count
-        std::atomic<size_t> ref_count;
-
-        //handle
-        handle_type handle;
-
-        //constructor
-        data(handle_type h = invalid_handle) 
-            : ref_count{ 1 }, handle{ h }
-        {
-        }
-
-        //destructor; closes the socket
-        ~data() {
-            if (handle != invalid_handle) {
-                closesocket(handle);
-            }
-        }
-    };
-
-
     //the default constructor.
-    socket::socket(handle_type handle) 
-        : m_data(new data(handle))
+    socket::socket(handle_type handle)
+        : m_handle(handle)
     {
     }
 
 
     //closes the socket.
     socket::~socket() {
-        unref();
-    }
-
-
-    //The copy constructor.
-    socket::socket(const socket& src) 
-        : m_data(src.m_data)
-    {
-        ref();
+        if (m_handle != invalid_handle) {
+            closesocket(m_handle);
+        }
     }
 
 
     //The move constructor.
-    socket::socket(socket&& src) 
-        : m_data(src.m_data)
+    socket::socket(socket&& src)
+        : m_handle{ src.m_handle }
     {
-        src.m_data = new data{};
-    }
-
-
-    //The copy assignment operator.
-    socket& socket::operator = (const socket& src) {
-        src.ref();
-        unref();
-        m_data = src.m_data;
-        return *this;
+        src.m_handle = invalid_handle;
     }
 
 
     //The move assignment operator.
     socket& socket::operator = (socket&& src) {
-        if (&src != this) {
-            unref();
-            m_data = src.m_data;
-            src.m_data = new data{};
-        }
+        handle_type temp = src.m_handle;
+        src.m_handle = invalid_handle;
+        m_handle = temp;
         return *this;
     }
 
 
     //Returns the handle.
     socket::handle_type socket::handle() const { 
-        return m_data->handle;
+        return m_handle;
     }
 
 
     //if socket is initialized
     socket::operator bool() const {
-        return m_data->handle != invalid_handle;
+        return m_handle != invalid_handle;
     }
 
 
@@ -96,7 +56,7 @@ namespace netlib {
         sockaddr_storage s;
         int namelen = sizeof(s);
 
-        if (getsockname(m_data->handle, reinterpret_cast<sockaddr*>(&s), &namelen)) {
+        if (getsockname(m_handle, reinterpret_cast<sockaddr*>(&s), &namelen)) {
             throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
         }
 
@@ -114,7 +74,7 @@ namespace netlib {
 
     //compare sockets.
     int socket::compare(const socket& other) const {
-        return m_data->handle < other.m_data->handle ? -1 : m_data->handle > other.m_data->handle ? 1 : 0;
+        return m_handle < other.m_handle ? -1 : m_handle > other.m_handle ? 1 : 0;
     }
 
 
@@ -122,21 +82,7 @@ namespace netlib {
      * Returns the hash code for this object.
      */
     size_t socket::hash() const {
-        return std::hash<handle_type>()(m_data->handle);
-    }
-
-
-    //increments the ref count
-    void socket::ref() const {
-        m_data->ref_count.fetch_add(1, std::memory_order_relaxed);
-    }
-
-
-    //decrements the ref count and closes the socket/deletes the data block if ref count reaches 0
-    void socket::unref() const {
-        if (m_data->ref_count.fetch_sub(1, std::memory_order_acquire) == 1) {
-            delete m_data;
-        }
+        return std::hash<handle_type>()(m_handle);
     }
 
 

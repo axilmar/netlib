@@ -22,14 +22,14 @@ namespace netlib::tcp {
 
 
     //Accepts a socket connection.
-    client_socket server_socket::accept(socket_address& addr) {
+    std::shared_ptr<client_socket> server_socket::accept(socket_address& addr) {
         //accept
         int addrlen = sizeof(sockaddr_storage);
         uintptr_t handle = ::accept(this->handle(), reinterpret_cast<sockaddr*>(addr.data()), &addrlen);
 
         //if no error
         if (handle >= 0) {
-            return { handle };
+            return std::make_shared<client_socket>(handle);
         }
 
         //error

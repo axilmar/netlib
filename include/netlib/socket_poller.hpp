@@ -6,6 +6,7 @@
 #include <vector>
 #include <mutex>
 #include <atomic>
+#include <memory>
 #include "udp_server_socket.hpp"
 
 
@@ -61,10 +62,12 @@ namespace netlib {
             bool invalid_socket : 1;
         };
 
+        using socket_ptr = std::shared_ptr<socket>;
+
         /**
          * event callback type. 
          */
-        using event_callback_type = std::function<void(socket_poller&, socket&, event_type, status_flags)>;
+        using event_callback_type = std::function<void(socket_poller&, const socket_ptr&, event_type, status_flags)>;
 
         /**
          * poll status.
@@ -135,7 +138,7 @@ namespace netlib {
          * @return true if the entry is added, false if the poller is full.
          * @exception std::invalid_argument thrown if any of the parameters is invalid.
          */
-        bool add(const socket& s, event_type e, const event_callback_type& cb);
+        bool add(const socket_ptr& s, event_type e, const event_callback_type& cb);
 
         /**
          * Adds a socket for reading.
@@ -144,7 +147,7 @@ namespace netlib {
          * @return true if the entry is added, false if the poller is full.
          * @exception std::invalid_argument thrown if any of the parameters is invalid.
          */
-        bool add(const socket& s, const event_callback_type& cb) {
+        bool add(const socket_ptr& s, const event_callback_type& cb) {
             return add(s, event_type::read, cb);
         }
 
@@ -155,9 +158,9 @@ namespace netlib {
          * @return true if the entry is added, false if the poller is full.
          * @exception std::invalid_argument thrown if any of the parameters is invalid.
          */
-        template <class S, class F> bool add(const S& s, const F& cb) {
-            return add(static_cast<const socket&>(s), event_callback_type([cb](socket_poller& sp, socket& s, event_type e, status_flags f) {
-                return cb(sp, static_cast<S&>(s), e, f);
+        template <class S, class F> bool add(const std::shared_ptr<S>& s, const F& cb) {
+            return add(std::static_pointer_cast<socket>(s), event_callback_type([cb](socket_poller& sp, const socket_ptr& s, event_type e, status_flags f) {
+                return cb(sp, std::static_pointer_cast<S>(s), e, f);
                 }));
         }
 
@@ -167,14 +170,14 @@ namespace netlib {
          * @param e event type.
          * @exception std::invalid_argument thrown if any of the parameters is invalid.
          */
-        void remove(const socket& s, event_type e);
+        void remove(const socket_ptr& s, event_type e);
 
         /**
          * Removes all the entries for the given socket.
          * @param s socket.
          * @exception std::invalid_argument thrown if there is no entry for the given socket.
          */
-        void remove(const socket& s);
+        void remove(const socket_ptr& s);
 
         /**
          * Polls all the added sockets.
@@ -191,19 +194,19 @@ namespace netlib {
          * Sets the callback that is invoked when a socket entry is added.
          * @param f function to invoke for this callback.
          */
-        void set_on_socket_entry_added_callback(const std::function<void(const size_t entries_count, const socket& s, event_type e, const event_callback_type& cb)>& f);
+        void set_on_socket_entry_added_callback(const std::function<void(const size_t entries_count, const socket_ptr& s, event_type e, const event_callback_type& cb)>& f);
 
         /**
          * Sets the callback that is invoked when a socket entry is removed.
          * @param f function to invoke for this callback.
          */
-        void set_on_socket_entry_remmoved_callback(const std::function<void(const size_t entries_count, const socket& s, event_type e, const event_callback_type& cb)>& f);
+        void set_on_socket_entry_remmoved_callback(const std::function<void(const size_t entries_count, const socket_ptr& s, event_type e, const event_callback_type& cb)>& f);
 
         /**
          * Sets the callback that is invoked when a socket is removed.
          * @param f function to invoke for this callback.
          */
-        void set_on_socket_removed_callback(const std::function<void(const size_t entries_count, const socket& s)>& f);
+        void set_on_socket_removed_callback(const std::function<void(const size_t entries_count, const socket_ptr& s)>& f);
 
         /**
          * Stops the socket poller, if not stopped yet.
@@ -214,7 +217,7 @@ namespace netlib {
     private:
         //entry
         struct entry {
-            socket socket;
+            socket_ptr socket;
             event_type event;
             event_callback_type callback;
         };
@@ -226,7 +229,7 @@ namespace netlib {
         const size_t m_max_sockets;
 
         //internal socket used for waking up from poll.
-        udp::server_socket m_com_socket;
+        std::shared_ptr<udp::server_socket> m_com_socket;
 
         //socket address assigned to the com socket.
         socket_address m_com_socket_address;
@@ -244,9 +247,9 @@ namespace netlib {
         void set_entries_changed();
 
         //callbacks
-        std::function<void(const size_t entries_count, const socket& s, event_type e, const event_callback_type& cb)> m_on_socket_entry_added;
-        std::function<void(const size_t entries_count, const socket& s, event_type e, const event_callback_type& cb)> m_on_socket_entry_removed;
-        std::function<void(const size_t entries_count, const socket& s)> m_on_socket_removed;
+        std::function<void(const size_t entries_count, const socket_ptr& s, event_type e, const event_callback_type& cb)> m_on_socket_entry_added;
+        std::function<void(const size_t entries_count, const socket_ptr& s, event_type e, const event_callback_type& cb)> m_on_socket_entry_removed;
+        std::function<void(const size_t entries_count, const socket_ptr& s)> m_on_socket_removed;
 
         //data used for polling
         std::vector<entry> m_poll_entries;

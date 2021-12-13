@@ -338,10 +338,10 @@ static void test_tcp_sockets() {
             try {
                 tcp::server_socket server(server_address);
                 socket_address client_address;
-                tcp::client_socket client_socket = server.accept(client_address);
+                std::shared_ptr<tcp::client_socket> client_socket = server.accept(client_address);
                 std::vector<char> buffer;
                 for (size_t i = 0; i < message_count; ++i) {
-                    client_socket.receive(buffer);
+                    client_socket->receive(buffer);
                     std::string str(buffer.begin(), buffer.end());
                     check(str == message);
                 }
@@ -443,11 +443,11 @@ static void test_udp_socket_polling() {
                 socket_poller_thread poller;
 
                 //server callback
-                auto callback = [&](socket_poller& sp, udp::server_socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
+                auto callback = [&](socket_poller& sp, const std::shared_ptr<udp::server_socket>& s, socket_poller::event_type e, socket_poller::status_flags f) {
                     try {
                         std::vector<char> buffer;
                         socket_address src;
-                        s.receive(buffer, src, 256);
+                        s->receive(buffer, src, 256);
                         std::string str{ buffer.begin(), buffer.end() };
                         check(str == message);
                         ++server_message_count;
@@ -461,7 +461,7 @@ static void test_udp_socket_polling() {
 
                 //add server sockets
                 for (size_t i = 0; i < server_socket_count; ++i) {
-                    poller.add(udp::server_socket{ ssa[i] }, callback);
+                    poller.add(std::make_shared<udp::server_socket>(ssa[i]), callback);
                 }
 
                 //poll until stopped
@@ -542,11 +542,11 @@ static void test_tcp_socket_polling() {
         std::thread server_thread{ [&, &ssa = server_socket_addresses]() {
             try {
                 //server receive callback
-                auto receive_callback = [&](socket_poller& sp, tcp::client_socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
+                auto receive_callback = [&](socket_poller& sp, const std::shared_ptr<tcp::client_socket>& s, socket_poller::event_type e, socket_poller::status_flags f) {
                     try {
                         std::vector<char> buffer;
                         socket_address src;
-                        if (!s.receive(buffer)) {
+                        if (!s->receive(buffer)) {
                             return;
                         }
                         std::string str{ buffer.begin(), buffer.end() };
@@ -561,23 +561,23 @@ static void test_tcp_socket_polling() {
                 };
 
                 //client sockets of server
-                std::vector<tcp::client_socket> clients;
+                std::vector<std::shared_ptr<tcp::client_socket>> clients;
 
                 //reserve space upfront so as that the clients vector is not resized while the sockets are being used
                 clients.reserve(client_count);
 
                 //server accept callback
-                auto accept_callback = [&](socket_poller& sp, tcp::server_socket& s, socket_poller::event_type e, socket_poller::status_flags f) {
+                auto accept_callback = [&](socket_poller& sp, const std::shared_ptr<tcp::server_socket>& s, socket_poller::event_type e, socket_poller::status_flags f) {
                     try {
                         //accept client
                         socket_address src;
-                        tcp::client_socket client_socket = s.accept(src);
+                        std::shared_ptr<tcp::client_socket> client_socket = s->accept(src);
 
                         //keep the socket
-                        clients.push_back(std::move(client_socket));
+                        clients.push_back(client_socket);
 
                         //add the socket to the socket poller
-                        sp.add(clients.back(), receive_callback);
+                        sp.add(client_socket, receive_callback);
                     }
                     catch (const std::exception&) {
                     }
@@ -588,7 +588,7 @@ static void test_tcp_socket_polling() {
 
                 //add the server sockets
                 for (size_t i = 0; i < server_socket_count; ++i) {
-                    poller.add(tcp::server_socket{ ssa[i] }, accept_callback);
+                    poller.add(std::make_shared<tcp::server_socket>(ssa[i]), accept_callback);
                 }
 
                 //poll until stopped

@@ -36,17 +36,17 @@ namespace netlib {
     //the constructor.
     socket_poller::socket_poller(size_t max_sockets)
         : m_max_sockets(max_sockets + 1) //account for the com socket
-        , m_com_socket(socket_address(ip_address::ip4::loopback, 0))
-        , m_com_socket_address(m_com_socket.bound_address())
+        , m_com_socket(std::make_shared<udp::server_socket>(socket_address(ip_address::ip4::loopback, 0)))
+        , m_com_socket_address(m_com_socket->bound_address())
         , m_entries_changed{}
         , m_stop{}
         , m_poll_counter{0}
     {
         //add entry for the internal com socket.
-        m_entries.push_back(entry{ m_com_socket, event_type::read, [](socket_poller&, socket& s, event_type, status_flags) {
+        m_entries.push_back(entry{ m_com_socket, event_type::read, [](socket_poller&, const socket_ptr& s, event_type, status_flags) {
             std::vector<char> buffer;
             socket_address src;
-            static_cast<udp::server_socket&>(s).receive(buffer, src, 0);
+            std::static_pointer_cast<udp::server_socket>(s)->receive(buffer, src, 0);
             } });
     }
 
@@ -58,7 +58,7 @@ namespace netlib {
 
 
     //add entry.
-    bool socket_poller::add(const socket& s, event_type e, const event_callback_type& cb) {
+    bool socket_poller::add(const socket_ptr& s, event_type e, const event_callback_type& cb) {
         //check the socket
         if (!s) {
             throw std::invalid_argument("Invalid socket.");
@@ -105,7 +105,7 @@ namespace netlib {
 
 
     //remove entry
-    void socket_poller::remove(const socket& s, event_type e) {
+    void socket_poller::remove(const socket_ptr& s, event_type e) {
         std::lock_guard lock(m_mutex);
 
         //locate the entry
@@ -139,7 +139,7 @@ namespace netlib {
 
 
     //remove all entries.
-    void socket_poller::remove(const socket& s) {
+    void socket_poller::remove(const socket_ptr& s) {
         std::lock_guard lock(m_mutex);
 
         //find and remove entries; iterate backwards so as that index is not invalidated
@@ -197,7 +197,7 @@ namespace netlib {
                 for (size_t i = 0; i < m_entries.size(); ++i) {
                     m_poll_entries[i] = m_entries[i];
                     m_poll_fds[i].events = m_entries[i].event == event_type::read ? POLLRDNORM : POLLWRNORM;
-                    m_poll_fds[i].fd = m_entries[i].socket.handle();
+                    m_poll_fds[i].fd = m_entries[i].socket->handle();
                 }
             }
         }
@@ -236,21 +236,21 @@ namespace netlib {
 
 
     //Sets the callback that is invoked when a socket entry is added.
-    void socket_poller::set_on_socket_entry_added_callback(const std::function<void(const size_t entries_count, const socket& s, event_type e, const event_callback_type& cb)>& f) {
+    void socket_poller::set_on_socket_entry_added_callback(const std::function<void(const size_t entries_count, const socket_ptr& s, event_type e, const event_callback_type& cb)>& f) {
         std::lock_guard lock(m_mutex);
         m_on_socket_entry_added = f;
     }
 
 
     //Sets the callback that is invoked when a socket entry is removed.
-    void socket_poller::set_on_socket_entry_remmoved_callback(const std::function<void(const size_t entries_count, const socket& s, event_type e, const event_callback_type& cb)>& f) {
+    void socket_poller::set_on_socket_entry_remmoved_callback(const std::function<void(const size_t entries_count, const socket_ptr& s, event_type e, const event_callback_type& cb)>& f) {
         std::lock_guard lock(m_mutex);
         m_on_socket_entry_removed = f;
     }
 
 
     //Sets the callback that is invoked when a socket is removed.
-    void socket_poller::set_on_socket_removed_callback(const std::function<void(const size_t entries_count, const socket& s)>& f) {
+    void socket_poller::set_on_socket_removed_callback(const std::function<void(const size_t entries_count, const socket_ptr& s)>& f) {
         std::lock_guard lock(m_mutex);
         m_on_socket_removed = f;
     }
@@ -267,19 +267,14 @@ namespace netlib {
             
             m_stop = true;
         }
-        m_com_socket.send(std::vector<char>(), m_com_socket_address);
+        m_com_socket->send(std::vector<char>(), m_com_socket_address);
     }
-
-
-    ///////////////////////////////////////////////////////////////////////////
-    // PRIVATE
-    ///////////////////////////////////////////////////////////////////////////
 
 
     //sets the entries as changed
     void socket_poller::set_entries_changed() {
         m_entries_changed = true;
-        m_com_socket.send(std::vector<char>(), m_com_socket_address);
+        m_com_socket->send(std::vector<char>(), m_com_socket_address);
     }
 
 
