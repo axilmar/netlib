@@ -21,24 +21,9 @@ namespace netlib::unencrypted {
         }
 
         /**
-         * The move constructor.
-         * @param src source object.
-         */
-        socket(socket&& src) : m_handle(src.m_handle) {
-            src.m_handle = invalid_handle;
-        }
-
-        /**
          * Closes the underlying socket.
          */
         ~socket();
-
-        /**
-         * The move assignment operator.
-         * @param src source object.
-         * @return reference to this.
-         */
-        socket& operator = (socket&& src);
 
         /**
          * Returns the handle.

@@ -1,6 +1,6 @@
 #include "platform.hpp"
 #include "netlib/socket_poller.hpp"
-#include "numeric_cast.hpp"
+#include "netlib/numeric_cast.hpp"
 
 
 namespace netlib {

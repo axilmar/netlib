@@ -2,7 +2,7 @@
 #include <stdexcept>
 #include <system_error>
 #include "netlib/unencrypted_tcp_client_socket.hpp"
-#include "numeric_cast.hpp"
+#include "netlib/numeric_cast.hpp"
 #include "netlib/endianess.hpp"
 
 

@@ -39,10 +39,9 @@ namespace netlib {
 
         /**
          * The move constructor.
-         * Sockets are movable.
+         * Sockets are not movable.
          */
-        socket(socket&& src) {
-        }
+        socket(socket&&) = delete;
 
         /**
          * The destructor.
@@ -58,12 +57,10 @@ namespace netlib {
 
         /**
          * The move assignment operator.
-         * Sockets are movable.
+         * Sockets are not movable.
          * @return reference to this.
          */
-        socket& operator = (socket&& src) {
-            return *this;
-        }
+        socket& operator = (socket&&) = delete;
 
         /**
          * Returns the handle.

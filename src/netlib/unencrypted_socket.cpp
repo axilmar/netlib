@@ -11,13 +11,4 @@ namespace netlib::unencrypted {
     }
 
 
-    //The move assignment operator.
-    socket& socket::operator = (socket&& src) {
-        handle_type temp = src.m_handle;
-        src.m_handle = invalid_handle;
-        m_handle = temp;
-        return *this;
-    }
-
-
 } //namespace netlib::unencrypted
