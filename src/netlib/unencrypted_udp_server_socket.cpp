@@ -1,11 +1,11 @@
 #include "platform.hpp"
 #include <stdexcept>
 #include <system_error>
-#include "netlib/udp_server_socket.hpp"
+#include "netlib/unencrypted_udp_server_socket.hpp"
 #include "numeric_cast.hpp"
 
 
-namespace netlib::udp {
+namespace netlib::unencrypted::udp {
 
 
     //Constructor.

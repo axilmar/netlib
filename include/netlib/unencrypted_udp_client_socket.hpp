@@ -1,25 +1,24 @@
-#ifndef NETLIB_UDP_CLIENT_SOCKET_HPP
-#define NETLIB_UDP_CLIENT_SOCKET_HPP
+#ifndef NETLIB_UNENCRYPTED_UDP_CLIENT_SOCKET_HPP
+#define NETLIB_UNENCRYPTED_UDP_CLIENT_SOCKET_HPP
 
 
 #include <vector>
-#include "socket.hpp"
-#include "socket_address.hpp"
+#include "unencrypted_socket.hpp"
 
 
-namespace netlib::udp {
+namespace netlib::unencrypted::udp {
 
 
     /**
      * UDP client socket.
      */
-    class client_socket : public socket {
+    class client_socket : public unencrypted::socket {
     public:
         /**
          * The default constructor.
          * @param handle optional socket handle.
          */
-        client_socket(handle_type handle = invalid_handle) : socket(handle) {
+        client_socket(handle_type handle = invalid_handle) : unencrypted::socket(handle) {
         }
 
         /**
@@ -47,7 +46,7 @@ namespace netlib::udp {
     };
 
 
-} //namespace netlib::udp
+} //namespace netlib::unencrypted::udp
 
 
-#endif //NETLIB_UDP_CLIENT_SOCKET_HPP
+#endif //NETLIB_UNENCRYPTED_UDP_CLIENT_SOCKET_HPP

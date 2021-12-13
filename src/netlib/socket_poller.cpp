@@ -36,7 +36,7 @@ namespace netlib {
     //the constructor.
     socket_poller::socket_poller(size_t max_sockets)
         : m_max_sockets(max_sockets + 1) //account for the com socket
-        , m_com_socket(std::make_shared<udp::server_socket>(socket_address(ip_address::ip4::loopback, 0)))
+        , m_com_socket(std::make_shared<unencrypted::udp::server_socket>(socket_address(ip_address::ip4::loopback, 0)))
         , m_com_socket_address(m_com_socket->bound_address())
         , m_entries_changed{}
         , m_stop{}
@@ -46,7 +46,7 @@ namespace netlib {
         m_entries.push_back(entry{ m_com_socket, event_type::read, [](socket_poller&, const socket_ptr& s, event_type, status_flags) {
             std::vector<char> buffer;
             socket_address src;
-            std::static_pointer_cast<udp::server_socket>(s)->receive(buffer, src, 0);
+            std::static_pointer_cast<unencrypted::udp::server_socket>(s)->receive(buffer, src, 0);
             } });
     }
 

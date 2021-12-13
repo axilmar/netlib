@@ -7,47 +7,9 @@
 namespace netlib {
 
 
-    //the default constructor.
-    socket::socket(handle_type handle)
-        : m_handle(handle)
-    {
-    }
-
-
-    //closes the socket.
-    socket::~socket() {
-        if (m_handle != invalid_handle) {
-            closesocket(m_handle);
-        }
-    }
-
-
-    //The move constructor.
-    socket::socket(socket&& src)
-        : m_handle{ src.m_handle }
-    {
-        src.m_handle = invalid_handle;
-    }
-
-
-    //The move assignment operator.
-    socket& socket::operator = (socket&& src) {
-        handle_type temp = src.m_handle;
-        src.m_handle = invalid_handle;
-        m_handle = temp;
-        return *this;
-    }
-
-
-    //Returns the handle.
-    socket::handle_type socket::handle() const { 
-        return m_handle;
-    }
-
-
     //if socket is initialized
     socket::operator bool() const {
-        return m_handle != invalid_handle;
+        return handle() != invalid_handle;
     }
 
 
@@ -56,7 +18,7 @@ namespace netlib {
         sockaddr_storage s;
         int namelen = sizeof(s);
 
-        if (getsockname(m_handle, reinterpret_cast<sockaddr*>(&s), &namelen)) {
+        if (getsockname(handle(), reinterpret_cast<sockaddr*>(&s), &namelen)) {
             throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
         }
 
@@ -74,7 +36,7 @@ namespace netlib {
 
     //compare sockets.
     int socket::compare(const socket& other) const {
-        return m_handle < other.m_handle ? -1 : m_handle > other.m_handle ? 1 : 0;
+        return handle() < other.handle() ? -1 : handle() > other.handle() ? 1 : 0;
     }
 
 
@@ -82,7 +44,7 @@ namespace netlib {
      * Returns the hash code for this object.
      */
     size_t socket::hash() const {
-        return std::hash<handle_type>()(m_handle);
+        return std::hash<handle_type>()(handle());
     }
 
 

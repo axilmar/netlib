@@ -1,12 +1,12 @@
 #include "platform.hpp"
 #include <stdexcept>
 #include <system_error>
-#include "netlib/tcp_client_socket.hpp"
+#include "netlib/unencrypted_tcp_client_socket.hpp"
 #include "numeric_cast.hpp"
 #include "netlib/endianess.hpp"
 
 
-namespace netlib::tcp {
+namespace netlib::unencrypted::tcp {
 
 
     //send data

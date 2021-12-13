@@ -7,7 +7,7 @@
 #include <mutex>
 #include <atomic>
 #include <memory>
-#include "udp_server_socket.hpp"
+#include "unencrypted_udp_server_socket.hpp"
 
 
 /**
@@ -229,7 +229,7 @@ namespace netlib {
         const size_t m_max_sockets;
 
         //internal socket used for waking up from poll.
-        std::shared_ptr<udp::server_socket> m_com_socket;
+        std::shared_ptr<unencrypted::udp::server_socket> m_com_socket;
 
         //socket address assigned to the com socket.
         socket_address m_com_socket_address;

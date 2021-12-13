@@ -3,7 +3,6 @@
 
 
 #include <cstdint>
-#include <atomic>
 #include <functional>
 #include "socket_address.hpp"
 
@@ -28,45 +27,48 @@ namespace netlib {
 
         /**
          * The default constructor.
-         * @param handle optional socket handle.
          */
-        socket(handle_type handle = invalid_handle);
+        socket() {
+        }
 
         /**
-         * The copy constructor. 
+         * The copy constructor.
          * Sockets are not copyable.
          */
         socket(const socket&) = delete;
 
         /**
-         * The move constructor. 
-         * @param src source object.
+         * The move constructor.
+         * Sockets are movable.
          */
-        socket(socket&& src);
+        socket(socket&& src) {
+        }
 
         /**
          * The destructor.
-         * closes the socket if its reference count drops to 0.
          */
-        virtual ~socket();
+        virtual ~socket() {
+        }
 
         /**
-         * The copy assignment operator. 
+         * The copy assignment operator.
          * Sockets are not copyable.
          */
         socket& operator = (const socket&) = delete;
 
         /**
-         * The move assignment operator. 
-         * @param src source object.
+         * The move assignment operator.
+         * Sockets are movable.
          * @return reference to this.
          */
-        socket& operator = (socket&& src);
+        socket& operator = (socket&& src) {
+            return *this;
+        }
 
         /**
          * Returns the handle.
          */
-        handle_type handle() const;
+        virtual handle_type handle() const = 0;
 
         /**
          * Returns true if the socket is valid, false otherwise.
@@ -145,10 +147,6 @@ namespace netlib {
          * Returns the hash code for this object.
          */
         size_t hash() const;
-
-    private:
-        //handle
-        handle_type m_handle;
     };
 
 

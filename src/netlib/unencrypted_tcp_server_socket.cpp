@@ -1,10 +1,10 @@
 #include "platform.hpp"
 #include <stdexcept>
 #include <system_error>
-#include "netlib/tcp_server_socket.hpp"
+#include "netlib/unencrypted_tcp_server_socket.hpp"
 
 
-namespace netlib::tcp {
+namespace netlib::unencrypted::tcp {
 
 
     //Creates a socket, binds it to the given address, and listens for connections.

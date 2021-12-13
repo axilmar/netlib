@@ -6,9 +6,9 @@
 #include "testlib.hpp"
 #include "netlib/ip_address.hpp"
 #include "netlib/socket_address.hpp"
-#include "netlib/tcp_server_socket.hpp"
-#include "netlib/udp_server_socket.hpp"
-#include "netlib/udp_client_socket.hpp"
+#include "netlib/unencrypted_tcp_server_socket.hpp"
+#include "netlib/unencrypted_udp_server_socket.hpp"
+#include "netlib/unencrypted_udp_client_socket.hpp"
 #include "netlib/socket_poller_thread.hpp"
 
 
@@ -336,9 +336,9 @@ static void test_tcp_sockets() {
     test("tcp sockets", [&]() {
         std::thread server_thread([&]() {
             try {
-                tcp::server_socket server(server_address);
+                unencrypted::tcp::server_socket server(server_address);
                 socket_address client_address;
-                std::shared_ptr<tcp::client_socket> client_socket = server.accept(client_address);
+                std::shared_ptr<unencrypted::tcp::client_socket> client_socket = server.accept(client_address);
                 std::vector<char> buffer;
                 for (size_t i = 0; i < message_count; ++i) {
                     client_socket->receive(buffer);
@@ -353,7 +353,7 @@ static void test_tcp_sockets() {
 
         std::thread client_thread([&]() {
             try {
-                tcp::client_socket client_socket(server_address);
+                unencrypted::tcp::client_socket client_socket(server_address);
                 std::vector<char> buffer(message.begin(), message.end());
                 for (size_t i = 0; i < message_count; ++i) {
                     client_socket.send(buffer);
@@ -380,7 +380,7 @@ static void test_udp_sockets() {
     test("udp sockets", [&]() {
         std::thread server_thread([&]() {
             try {
-                udp::server_socket server_socket(server_address);
+                unencrypted::udp::server_socket server_socket(server_address);
                 server_started = true;
                 socket_address client_address;
                 std::vector<char> buffer;
@@ -400,7 +400,7 @@ static void test_udp_sockets() {
                 while (!server_started) {
                     std::this_thread::yield();
                 }
-                udp::client_socket client_socket(server_address);
+                unencrypted::udp::client_socket client_socket(server_address);
                 std::vector<char> buffer(message.begin(), message.end());
                 for (size_t i = 0; i < message_count; ++i) {
                     client_socket.send(buffer);
@@ -443,7 +443,7 @@ static void test_udp_socket_polling() {
                 socket_poller_thread poller;
 
                 //server callback
-                auto callback = [&](socket_poller& sp, const std::shared_ptr<udp::server_socket>& s, socket_poller::event_type e, socket_poller::status_flags f) {
+                auto callback = [&](socket_poller& sp, const std::shared_ptr<unencrypted::udp::server_socket>& s, socket_poller::event_type e, socket_poller::status_flags f) {
                     try {
                         std::vector<char> buffer;
                         socket_address src;
@@ -461,7 +461,7 @@ static void test_udp_socket_polling() {
 
                 //add server sockets
                 for (size_t i = 0; i < server_socket_count; ++i) {
-                    poller.add(std::make_shared<udp::server_socket>(ssa[i]), callback);
+                    poller.add(std::make_shared<unencrypted::udp::server_socket>(ssa[i]), callback);
                 }
 
                 //poll until stopped
@@ -490,7 +490,7 @@ static void test_udp_socket_polling() {
                     }
 
                     //client socket
-                    udp::client_socket client_socket(server_addr);
+                    unencrypted::udp::client_socket client_socket(server_addr);
 
                     //buffer to send
                     std::vector<char> buffer(message.begin(), message.end());
@@ -542,7 +542,7 @@ static void test_tcp_socket_polling() {
         std::thread server_thread{ [&, &ssa = server_socket_addresses]() {
             try {
                 //server receive callback
-                auto receive_callback = [&](socket_poller& sp, const std::shared_ptr<tcp::client_socket>& s, socket_poller::event_type e, socket_poller::status_flags f) {
+                auto receive_callback = [&](socket_poller& sp, const std::shared_ptr<unencrypted::tcp::client_socket>& s, socket_poller::event_type e, socket_poller::status_flags f) {
                     try {
                         std::vector<char> buffer;
                         socket_address src;
@@ -561,17 +561,17 @@ static void test_tcp_socket_polling() {
                 };
 
                 //client sockets of server
-                std::vector<std::shared_ptr<tcp::client_socket>> clients;
+                std::vector<std::shared_ptr<unencrypted::tcp::client_socket>> clients;
 
                 //reserve space upfront so as that the clients vector is not resized while the sockets are being used
                 clients.reserve(client_count);
 
                 //server accept callback
-                auto accept_callback = [&](socket_poller& sp, const std::shared_ptr<tcp::server_socket>& s, socket_poller::event_type e, socket_poller::status_flags f) {
+                auto accept_callback = [&](socket_poller& sp, const std::shared_ptr<unencrypted::tcp::server_socket>& s, socket_poller::event_type e, socket_poller::status_flags f) {
                     try {
                         //accept client
                         socket_address src;
-                        std::shared_ptr<tcp::client_socket> client_socket = s->accept(src);
+                        std::shared_ptr<unencrypted::tcp::client_socket> client_socket = s->accept(src);
 
                         //keep the socket
                         clients.push_back(client_socket);
@@ -588,7 +588,7 @@ static void test_tcp_socket_polling() {
 
                 //add the server sockets
                 for (size_t i = 0; i < server_socket_count; ++i) {
-                    poller.add(std::make_shared<tcp::server_socket>(ssa[i]), accept_callback);
+                    poller.add(std::make_shared<unencrypted::tcp::server_socket>(ssa[i]), accept_callback);
                 }
 
                 //poll until stopped
@@ -608,7 +608,7 @@ static void test_tcp_socket_polling() {
             client_threads[i] = std::thread{ [&, sa = server_addr] () {
                 try {
                     //the client socket
-                    tcp::client_socket client_socket(sa);
+                    unencrypted::tcp::client_socket client_socket(sa);
 
                     //buffer to send
                     std::vector<char> buffer(message.begin(), message.end());

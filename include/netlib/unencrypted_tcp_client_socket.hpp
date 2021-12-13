@@ -1,25 +1,24 @@
-#ifndef NETLIB_TCP_CLIENT_SOCKET_HPP
-#define NETLIB_TCP_CLIENT_SOCKET_HPP
+#ifndef NETLIB_UNENCRYPTED_TCP_CLIENT_SOCKET_HPP
+#define NETLIB_UNENCRYPTED_TCP_CLIENT_SOCKET_HPP
 
 
 #include <vector>
-#include "socket.hpp"
-#include "socket_address.hpp"
+#include "unencrypted_socket.hpp"
 
 
-namespace netlib::tcp {
+namespace netlib::unencrypted::tcp {
 
 
     /**
      * TCP client socket.
      */
-    class client_socket : public socket {
+    class client_socket : public unencrypted::socket {
     public:
         /**
          * The default constructor.
          * @param handle optional socket handle.
          */
-        client_socket(handle_type handle = invalid_handle) : socket(handle) {
+        client_socket(handle_type handle = invalid_handle) : unencrypted::socket(handle) {
         }
 
         /**
@@ -46,7 +45,7 @@ namespace netlib::tcp {
     }; 
 
 
-} //namespace netlib::tcp
+} //namespace netlib::unencrypted::tcp
 
 
-#endif //NETLIB_TCP_CLIENT_SOCKET_HPP
+#endif //NETLIB_UNENCRYPTED_TCP_CLIENT_SOCKET_HPP
