@@ -36,7 +36,7 @@ namespace netlib {
 
         /**
          * The default constructor.
-         * @param handle socket handle.
+         * @param handle optional socket handle.
          */
         socket(handle_type handle = invalid_handle);
 

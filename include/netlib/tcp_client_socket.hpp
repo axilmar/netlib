@@ -17,8 +17,9 @@ namespace netlib::tcp {
     public:
         /**
          * The default constructor.
+         * @param handle optional socket handle.
          */
-        client_socket() : socket() {
+        client_socket(handle_type handle = invalid_handle) : socket(handle) {
         }
 
         /**
@@ -42,10 +43,6 @@ namespace netlib::tcp {
          * @exception std::system_error thrown if there was an error.
          */
         bool receive(std::vector<char>& data);
-
-    private:
-        client_socket(handle_type handle) : socket(handle) {}
-        friend class server_socket;
     }; 
 
 

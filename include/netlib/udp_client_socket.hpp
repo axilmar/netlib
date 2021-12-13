@@ -17,8 +17,9 @@ namespace netlib::udp {
     public:
         /**
          * The default constructor.
+         * @param handle optional socket handle.
          */
-        client_socket() : socket() {
+        client_socket(handle_type handle = invalid_handle) : socket(handle) {
         }
 
         /**

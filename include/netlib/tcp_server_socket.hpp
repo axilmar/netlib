@@ -15,8 +15,9 @@ namespace netlib::tcp {
     public:
         /**
          * The default constructor.
+         * @param handle optional socket handle.
          */
-        server_socket() : socket() {
+        server_socket(handle_type handle = invalid_handle) : socket(handle) {
         }
 
         /**
