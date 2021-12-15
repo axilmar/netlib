@@ -4,6 +4,7 @@
 #include "netlib/unencrypted_tcp_client_socket.hpp"
 #include "netlib/numeric_cast.hpp"
 #include "netlib/endianess.hpp"
+#include "netlib/message_size_t.hpp"
 
 
 namespace netlib::unencrypted::tcp {
@@ -75,7 +76,7 @@ namespace netlib::unencrypted::tcp {
 
     //Sends data to the server.
     bool client_socket::send(const std::vector<char>& data) {
-        size_t size = data.size();
+        message_size_t size = numeric_cast<message_size_t>(data.size());
 
         //send size
         set_endianess(size);
@@ -90,7 +91,7 @@ namespace netlib::unencrypted::tcp {
 
     //Receives data from the server.
     bool client_socket::receive(std::vector<char>& data) {
-        size_t size;
+        message_size_t size;
 
         //receive size
         if (!_receive(handle(), reinterpret_cast<char*>(&size), sizeof(size))) {

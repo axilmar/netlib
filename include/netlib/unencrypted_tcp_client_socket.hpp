@@ -32,6 +32,7 @@ namespace netlib::unencrypted::tcp {
          * @param data data to send.
          * @return true on success, false if the socket is closed.
          * @exception std::system_error thrown if there was an error.
+         * @exception bad_narrow_cast thrown if the buffer contains more bytes than what message_size_t can store.
          */
         bool send(const std::vector<char>& data);
 
