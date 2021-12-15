@@ -29,7 +29,7 @@ namespace netlib::unencrypted::tcp {
             }
 
             //error
-            throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+            throw std::system_error(get_last_error_number(), std::system_category());
 
         } while (len > 0);
 
@@ -56,7 +56,7 @@ namespace netlib::unencrypted::tcp {
             }
 
             //error
-            throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+            throw std::system_error(get_last_error_number(), std::system_category());
 
         } while (len > 0);
 
@@ -69,7 +69,7 @@ namespace netlib::unencrypted::tcp {
         : socket(::socket(addr.type(), SOCK_STREAM, IPPROTO_TCP))
     {
         if (::connect(handle(), reinterpret_cast<const sockaddr*>(addr.data()), sizeof(sockaddr_storage))) {
-            throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+            throw std::system_error(get_last_error_number(), std::system_category());
         }
     }
 

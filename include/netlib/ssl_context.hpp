@@ -35,8 +35,7 @@ namespace netlib::ssl {
          * The constructor.
          * @param ctx context.
          */
-        context(const std::shared_ptr<ssl_ctx_st>& ctx) : m_ctx(ctx) {
-        }
+        context(const std::shared_ptr<ssl_ctx_st>& ctx);
 
     private:
         std::shared_ptr<ssl_ctx_st> m_ctx;

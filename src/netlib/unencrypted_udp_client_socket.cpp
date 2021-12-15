@@ -13,7 +13,7 @@ namespace netlib::unencrypted::udp {
         : socket(::socket(addr.type(), SOCK_DGRAM, IPPROTO_UDP))
     {
         if (::connect(handle(), reinterpret_cast<const sockaddr*>(addr.data()), sizeof(sockaddr_storage))) {
-            throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+            throw std::system_error(get_last_error_number(), std::system_category());
         }
     }
 
@@ -34,7 +34,7 @@ namespace netlib::unencrypted::udp {
         }
 
         //error
-        throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+        throw std::system_error(get_last_error_number(), std::system_category());
     }
 
 
@@ -58,7 +58,7 @@ namespace netlib::unencrypted::udp {
         }
 
         //error
-        throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+        throw std::system_error(get_last_error_number(), std::system_category());
     }
 
 

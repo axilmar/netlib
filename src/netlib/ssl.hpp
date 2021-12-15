@@ -21,6 +21,10 @@ namespace netlib::ssl {
     ssl_io_result ssl_handle_io_error(SSL* ssl, int bytes);
 
 
+    //does shutdown/SSL_free/close socket.
+    void SSL_close(SSL* ssl);
+
+
 } //namespace netlib::ssl
 
 

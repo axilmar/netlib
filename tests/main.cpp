@@ -348,7 +348,7 @@ static void test_tcp_sockets() {
                 }
             }
             catch (const std::exception& ex) {
-                printf("\nserver exception: %s\n", ex.what());
+                fail_test_with_exception(ex);
             }
             });
 
@@ -361,7 +361,7 @@ static void test_tcp_sockets() {
                 }
             }
             catch (const std::exception& ex) {
-                printf("\nclient exception: %s\n", ex.what());
+                fail_test_with_exception(ex);
             }
             });
 
@@ -392,7 +392,7 @@ static void test_udp_sockets() {
                 }
             }
             catch (const std::exception& ex) {
-                printf("\nserver exception: %s\n", ex.what());
+                fail_test_with_exception(ex);
             }
             });
 
@@ -408,7 +408,7 @@ static void test_udp_sockets() {
                 }
             }
             catch (const std::exception& ex) {
-                printf("\nclient exception: %s\n", ex.what());
+                fail_test_with_exception(ex);
             }
             });
 
@@ -456,7 +456,8 @@ static void test_udp_socket_polling() {
                             sp.stop();
                         }
                     }
-                    catch (const std::exception&) {
+                    catch (const std::exception& ex) {
+                        fail_test_with_exception(ex);
                     }
                 };
 
@@ -470,7 +471,7 @@ static void test_udp_socket_polling() {
                 poller.join();
             }
             catch (const std::exception& ex) {
-                printf("server exception: %s\n", ex.what());
+                fail_test_with_exception(ex);
             }
             } };
 
@@ -503,7 +504,7 @@ static void test_udp_socket_polling() {
                     }
                 }
                 catch (const std::exception& ex) {
-                    printf("client exception: %s\n", ex.what());
+                    fail_test_with_exception(ex);
                 }
                 } };
         }
@@ -557,7 +558,8 @@ static void test_tcp_socket_polling() {
                             sp.stop();
                         }
                     }
-                    catch (const std::exception&) {
+                    catch (const std::exception& ex) {
+                        fail_test_with_exception(ex);
                     }
                 };
 
@@ -580,7 +582,8 @@ static void test_tcp_socket_polling() {
                         //add the socket to the socket poller
                         sp.add(client_socket, receive_callback);
                     }
-                    catch (const std::exception&) {
+                    catch (const std::exception& ex) {
+                        fail_test_with_exception(ex);
                     }
                 };
 
@@ -596,7 +599,7 @@ static void test_tcp_socket_polling() {
                 poller.join();
             }
             catch (const std::exception& ex) {
-                printf("server exception: %s\n", ex.what());
+                fail_test_with_exception(ex);
             }
             } };
 
@@ -621,7 +624,7 @@ static void test_tcp_socket_polling() {
                     }
                 }
                 catch (const std::exception& ex) {
-                    printf("client exception: %s\n", ex.what());
+                    fail_test_with_exception(ex);
                 }
                 } };
         }
@@ -686,7 +689,7 @@ static void test_ssl_tcp_sockets() {
 
 
 static void test_ssl_tcp_socket_polling() {
-    test("tcp socket polling", [&]() {
+    test("ssl tcp socket polling", [&]() {
         static constexpr size_t server_socket_count = 10;
         static constexpr size_t client_count = 10;
         static constexpr size_t per_client_message_count = 10;
@@ -719,7 +722,8 @@ static void test_ssl_tcp_socket_polling() {
                             sp.stop();
                         }
                     }
-                    catch (const std::exception&) {
+                    catch (const std::exception& ex) {
+                        fail_test_with_exception(ex);
                     }
                 };
 
@@ -742,7 +746,8 @@ static void test_ssl_tcp_socket_polling() {
                         //add the socket to the socket poller
                         sp.add(client_socket, receive_callback);
                     }
-                    catch (const std::exception&) {
+                    catch (const std::exception& ex) {
+                        fail_test_with_exception(ex);
                     }
                 };
 
@@ -759,7 +764,7 @@ static void test_ssl_tcp_socket_polling() {
                 poller.join();
             }
             catch (const std::exception& ex) {
-                printf("server exception: %s\n", ex.what());
+                fail_test_with_exception(ex);
             }
             } };
 
@@ -785,7 +790,7 @@ static void test_ssl_tcp_socket_polling() {
                     }
                 }
                 catch (const std::exception& ex) {
-                    printf("client exception: %s\n", ex.what());
+                    fail_test_with_exception(ex);
                 }
                 } };
         }

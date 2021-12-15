@@ -81,7 +81,7 @@ namespace netlib {
             if (inet_ntop(AF_INET, &reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_addr, buffer, sizeof(buffer))) {
                 return std::string(buffer) + ':' + std::to_string(ntohs(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_port));
             }
-            throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+            throw std::system_error(get_last_error_number(), std::system_category());
 
         case AF_INET6:
             if (inet_ntop(AF_INET6, &reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_addr, buffer, sizeof(buffer))) {
@@ -92,7 +92,7 @@ namespace netlib {
                        "]:" + 
                        std::to_string(ntohs(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_port));
             }
-            throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+            throw std::system_error(get_last_error_number(), std::system_category());
         }
 
         throw std::logic_error("Invalid address family.");

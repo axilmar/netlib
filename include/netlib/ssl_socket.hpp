@@ -19,9 +19,28 @@ namespace netlib::ssl {
     class socket : public netlib::socket {
     public:
         /**
+         * Closes the socket. 
+         */
+        ~socket();
+
+        /**
          * Returns the handle.
          */
         handle_type handle() const override;
+
+        /**
+         * Returns the pointer to the SSL context.
+         */
+        const std::shared_ptr<ssl_ctx_st>& ctx() const {
+            return m_ctx;
+        }
+
+        /**
+         * Returns the connection pointer.
+         */
+        const std::shared_ptr<ssl_st>& ssl() const {
+            return m_ssl;
+        }
 
     protected:
         /**
@@ -30,13 +49,6 @@ namespace netlib::ssl {
          * @param ssl connection pointer.
          */
         socket(const std::shared_ptr<ssl_ctx_st>& ctx = nullptr, const std::shared_ptr<ssl_st>& ssl = nullptr) : m_ctx(ctx), m_ssl(ssl) {
-        }
-
-        /**
-         * Returns the connection pointer.
-         */
-        const std::shared_ptr<ssl_st>& ssl() const {
-            return m_ssl;
         }
 
     private:

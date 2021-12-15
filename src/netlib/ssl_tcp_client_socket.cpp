@@ -70,16 +70,16 @@ namespace netlib::ssl::tcp {
 
         //failure to create the socket
         if (sock < 0) {
-            throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+            throw std::system_error(get_last_error_number(), std::system_category());
         }
 
         //connect to the server; if error, throw exception
         if (::connect(sock, reinterpret_cast<const sockaddr*>(server_addr.data()), sizeof(sockaddr_storage))) {
-            throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+            throw std::system_error(get_last_error_number(), std::system_category());
         }
 
         //crreate the ssl
-        std::shared_ptr<SSL> ssl{SSL_new(context.ctx().get()), SSL_free};
+        std::shared_ptr<SSL> ssl{SSL_new(context.ctx().get()), SSL_close};
 
         //connect the ssl and the socket
         SSL_set_fd(ssl.get(), numeric_cast<int>(sock));

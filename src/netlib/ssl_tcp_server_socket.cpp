@@ -23,17 +23,17 @@ namespace netlib::ssl::tcp {
 
         //failure to create the socket
         if (sock < 0) {
-            throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+            throw std::system_error(get_last_error_number(), std::system_category());
         }
 
         //bind the socket; if error, throw exception
         if (::bind(sock, reinterpret_cast<const sockaddr*>(addr.data()), sizeof(sockaddr_storage))) {
-            throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+            throw std::system_error(get_last_error_number(), std::system_category());
         }
 
         //put socket in listen mode
         if (::listen(sock, backlog ? backlog : SOMAXCONN)) {
-            throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+            throw std::system_error(get_last_error_number(), std::system_category());
         }
 
         //success
@@ -57,11 +57,11 @@ namespace netlib::ssl::tcp {
 
         //error
         if (handle < 0) {
-            throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+            throw std::system_error(get_last_error_number(), std::system_category());
         }
 
         //create ssl
-        std::shared_ptr<SSL> ssl{SSL_new(m_ctx.get()), SSL_free};
+        std::shared_ptr<SSL> ssl{SSL_new(m_ctx.get()), SSL_close};
 
         //bind the ssl and the client socket
         SSL_set_fd(ssl.get(), numeric_cast<int>(handle));

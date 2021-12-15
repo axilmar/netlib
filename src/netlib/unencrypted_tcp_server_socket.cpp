@@ -12,11 +12,11 @@ namespace netlib::unencrypted::tcp {
         : socket(::socket(addr.type(), SOCK_STREAM, IPPROTO_TCP))
     {
         if (::bind(handle(), reinterpret_cast<const sockaddr*>(addr.data()), sizeof(sockaddr_storage))) {
-            throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+            throw std::system_error(get_last_error_number(), std::system_category());
         }
 
         if (::listen(handle(), backlog ? backlog : SOMAXCONN)) {
-            throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+            throw std::system_error(get_last_error_number(), std::system_category());
         }
     }
 
@@ -33,7 +33,7 @@ namespace netlib::unencrypted::tcp {
         }
 
         //error
-        throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+        throw std::system_error(get_last_error_number(), std::system_category());
     }
 
 

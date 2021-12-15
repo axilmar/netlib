@@ -140,7 +140,7 @@ namespace netlib {
             //get localhost name
             localhost_name[HOST_NAME_MAX] = '\0';
             if (gethostname(localhost_name, sizeof(localhost_name))) {
-                throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+                throw std::system_error(get_last_error_number(), std::system_category());
             }
             hostname = localhost_name;
         }
@@ -149,7 +149,7 @@ namespace netlib {
         addrinfo* ai;
         int error = getaddrinfo(hostname, nullptr, nullptr, &ai);
         if (error) {
-            throw std::system_error(error, std::system_category(), get_error_message(error));
+            throw std::system_error(error, std::system_category());
         }
 
         addrinfo* fai = nullptr;

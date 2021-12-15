@@ -19,7 +19,7 @@ namespace netlib {
         int namelen = sizeof(s);
 
         if (getsockname(handle(), reinterpret_cast<sockaddr*>(&s), &namelen)) {
-            throw std::system_error(get_last_error_number(), std::system_category(), get_last_error_message());
+            throw std::system_error(get_last_error_number(), std::system_category());
         }
 
         switch (s.ss_family) {
