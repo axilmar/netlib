@@ -9,57 +9,67 @@ namespace netlib::unencrypted::udp {
 
 
     //Constructor.
-    server_socket::server_socket(const socket_address& addr) 
-        : socket(::socket(addr.type(), SOCK_DGRAM, IPPROTO_UDP))
+    server_socket::server_socket(const socket_address& server_addr) 
+        : socket(::socket(server_addr.type(), SOCK_DGRAM, 0))
     {
-        if (::bind(handle(), reinterpret_cast<const sockaddr*>(addr.data()), sizeof(sockaddr_storage))) {
+        //bind
+        if (::bind(handle(), reinterpret_cast<const sockaddr*>(server_addr.data()), sizeof(sockaddr_storage))) {
             throw std::system_error(get_last_error_number(), std::system_category());
         }
     }
 
 
-    //Sends data.
-    bool server_socket::send(const std::vector<char>& data, const socket_address& dst) {
-        //send
-        int s = ::sendto(handle(), data.data(), numeric_cast<int>(data.size()), 0, reinterpret_cast<const sockaddr*>(dst.data()), sizeof(sockaddr_storage));
+    //mimic 'accept', as in tcp
+    std::shared_ptr<client_socket> server_socket::accept(socket_address& client_addr) {
+        //receive data
+        RECEIVE:
+        char buf;
+        int fromlen = sizeof(sockaddr_storage);
+        int s = recvfrom(handle(), &buf, sizeof(buf), 0, reinterpret_cast<sockaddr*>(client_addr.data()), &fromlen);
 
-        //success
-        if (s == data.size()) {
-            return true;
+        //if error
+        if (s <= 0) {
+            if (is_socket_closed_error(get_last_error_number())) {
+                return nullptr;
+            }
+            throw std::system_error(get_last_error_number(), std::system_category());
         }
 
-        //if closed
-        if (is_socket_closed_error(get_last_error_number())) {
-            return false;
+        //if received byte is not 0, ignore the message
+        if (buf != 0) {
+            goto RECEIVE;
         }
 
-        //error
-        throw std::system_error(get_last_error_number(), std::system_category());
-    }
+        //create new socket for the connection
+        handle_type client_socket = ::socket(client_addr.type(), SOCK_DGRAM, IPPROTO_UDP);
 
-
-    //Receives data.
-    bool server_socket::receive(std::vector<char>& data, socket_address& src, uint16_t max_message_size) {
-        //resize data for max udp packet
-        data.resize(max_message_size);
-
-        //send
-        int srclen = sizeof(sockaddr_storage);
-        int s = ::recvfrom(handle(), data.data(), numeric_cast<int>(data.size()), 0, reinterpret_cast<sockaddr*>(src.data()), &srclen);
-
-        //success
-        if (s >= 0) {
-            data.resize(s);
-            return true;
+        //error creating the client socket
+        if (client_socket < 0) {
+            throw std::system_error(get_last_error_number(), std::system_category());
         }
 
-        //if closed
-        if (is_socket_closed_error(get_last_error_number())) {
-            return false;
+        //bind the client socket to another server address, same ip, random port
+        socket_address bound_addr = bound_address();
+        socket_address server_addr(bound_addr.address(), 0);
+        if (::bind(client_socket, reinterpret_cast<const sockaddr*>(server_addr.data()), sizeof(sockaddr_storage))) {
+            throw std::system_error(get_last_error_number(), std::system_category());
         }
 
-        //error
-        throw std::system_error(get_last_error_number(), std::system_category());
+        //connect the client socket to the client address so as that 
+        //received messages are sent to the client socket,
+        //and not to this server socket
+        if (::connect(client_socket, reinterpret_cast<const sockaddr*>(client_addr.data()), sizeof(sockaddr_storage))) {
+            throw std::system_error(get_last_error_number(), std::system_category());
+        }
+
+        //send an acknowledgement to the client;
+        //instead of sending an acknowledgement value, send the address the socket was bound to on this end,
+        //allowing the client to connect the socket to this address
+        server_addr = socket::bound_address(client_socket);
+        ::send(client_socket, server_addr.data(), sizeof(sockaddr_storage), 0);
+
+        //success; create client socket object
+        return std::make_shared<udp::client_socket>(client_socket);
     }
 
 

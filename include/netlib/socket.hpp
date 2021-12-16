@@ -73,9 +73,28 @@ namespace netlib {
         explicit operator bool() const;
 
         /**
+         * Returns the address the given socket is connected to.
+         */
+        static socket_address peer_address(handle_type socket);
+
+        /**
+         * Returns the address this socket is connected to.
+         */
+        socket_address peer_address() const {
+            return peer_address(handle());
+        }
+
+        /**
+         * Returns the address the given socket is bound to.
+         */
+        static socket_address bound_address(handle_type socket);
+
+        /**
          * Returns the address this socket is bound to.
          */
-        socket_address bound_address() const;
+        socket_address bound_address() const {
+            return bound_address(handle());
+        }
 
         /**
          * Compares the socket handles.

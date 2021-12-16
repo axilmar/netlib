@@ -13,12 +13,33 @@ namespace netlib {
     }
 
 
-    //Returns the address this socket is bound to.
-    socket_address socket::bound_address() const {
+    //Returns the address this socket is connected to.
+    socket_address socket::peer_address(handle_type socket) {
         sockaddr_storage s;
         int namelen = sizeof(s);
 
-        if (getsockname(handle(), reinterpret_cast<sockaddr*>(&s), &namelen)) {
+        if (getpeername(socket, reinterpret_cast<sockaddr*>(&s), &namelen)) {
+            throw std::system_error(get_last_error_number(), std::system_category());
+        }
+
+        switch (s.ss_family) {
+        case AF_INET:
+            return socket_address(ntohl(reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(&s)->sin_addr)), ntohs(reinterpret_cast<const sockaddr_in*>(&s)->sin_port));
+
+        case AF_INET6:
+            return socket_address({ reinterpret_cast<const std::array<char, 16>&>(reinterpret_cast<const sockaddr_in6*>(&s)->sin6_addr), reinterpret_cast<const sockaddr_in6*>(&s)->sin6_scope_id }, ntohs(reinterpret_cast<const sockaddr_in*>(&s)->sin_port));
+        }
+
+        throw std::logic_error("Invalid address family.");
+    }
+
+
+    //Returns the address this socket is bound to.
+    socket_address socket::bound_address(handle_type socket) {
+        sockaddr_storage s;
+        int namelen = sizeof(s);
+
+        if (getsockname(socket, reinterpret_cast<sockaddr*>(&s), &namelen)) {
             throw std::system_error(get_last_error_number(), std::system_category());
         }
 

@@ -33,21 +33,44 @@ namespace netlib {
     };
 
 
+    //creates the com socket
+    static socket::handle_type create_com_socket() {
+        //create socket
+        socket::handle_type s = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        
+        //handle error
+        if (s < 0) {
+            throw std::system_error(get_last_error_number(), std::system_category());
+        }
+        
+        //bound address
+        socket_address addr(ip_address::ip4::loopback, 0);
+
+        //bind
+        if (::bind(s, reinterpret_cast<const sockaddr*>(addr.data()), sizeof(sockaddr_storage))) {
+            throw std::system_error(get_last_error_number(), std::system_category());
+        }
+
+        //connect
+        socket_address bound_addr = socket::bound_address(s);
+        if (::connect(s, reinterpret_cast<const sockaddr*>(bound_addr.data()), sizeof(sockaddr_storage))) {
+            throw std::system_error(get_last_error_number(), std::system_category());
+        }
+
+        //success
+        return s;
+    }
+
+
     //the constructor.
     socket_poller::socket_poller(size_t max_sockets)
         : m_max_sockets(max_sockets + 1) //account for the com socket
-        , m_com_socket(std::make_shared<unencrypted::udp::server_socket>(socket_address(ip_address::ip4::loopback, 0)))
-        , m_com_socket_address(m_com_socket->bound_address())
+        , m_com_socket(create_com_socket())
+        , m_entries(1) //account for the com socket
         , m_entries_changed{}
         , m_stop{}
         , m_poll_counter{0}
     {
-        //add entry for the internal com socket.
-        m_entries.push_back(entry{ m_com_socket, event_type::read, [](socket_poller&, const socket_ptr& s, event_type, status_flags) {
-            std::vector<char> buffer;
-            socket_address src;
-            std::static_pointer_cast<unencrypted::udp::server_socket>(s)->receive(buffer, src, 0);
-            } });
     }
 
 
@@ -173,28 +196,53 @@ namespace netlib {
         poll_counter_manager manage_poll_counter(m_poll_counter);
 
         {
-            std::lock_guard lock(m_mutex);
+            m_mutex.lock();
 
             //if stopped
             if (m_stop) {
+                m_mutex.unlock();
                 return poll_status::stopped;
             }
 
-            //if there are no m_poll_entries (besides the com socket)
-            if (m_entries.size() - 1 == 0) {
-                return poll_status::empty;
+            //if there are no entries, wait for internal socket entry;
+            //account for the com socket
+            while (m_entries.size() - 1 == 0) {
+                m_mutex.unlock();
+
+                //wait for data
+                char buf;
+                int s = recv(m_com_socket, &buf, sizeof(buf), 0);
+
+                //if there was an error
+                if (s <= 0) {
+                    if (is_socket_closed_error(get_last_error_number())) {
+                        return poll_status::stopped;
+                    }
+                    throw std::system_error(get_last_error_number(), std::system_category());
+                }
+
+                //no error
+                m_mutex.lock();
             }
 
-            //if changed, rebuild the m_poll_entries/m_poll_fds
+            m_mutex.unlock();
+
+            std::lock_guard lock(m_mutex);
+
+            //if changed, rebuild the m_poll_entries/m_poll_fds arrays
             if (m_entries_changed) {
                 m_entries_changed = false;
 
-                //make room for new m_poll_entries
+                //make room for new entries
                 m_poll_entries.resize(m_entries.size());
                 m_poll_fds.resize(m_entries.size());
 
+                //set the internal entry
+                m_poll_fds[0].events = POLLRDNORM;
+                m_poll_fds[0].fd = m_com_socket;
+
                 //set m_poll_entries
-                for (size_t i = 0; i < m_entries.size(); ++i) {
+                for (size_t i = 1; i < m_entries.size(); ++i) {
                     m_poll_entries[i] = m_entries[i];
                     m_poll_fds[i].events = m_entries[i].event == event_type::read ? POLLRDNORM : POLLWRNORM;
                     m_poll_fds[i].fd = m_entries[i].socket->handle();
@@ -207,7 +255,15 @@ namespace netlib {
 
         //process events
         if (poll_result > 0) {
-            for (size_t i = 0; i < m_poll_fds.size() && poll_result > 0; ++i) {
+            //process the internal com socket
+            if (m_poll_fds[0].revents) {
+                char buf;
+                recv(m_com_socket, &buf, sizeof(buf), 0);
+                --poll_result;
+            }
+
+            //process entries
+            for (size_t i = 1; i < m_poll_fds.size() && poll_result > 0; ++i) {
                 if (m_poll_fds[i].revents) {
                     //set the flags
                     status_flags flags;
@@ -267,14 +323,16 @@ namespace netlib {
             
             m_stop = true;
         }
-        m_com_socket->send(std::vector<char>(), m_com_socket_address);
+        char buf = 0;
+        ::send(m_com_socket, &buf, sizeof(buf), 0);
     }
 
 
     //sets the entries as changed
     void socket_poller::set_entries_changed() {
         m_entries_changed = true;
-        m_com_socket->send(std::vector<char>(), m_com_socket_address);
+        char buf = 0;
+        ::send(m_com_socket, &buf, sizeof(buf), 0);
     }
 
 

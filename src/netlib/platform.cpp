@@ -22,7 +22,8 @@ static const struct winsock_library {
 
 
 int get_last_error_number() {
-    return GetLastError();
+    const int error = GetLastError();
+    return error;
 }
 
 
@@ -79,6 +80,11 @@ int poll(pollfd* fda, unsigned long fds, int timeout) {
     }
 
     return result;
+}
+
+
+int get_connection_timeout_error_number() {
+    return WSAETIMEDOUT;
 }
 
 

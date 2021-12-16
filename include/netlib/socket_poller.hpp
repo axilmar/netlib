@@ -7,7 +7,7 @@
 #include <mutex>
 #include <atomic>
 #include <memory>
-#include "unencrypted_udp_server_socket.hpp"
+#include "socket.hpp"
 
 
 /**
@@ -76,12 +76,7 @@ namespace netlib {
             /**
              * stopped.
              */
-            stopped = -2,
-
-            /**
-             * no sockets were polled.
-             */
-             empty,
+            stopped = -1,
 
              /**
              * timeout.
@@ -229,10 +224,7 @@ namespace netlib {
         const size_t m_max_sockets;
 
         //internal socket used for waking up from poll.
-        std::shared_ptr<unencrypted::udp::server_socket> m_com_socket;
-
-        //socket address assigned to the com socket.
-        socket_address m_com_socket_address;
+        socket::handle_type m_com_socket;
 
         //entries
         std::vector<entry> m_entries;

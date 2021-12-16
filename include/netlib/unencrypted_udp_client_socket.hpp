@@ -23,9 +23,10 @@ namespace netlib::unencrypted::udp {
 
         /**
          * Constructor.
-         * @param addr address of server.
+         * @param server_addr address of server.
+         * @param client_addr address to bind this socket to.
          */
-        client_socket(const socket_address& addr);
+        client_socket(const socket_address& server_addr, const socket_address& client_addr);
 
         /**
          * Sends data to the server.
