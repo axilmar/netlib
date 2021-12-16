@@ -25,7 +25,15 @@ namespace netlib::ssl {
     void SSL_close(SSL* ssl);
 
 
-} //namespace netlib::ssl
+    //send data
+    bool ssl_send(SSL* ssl, const char* d, int len);
+
+
+    //receive data
+    bool ssl_receive(SSL* ssl, char* d, int len);
+
+
+    } //namespace netlib::ssl
 
 
 #endif //NETLIB_SSL_HPP

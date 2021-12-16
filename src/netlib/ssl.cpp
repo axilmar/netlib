@@ -173,4 +173,56 @@ namespace netlib::ssl {
     }
 
 
+    //send data
+    bool ssl_send(SSL* ssl, const char* d, int len) {
+        do {
+            //send
+            int s = SSL_write(ssl, d, len);
+
+            //success
+            if (s > 0) {
+                d += s;
+                len -= s;
+                continue;
+            }
+
+            switch (ssl_handle_io_error(ssl, s)) {
+            case ssl_io_result::success:
+                return true;
+            case ssl_io_result::failure:
+                return false;
+            }
+
+        } while (len > 0);
+
+        return true;
+    }
+
+
+    //receive data
+    bool ssl_receive(SSL* ssl, char* d, int len) {
+        do {
+            //receive
+            int s = SSL_read(ssl, d, len);
+
+            //success
+            if (s > 0) {
+                d += s;
+                len -= s;
+                continue;
+            }
+
+            switch (ssl_handle_io_error(ssl, s)) {
+            case ssl_io_result::success:
+                return true;
+            case ssl_io_result::failure:
+                return false;
+            }
+
+        } while (len > 0);
+
+        return true;
+    }
+
+
 } //namespace netlib::ssl

@@ -11,58 +11,6 @@
 namespace netlib::ssl::tcp {
 
 
-    //send data
-    static bool _send(SSL* ssl, const char* d, int len) {
-        do {
-            //send
-            int s = SSL_write(ssl, d, len);
-
-            //success
-            if (s > 0) {
-                d += s;
-                len -= s;
-                continue;
-            }
-
-            switch (ssl_handle_io_error(ssl, s)) {
-            case ssl_io_result::success:
-                return true;
-            case ssl_io_result::failure:
-                return false;
-            }
-
-        } while (len > 0);
-
-        return true;
-    }
-
-
-    //receive data
-    static bool _receive(SSL* ssl, char* d, int len) {
-        do {
-            //receive
-            int s = SSL_read(ssl, d, len);
-
-            //success
-            if (s > 0) {
-                d += s;
-                len -= s;
-                continue;
-            }
-
-            switch (ssl_handle_io_error(ssl, s)) {
-            case ssl_io_result::success:
-                return true;
-            case ssl_io_result::failure:
-                return false;
-            }
-
-        } while (len > 0);
-
-        return true;
-    }
-
-
     //create the socket and the ssl
     static std::shared_ptr<SSL> create_ssl(const client_context& context, const socket_address& server_addr) {
         //create the socket
@@ -107,12 +55,12 @@ namespace netlib::ssl::tcp {
 
         //send size
         set_endianess(size);
-        if (!_send(ssl().get(), reinterpret_cast<const char*>(&size), sizeof(size))) {
+        if (!ssl_send(ssl().get(), reinterpret_cast<const char*>(&size), sizeof(size))) {
             return false;
         }
 
         //send data
-        return _send(ssl().get(), data.data(), numeric_cast<int>(data.size()));
+        return ssl_send(ssl().get(), data.data(), numeric_cast<int>(data.size()));
     }
 
 
@@ -121,14 +69,14 @@ namespace netlib::ssl::tcp {
         message_size_t size;
 
         //receive size
-        if (!_receive(ssl().get(), reinterpret_cast<char*>(&size), sizeof(size))) {
+        if (!ssl_receive(ssl().get(), reinterpret_cast<char*>(&size), sizeof(size))) {
             return false;
         }
         set_endianess(size);
 
         //receive data
         data.resize(size);
-        return _receive(ssl().get(), data.data(), numeric_cast<int>(size));
+        return ssl_receive(ssl().get(), data.data(), numeric_cast<int>(size));
     }
 
 
