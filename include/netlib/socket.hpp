@@ -163,6 +163,18 @@ namespace netlib {
          * Returns the hash code for this object.
          */
         size_t hash() const;
+
+        /**
+         * Sets SO_REUSEADDR and SO_REUSEPORT (if available) on the given socket handle.
+         */
+        static void set_reuse_address_and_port(handle_type handle);
+
+        /**
+         * Sets SO_REUSEADDR and SO_REUSEPORT (if available) on the underlying socket handle. 
+         */
+        void set_reuse_address_and_port() {
+            set_reuse_address_and_port(handle());
+        }
     };
 
 

@@ -10,7 +10,7 @@ namespace netlib {
 
     //the default constructor.
     socket_address::socket_address() : m_data{} {
-        reinterpret_cast<sockaddr_in*>(m_data.data())->sin_family = AF_INET;
+        reinterpret_cast<sockaddr_in*>(m_data.data())->sin_family = AF_UNSPEC;
     }
 
 
@@ -18,7 +18,7 @@ namespace netlib {
     socket_address::socket_address(const ip_address& addr, uint16_t port) {
         static_assert(sizeof(m_data) >= sizeof(sockaddr_storage));
 
-        switch (addr.type()) {
+        switch (addr.address_family()) {
         case AF_INET:
             reinterpret_cast<uint32_t&>(reinterpret_cast<sockaddr_in*>(m_data.data())->sin_addr) = *reinterpret_cast<const uint32_t*>(addr.data());
             reinterpret_cast<sockaddr_in*>(m_data.data())->sin_family = AF_INET;
@@ -37,8 +37,8 @@ namespace netlib {
     }
 
 
-    //Returns the socket address type.
-    int socket_address::type() const {
+    //Returns the socket address family.
+    int socket_address::address_family() const {
         return reinterpret_cast<const sockaddr*>(m_data.data())->sa_family;
     }
 
@@ -101,9 +101,9 @@ namespace netlib {
 
     //compare socket addresses
     int socket_address::compare(const socket_address& other) const {
-        switch (type()) {
+        switch (address_family()) {
         case AF_INET:
-            switch (other.type()) {
+            switch (other.address_family()) {
             case AF_INET: 
                 return reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_addr) < reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_addr) ? -1 :
                        reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_addr) > reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_addr) ?  1 : 
@@ -120,7 +120,7 @@ namespace netlib {
             }
 
         case AF_INET6:
-            switch (other.type()) {
+            switch (other.address_family()) {
             case AF_INET:
                 return reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_addr) < reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_addr) ? -1 :
                        reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_addr) > reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(other.m_data.data())->sin_addr) ?  1 :
@@ -151,6 +151,34 @@ namespace netlib {
 
         case AF_INET6:
             return netlib::hash(reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_addr, reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_port, reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_scope_id);
+        }
+
+        throw std::logic_error("Invalid address family.");
+    }
+
+
+    //Returns true if the address of this is any.
+    bool socket_address::is_any() const {
+        switch (reinterpret_cast<const sockaddr*>(m_data.data())->sa_family) {
+        case AF_INET:
+            return reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_addr) == htonl(INADDR_ANY);
+
+        case AF_INET6:
+            return memcmp(&reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_addr, &in6addr_any, sizeof(in6addr_any)) == 0;
+        }
+
+        throw std::logic_error("Invalid address family.");
+    }
+
+
+    //Returns true if the address of this is loopback.
+    bool socket_address::is_loopback() const {
+        switch (reinterpret_cast<const sockaddr*>(m_data.data())->sa_family) {
+        case AF_INET:
+            return reinterpret_cast<const uint32_t&>(reinterpret_cast<const sockaddr_in*>(m_data.data())->sin_addr) == htonl(INADDR_LOOPBACK);
+
+        case AF_INET6:
+            return memcmp(&reinterpret_cast<const sockaddr_in6*>(m_data.data())->sin6_addr, &in6addr_loopback, sizeof(in6addr_loopback)) == 0;
         }
 
         throw std::logic_error("Invalid address family.");

@@ -25,12 +25,12 @@ namespace netlib::ssl::tcp {
         /**
          * Creates a socket, binds it to the given address, and listens for connections.
          * @param context context.
-         * @param addr address to bind the socket to.
+         * @param this_addr address to bind the socket to.
          * @param backlog backlog; if 0, SOMAXCONN is used.
          * @exception std::system_error thrown if there is a socket error.
          * @exception ssl_error thrown if there is an ssl error.
          */
-        server_socket(const server_context& context, const socket_address& addr, int backlog = 0);
+        server_socket(const server_context& context, const socket_address& this_addr, int backlog = 0);
 
         /**
          * Accepts a socket connection.

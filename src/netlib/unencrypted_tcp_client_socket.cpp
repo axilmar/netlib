@@ -65,10 +65,21 @@ namespace netlib::unencrypted::tcp {
 
 
     //Constructor.
-    client_socket::client_socket(const socket_address& addr)
-        : socket(::socket(addr.type(), SOCK_STREAM, IPPROTO_TCP))
+    client_socket::client_socket(const std::optional<socket_address>& this_addr, const socket_address& server_addr, bool reuse_address_and_port)
+        : socket(::socket(server_addr.address_family(), SOCK_STREAM, IPPROTO_TCP))
     {
-        if (::connect(handle(), reinterpret_cast<const sockaddr*>(addr.data()), sizeof(sockaddr_storage))) {
+        //optionally reuse address/port
+        if (reuse_address_and_port) {
+            set_reuse_address_and_port();
+        }
+
+        //optionally bind the socket
+        if (this_addr.has_value() && ::bind(handle(), reinterpret_cast<const sockaddr*>(this_addr.value().data()), sizeof(sockaddr_storage))) {
+            throw std::system_error(get_last_error_number(), std::system_category());
+        }
+
+        //connect the socket
+        if (::connect(handle(), reinterpret_cast<const sockaddr*>(server_addr.data()), sizeof(sockaddr_storage))) {
             throw std::system_error(get_last_error_number(), std::system_category());
         }
     }

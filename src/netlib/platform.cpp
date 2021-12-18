@@ -54,6 +54,7 @@ bool is_socket_closed_error(int error) {
     switch (error) {
     case WSAECONNABORTED:
     case WSAECONNRESET:
+    case WSAENOTSOCK:
         return true;
     }
     return false;
@@ -85,6 +86,11 @@ int poll(pollfd* fda, unsigned long fds, int timeout) {
 
 int get_connection_timeout_error_number() {
     return WSAETIMEDOUT;
+}
+
+
+int get_socket_closed_error_number() {
+    return WSAENOTSOCK;
 }
 
 

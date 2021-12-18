@@ -58,7 +58,7 @@ namespace netlib {
 
         /**
          * The default constructor.
-         * The address contains all zeros, and the address type is ip4.
+         * The address contains all zeros, and the address family is 0.
          */
         ip_address();
 
@@ -90,8 +90,8 @@ namespace netlib {
          * Constructor from hostname/ip address string.
          * @param hostname hostname/ip address string; 
          *  if null/empty, then the ip address of the localhost is discovered.
-         * @param type address type; if 0, then it is autodetected.
-         * @exception std::invalid_argument if the address type is not supported.
+         * @param type address family; if 0, then it is autodetected.
+         * @exception std::invalid_argument if the address family is not supported.
          * @exception std::system_error if a system error happens.
          * @exception std::logic_error if the hostname is valid but cannot be resolved to an IP4/IP6 address.
          */
@@ -101,7 +101,7 @@ namespace netlib {
          * Constructor from hostname/ip address string.
          * @param hostname hostname/ip address string;
          *  if null/empty, then the ip address of the localhost is discovered.
-         * @param type address type; if 0, then it is autodetected.
+         * @param type address family; if 0, then it is autodetected.
          */
         ip_address(const std::string& hostname, int type = 0) 
             : ip_address(hostname.c_str(), type)
@@ -109,10 +109,17 @@ namespace netlib {
         }
 
         /**
-         * Returns the address type.
+         * Returns the address family.
          */
-        int type() const {
-            return m_address_type;
+        int address_family() const {
+            return m_address_family;
+        }
+
+        /**
+         * Returns true if the address family is different than 0.
+         */
+        explicit operator bool() const {
+            return m_address_family != 0;
         }
 
         /**
@@ -226,8 +233,18 @@ namespace netlib {
          */
         size_t hash() const;
 
+        /**
+         * Returns true if the address of this is any.
+         */
+        bool is_any() const;
+
+        /**
+         * Returns true if the address of this is loopback.
+         */
+        bool is_loopback() const;
+
     private:
-        int m_address_type;
+        int m_address_family;
         std::array<char, 16> m_data;
         uint32_t m_zone_index;
     };

@@ -17,9 +17,9 @@ namespace netlib::ssl::tcp {
 
 
     //create the socket
-    static unencrypted::socket::handle_type create_socket(const socket_address& addr, int backlog) {
+    static unencrypted::socket::handle_type create_socket(const socket_address& this_addr, int backlog) {
         //create the socket
-        socket::handle_type sock = ::socket(addr.type(), SOCK_STREAM, IPPROTO_TCP);
+        socket::handle_type sock = ::socket(this_addr.address_family(), SOCK_STREAM, IPPROTO_TCP);
 
         //failure to create the socket
         if (sock < 0) {
@@ -27,7 +27,7 @@ namespace netlib::ssl::tcp {
         }
 
         //bind the socket; if error, throw exception
-        if (::bind(sock, reinterpret_cast<const sockaddr*>(addr.data()), sizeof(sockaddr_storage))) {
+        if (::bind(sock, reinterpret_cast<const sockaddr*>(this_addr.data()), sizeof(sockaddr_storage))) {
             throw std::system_error(get_last_error_number(), std::system_category());
         }
 
@@ -42,8 +42,8 @@ namespace netlib::ssl::tcp {
 
 
     //Creates a socket, binds it to the given address, and listens for connections.
-    server_socket::server_socket(const server_context& context, const socket_address& addr, int backlog)
-        : unencrypted::socket(create_socket(addr, backlog))
+    server_socket::server_socket(const server_context& context, const socket_address& this_addr, int backlog)
+        : unencrypted::socket(create_socket(this_addr, backlog))
         , m_ctx(context.ctx())
     {
     }

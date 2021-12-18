@@ -12,12 +12,22 @@ namespace netlib::ssl::tcp {
 
 
     //create the socket and the ssl
-    static std::shared_ptr<SSL> create_ssl(const client_context& context, const socket_address& server_addr) {
+    static std::shared_ptr<SSL> create_ssl(const client_context& context, const std::optional<socket_address>& this_addr, const socket_address& server_addr, bool reuse_address_and_port) {
         //create the socket
-        socket::handle_type sock = ::socket(server_addr.type(), SOCK_STREAM, IPPROTO_TCP);
+        socket::handle_type sock = ::socket(server_addr.address_family(), SOCK_STREAM, IPPROTO_TCP);
 
         //failure to create the socket
         if (sock < 0) {
+            throw std::system_error(get_last_error_number(), std::system_category());
+        }
+
+        //set reuse
+        if (reuse_address_and_port) {
+            socket::set_reuse_address_and_port(sock);
+        }
+
+        //optionally bind the socket
+        if (this_addr.has_value() && ::bind(sock, reinterpret_cast<const sockaddr*>(this_addr.value().data()), sizeof(sockaddr_storage))) {
             throw std::system_error(get_last_error_number(), std::system_category());
         }
 
@@ -43,8 +53,8 @@ namespace netlib::ssl::tcp {
 
 
     //constructor
-    client_socket::client_socket(const client_context& context, const socket_address& server_addr)
-        : ssl::socket(context.ctx(), create_ssl(context, server_addr))
+    client_socket::client_socket(const client_context& context, const std::optional<socket_address>& this_addr, const socket_address& server_addr, bool reuse_address_and_port)
+        : ssl::socket(context.ctx(), create_ssl(context, this_addr, server_addr, reuse_address_and_port))
     {
     }
 

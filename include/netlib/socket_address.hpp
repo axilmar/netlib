@@ -15,7 +15,7 @@ namespace netlib {
     public:
         /**
          * The default constructor.
-         * It constructs an IP4 address set to 0.
+         * It constructs an address with its type set to 0.
          */
         socket_address();
 
@@ -25,9 +25,16 @@ namespace netlib {
         socket_address(const ip_address& addr, uint16_t port = 0);
 
         /**
-         * Returns the address type.
+         * Returns the address family.
          */
-        int type() const;
+        int address_family() const;
+
+        /**
+         * Returns true if the address family is different than 0. 
+         */
+        explicit operator bool() const {
+            return address_family() != 0;
+        }
 
         /**
          * Returns the address.
@@ -125,6 +132,16 @@ namespace netlib {
          * Returns the hash code for this object.
          */
         size_t hash() const;
+
+        /**
+         * Returns true if the address of this is any. 
+         */
+        bool is_any() const;
+
+        /**
+         * Returns true if the address of this is loopback. 
+         */
+        bool is_loopback() const;
 
     private:
         std::array<char, 128> m_data;

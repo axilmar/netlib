@@ -3,6 +3,7 @@
 
 
 #include <vector>
+#include <optional>
 #include "unencrypted_socket.hpp"
 
 
@@ -16,16 +17,27 @@ namespace netlib::unencrypted::tcp {
     public:
         /**
          * The default constructor.
-         * @param handle optional socket handle.
+         * An invalid socket is created.
          */
-        client_socket(handle_type handle = invalid_handle) : unencrypted::socket(handle) {
+        client_socket() : unencrypted::socket() {
+        }
+
+        /**
+         * Constructor from handle.
+         * @param handle socket handle.
+         * @exception std::system_error if the socket is invalid.
+         */
+        client_socket(handle_type handle) : unencrypted::socket(handle) {
         }
 
         /**
          * Constructor.
-         * @param addr address of server.
+         * @param this_addr address to optionally bind this socket to.
+         * @param server_addr address of server.
+         * @param reuse_addr_and_port if set, then SO_REUSEADDR and SO_REUSEPORT (if available) are set on the socket.
+         * @exception std::system_error if a system error has occurred.
          */
-        client_socket(const socket_address& addr);
+        client_socket(const std::optional<socket_address>& this_addr, const socket_address& server_addr, bool reuse_address_and_port = false);
 
         /**
          * Sends data to the server.

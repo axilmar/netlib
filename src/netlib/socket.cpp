@@ -69,4 +69,20 @@ namespace netlib {
     }
 
 
+    //Sets SO_REUSEADDR and SO_REUSEPORT (if available) on the underlying socket handle.
+    void socket::set_reuse_address_and_port(handle_type handle) {
+        const char on = 1;
+
+        if (setsockopt(handle, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) {
+            throw std::system_error(get_last_error_number(), std::system_category());
+        }
+
+        #ifdef SO_REUSEPORT
+        if (setsockopt(handle, SOL_SOCKET, SO_REUSEPORT, &on, sizeof(on)) < 0) {
+            throw std::system_error(get_last_error_number(), std::system_category());
+        }
+        #endif
+    }
+
+
 } //namespace netlib

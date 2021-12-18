@@ -8,20 +8,6 @@
 namespace netlib {
 
 
-    /*
-    //constants
-    const int ip_address::ip4 = AF_INET;
-    const int ip_address::ip6 = AF_INET6;
-
-
-    //standard addresses
-    const ip_address ip_address::ip4_any(static_cast<uint32_t>(INADDR_ANY));
-    const ip_address ip_address::ip4_loopback(INADDR_LOOPBACK);
-    const ip_address ip_address::ip6_any(reinterpret_cast<const std::array<char, 16>&>(in6addr_any));
-    const ip_address ip_address::ip6_loopback(reinterpret_cast<const std::array<char, 16>&>(in6addr_loopback));
-    */
-
-
     //ip4 family address constant
     ip_address::ip4::operator int() const {
         return AF_INET;
@@ -48,7 +34,7 @@ namespace netlib {
 
     //the default constructor.
     ip_address::ip_address()
-        : m_address_type{AF_INET}
+        : m_address_family{AF_UNSPEC}
     {
         reinterpret_cast<uint32_t&>(m_data) = 0;
     }
@@ -56,7 +42,7 @@ namespace netlib {
 
     //ip4 constructor.
     ip_address::ip_address(uint32_t addr) 
-        : m_address_type(AF_INET)
+        : m_address_family(AF_INET)
     {
         reinterpret_cast<uint32_t&>(m_data) = htonl(addr);
     }
@@ -64,7 +50,7 @@ namespace netlib {
 
     //ip4 constructor.
     ip_address::ip_address(const std::array<char, 4>& addr) 
-        : m_address_type(AF_INET)
+        : m_address_family(AF_INET)
     {
         reinterpret_cast<std::array<char, 4>&>(m_data) = addr;
     }
@@ -72,7 +58,7 @@ namespace netlib {
 
     //ip6 constructor
     ip_address::ip_address(const std::array<char, 16>& addr, uint32_t zone_index)
-        : m_address_type(AF_INET6)
+        : m_address_family(AF_INET6)
         , m_zone_index(zone_index)
     {
         reinterpret_cast<std::array<char, 16>&>(m_data) = addr;
@@ -81,7 +67,7 @@ namespace netlib {
 
     //ip6 constructor
     ip_address::ip_address(const std::array<uint16_t, 8>& addr, uint32_t zone_index)
-        : m_address_type(AF_INET6)
+        : m_address_family(AF_INET6)
         , m_zone_index(zone_index)
     {
         for (size_t i = 0; i < 8; ++i) {
@@ -101,14 +87,14 @@ namespace netlib {
         case AF_INET6:
             break;
         default:
-            throw std::invalid_argument("Invalid address type.");
+            throw std::invalid_argument("Invalid address family.");
         }
 
         //if hostname is given, try to convert string to ip address
         if (hostname && strlen(hostname) > 0) {
             if (type == AF_INET || !type) {
                 if (inet_pton(AF_INET, hostname, m_data.data()) == 1) {
-                    m_address_type = AF_INET;
+                    m_address_family = AF_INET;
                     return;
                 }
             }
@@ -117,7 +103,7 @@ namespace netlib {
                 const char* zone_index_str = strchr(hostname, '%');
                 if (!zone_index_str) {
                     if (inet_pton(AF_INET6, hostname, m_data.data()) == 1) {
-                        m_address_type = AF_INET6;
+                        m_address_family = AF_INET6;
                         m_zone_index = 0;
                         return;
                     }
@@ -127,7 +113,7 @@ namespace netlib {
                     char* p;
                     long v = strtol(zone_index_str + 1, &p, 10);
                     if (!*p && v >= 0 && inet_pton(AF_INET6, hostname, m_data.data()) == 1) {
-                        m_address_type = AF_INET6;
+                        m_address_family = AF_INET6;
                         m_zone_index = v;
                         return;
                     }
@@ -154,7 +140,7 @@ namespace netlib {
 
         addrinfo* fai = nullptr;
 
-        //autodetect address type
+        //autodetect address family
         if (type == 0) {
             for (addrinfo* tai = ai; tai; tai = tai->ai_next) {
                 if (tai->ai_family == AF_INET || tai->ai_family == AF_INET6) {
@@ -164,7 +150,7 @@ namespace netlib {
             }
         }
 
-        //else find specific address type
+        //else find specific address family
         else {
             for (addrinfo* tai = ai; tai; tai = tai->ai_next) {
                 if (tai->ai_family == type) {
@@ -178,12 +164,12 @@ namespace netlib {
         if (fai) {
             switch (fai->ai_family) {
             case AF_INET:
-                m_address_type = AF_INET;
+                m_address_family = AF_INET;
                 reinterpret_cast<uint32_t&>(m_data) = reinterpret_cast<const uint32_t&>(reinterpret_cast<sockaddr_in*>(fai->ai_addr)->sin_addr);
                 break;
 
             case AF_INET6:
-                m_address_type = AF_INET6;
+                m_address_family = AF_INET6;
                 m_data = reinterpret_cast<const std::array<char, 16>&>(reinterpret_cast<sockaddr_in6*>(fai->ai_addr)->sin6_addr);
                 m_zone_index = reinterpret_cast<sockaddr_in6*>(fai->ai_addr)->sin6_scope_id;
                 break;
@@ -226,7 +212,7 @@ namespace netlib {
     std::string ip_address::to_string() const {
         char buffer[256];
 
-        switch (m_address_type) {
+        switch (m_address_family) {
         case AF_INET:
             return inet_ntop(AF_INET, m_data.data(), buffer, sizeof(buffer));
 
@@ -242,14 +228,42 @@ namespace netlib {
 
     //compare ip addresses
     int ip_address::compare(const ip_address& other) const {
-        int r = memcmp(m_data.data(), other.m_data.data(), m_address_type == AF_INET ? 4 : 16);
+        int r = memcmp(m_data.data(), other.m_data.data(), m_address_family == AF_INET ? 4 : 16);
         return r ? r : m_zone_index < other.m_zone_index ? -1 : m_zone_index > other.m_zone_index ? 1 : 0;
     }
 
 
     //hash
     size_t ip_address::hash() const {
-        return netlib::hash(m_address_type, m_data, m_zone_index);
+        return netlib::hash(m_address_family, m_data, m_zone_index);
+    }
+
+
+    //Returns true if the address of this is any.
+    bool ip_address::is_any() const {
+        switch (m_address_family) {
+        case AF_INET:
+            return *reinterpret_cast<const uint32_t*>(m_data.data()) == htonl(INADDR_ANY);
+
+        case AF_INET6:
+            return memcmp(m_data.data(), &in6addr_any, sizeof(in6addr_any)) == 0;
+        }
+
+        throw std::logic_error("Invalid address family.");
+    }
+
+
+    //Returns true if the address of this is loopback.
+    bool ip_address::is_loopback() const {
+        switch (m_address_family) {
+        case AF_INET:
+            return *reinterpret_cast<const uint32_t*>(m_data.data()) == htonl(INADDR_LOOPBACK);
+
+        case AF_INET6:
+            return memcmp(m_data.data(), &in6addr_loopback, sizeof(in6addr_loopback)) == 0;
+        }
+
+        throw std::logic_error("Invalid address family.");
     }
 
 

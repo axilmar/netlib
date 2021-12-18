@@ -4,13 +4,14 @@
 #include <atomic>
 #include <vector>
 #include "testlib.hpp"
+#include "execlib/counter.hpp"
 #include "netlib/ip_address.hpp"
 #include "netlib/socket_address.hpp"
 #include "netlib/unencrypted_tcp_server_socket.hpp"
-#include "netlib/unencrypted_udp_server_socket.hpp"
-#include "netlib/unencrypted_udp_client_socket.hpp"
+#include "netlib/unencrypted_udp_socket.hpp"
 #include "netlib/socket_poller_thread.hpp"
 #include "netlib/ssl_tcp_server_socket.hpp"
+#include "netlib/numeric_cast.hpp"
 
 
 using namespace testlib;
@@ -73,88 +74,88 @@ static void test_ip_address() {
     test("ip_address::ip_address()", [&]() {
         ip_address a;
         std::array<char, 4> b{};
-        check(a.type() == ip_address::ip4);
+        check(a.address_family() == 0);
         check(a.ip4_bytes() == b);
         });
 
     test("ip_address::ip_address(ip4 value)", [&]() {
         ip_address a(ip4_value);
-        check(a.type() == ip_address::ip4);
+        check(a.address_family() == ip_address::ip4);
         check(a.ip4_value() == ip4_value);
         });
 
     test("ip_address::ip_address(ip4 bytes)", [&]() {
         ip_address a(ip4_bytes);
-        check(a.type() == ip_address::ip4);
+        check(a.address_family() == ip_address::ip4);
         check(a.ip4_bytes() == ip4_bytes);
         });
 
     test("ip_address::ip_address(ip6 bytes, 1)", [&]() {
         ip_address a(ip6_bytes, 1);
-        check(a.type() == ip_address::ip6);
+        check(a.address_family() == ip_address::ip6);
         check(a.ip6_bytes() == ip6_bytes);
         check(a.zone_index() == 1);
         });
 
     test("ip_address::ip_address(ip6 words, 1)", [&]() {
         ip_address a(ip6_words, 1);
-        check(a.type() == ip_address::ip6);
+        check(a.address_family() == ip_address::ip6);
         check(a.ip6_words() == ip6_words);
         check(a.zone_index() == 1);
         });
 
     test("ip_address::ip_address(nullptr, ip4)", [&]() {
         ip_address a(nullptr, ip_address::ip4);
-        check(a.type() == ip_address::ip4);
+        check(a.address_family() == ip_address::ip4);
         check(a.ip4_bytes() == localhost_ip4_bytes);
         check(a.ip4_value() == localhost_ip4_value);
         });
 
     test("ip_address::ip_address("", ip4)", [&]() {
         ip_address a("", ip_address::ip4);
-        check(a.type() == ip_address::ip4);
+        check(a.address_family() == ip_address::ip4);
         check(a.ip4_bytes() == localhost_ip4_bytes);
         check(a.ip4_value() == localhost_ip4_value);
         });
 
     test("ip_address::ip_address(ip4 string, ip4)", [&]() {
         ip_address a(ip4_string, ip_address::ip4);
-        check(a.type() == ip_address::ip4);
+        check(a.address_family() == ip_address::ip4);
         check(a.ip4_bytes() == ip4_bytes);
         check(a.ip4_value() == ip4_value);
         });
 
     test("ip_address::ip_address(localhost name, ip4)", [&]() {
         ip_address a(localhost_name, ip_address::ip4);
-        check(a.type() == ip_address::ip4);
+        check(a.address_family() == ip_address::ip4);
         check(a.ip4_bytes() == localhost_ip4_bytes);
         check(a.ip4_value() == localhost_ip4_value);
         });
 
     test("ip_address::ip_address(nullptr, ip6)", [&]() {
         ip_address a(nullptr, ip_address::ip6);
-        check(a.type() == ip_address::ip6);
+        check(a.address_family() == ip_address::ip6);
         check(a.ip6_bytes() == localhost_ip6_bytes);
         check(a.ip6_words() == localhost_ip6_words);
         });
 
     test("ip_address::ip_address("", ip6)", [&]() {
         ip_address a("", ip_address::ip6);
-        check(a.type() == ip_address::ip6);
+        check(a.address_family() == ip_address::ip6);
         check(a.ip6_bytes() == localhost_ip6_bytes);
         check(a.ip6_words() == localhost_ip6_words);
         });
 
     test("ip_address::ip_address(ip6 string, ip6)", [&]() {
         ip_address a(ip6_string, ip_address::ip6);
-        check(a.type() == ip_address::ip6);
+        check(a.address_family() == ip_address::ip6);
         check(a.ip6_bytes() == ip6_bytes);
         check(a.ip6_words() == ip6_words);
         });
 
     test("ip_address::ip_address(ip6 string %1, ip6)", [&]() {
         ip_address a(ip6_string_1, ip_address::ip6);
-        check(a.type() == ip_address::ip6);
+        check(a.address_family() == ip_address::ip6);
         check(a.ip6_bytes() == ip6_bytes);
         check(a.ip6_words() == ip6_words);
         check(a.zone_index() == 1);
@@ -162,7 +163,7 @@ static void test_ip_address() {
 
     test("ip_address::ip_address(localhost name, ip6)", [&]() {
         ip_address a(localhost_name, ip_address::ip6);
-        check(a.type() == ip_address::ip6);
+        check(a.address_family() == ip_address::ip6);
         check(a.ip6_bytes() == localhost_ip6_bytes);
         check(a.ip6_words() == localhost_ip6_words);
         check(a.zone_index() == localhost_zone_index);
@@ -231,21 +232,19 @@ static void test_socket_address() {
 
     test("socket_address::socket_address()", [&]() {
         socket_address a;
-        check(a.type() == AF_INET);
-        check(a.address() == ip_address());
-        check(a.port() == 0);
+        check(a.address_family() == 0);
         });
 
     test("socket_address::socket_address(ip_address, port)", [&]() {
         {
             socket_address a(ip4_string, port);
-            check(a.type() == AF_INET);
+            check(a.address_family() == AF_INET);
             check(a.address() == ip_address(ip4_string));
             check(a.port() == port);
         }
         {
             socket_address a(ip6_string, port);
-            check(a.type() == AF_INET6);
+            check(a.address_family() == AF_INET6);
             check(a.address() == ip_address(ip6_string));
             check(a.port() == port);
         }
@@ -354,7 +353,7 @@ static void test_tcp_sockets() {
 
         std::thread client_thread([&]() {
             try {
-                unencrypted::tcp::client_socket client_socket(server_address);
+                unencrypted::tcp::client_socket client_socket({}, server_address);
                 std::vector<char> buffer(message.begin(), message.end());
                 for (size_t i = 0; i < message_count; ++i) {
                     client_socket.send(buffer);
@@ -459,7 +458,7 @@ static void test_tcp_socket_polling() {
             client_threads[i] = std::thread{ [&, sa = server_addr] () {
                 try {
                     //the client socket
-                    unencrypted::tcp::client_socket client_socket(sa);
+                    unencrypted::tcp::client_socket client_socket({}, sa);
 
                     //buffer to send
                     std::vector<char> buffer(message.begin(), message.end());
@@ -491,193 +490,158 @@ static void test_tcp_socket_polling() {
 }
 
 
-static void test_udp_sockets() {
-    socket_address server_address(ip_address::ip4::loopback, 10000);
-    const std::string message = "hello world!";
-    static constexpr size_t message_count = 10;
-
-    test("udp sockets", [&]() {
-        std::thread server_thread([&]() {
-            try {
-                unencrypted::udp::server_socket server(server_address);
-                socket_address client_address_1, client_address_2;
-                std::shared_ptr<unencrypted::udp::client_socket> client_socket_1 = server.accept(client_address_1);
-                std::shared_ptr<unencrypted::udp::client_socket> client_socket_2 = server.accept(client_address_2);
-                std::vector<char> buffer;
-                for (size_t i = 0; i < message_count; ++i) {
-                    {
-                        client_socket_1->receive(buffer);
-                        std::string str(buffer.begin(), buffer.end());
-                        check(str == message);
-                    }
-                    {
-                        client_socket_2->receive(buffer);
-                        std::string str(buffer.begin(), buffer.end());
-                        check(str == message);
-                    }
-                }
-            }
-            catch (const std::exception& ex) {
-                fail_test_with_exception(ex);
-            }
-            });
-
-        std::thread client_thread([&]() {
-            try {
-                unencrypted::udp::client_socket client_socket(server_address, socket_address(ip_address::ip4::loopback, 10001));
-                std::vector<char> buffer(message.begin(), message.end());
-                for (size_t i = 0; i < message_count; ++i) {
-                    client_socket.send(buffer);
-                }
-                int x = 0;
-            }
-            catch (const std::exception& ex) {
-                fail_test_with_exception(ex);
-            }
-            });
-
-        std::thread client_thread_2([&]() {
-            try {
-                unencrypted::udp::client_socket client_socket(server_address, socket_address(ip_address::ip4::loopback, 10002));
-                std::vector<char> buffer(message.begin(), message.end());
-                for (size_t i = 0; i < message_count; ++i) {
-                    client_socket.send(buffer);
-                }
-                int x = 0;
-            }
-            catch (const std::exception& ex) {
-                fail_test_with_exception(ex);
-            }
-            });
-
-        server_thread.join();
-        client_thread.join();
-        client_thread_2.join();
-        });
-}
-
-
-static void test_udp_socket_polling() {
-    test("udp socket polling", [&]() {
-        static constexpr size_t server_socket_count = 10;
-        static constexpr size_t client_count = 50;
-        static constexpr size_t per_client_message_count = 10;
-        static constexpr size_t total_message_count = client_count * per_client_message_count;
-        const std::string message = "hello server!!!";
-
-        //server socket addresses
-        std::array<socket_address, server_socket_count> server_socket_addresses;
-        for (size_t i = 0; i < server_socket_count; ++i) {
-            server_socket_addresses[i] = socket_address(ip_address::ip4::loopback, uint16_t(10000 + i));
-        }
-
-        std::atomic<size_t> server_message_count{};
-
-        //init server
-        std::thread server_thread{ [&, &ssa = server_socket_addresses]() {
-            try {
-                //server receive callback
-                auto receive_callback = [&](socket_poller& sp, const std::shared_ptr<unencrypted::udp::client_socket>& s, socket_poller::event_type e, socket_poller::status_flags f) {
-                    try {
-                        std::vector<char> buffer;
-                        socket_address src;
-                        if (!s->receive(buffer)) {
-                            return;
-                        }
-                        std::string str{ buffer.begin(), buffer.end() };
-                        if (str != message) {
-                            int x = 0;
-                        }
-                        check(str == message);
-                        ++server_message_count;
-                        if (server_message_count == total_message_count) {
-                            sp.stop();
-                        }
-                    }
-                    catch (const std::exception& ex) {
-                        fail_test_with_exception(ex);
-                    }
-                };
-
-                //client sockets of server
-                std::vector<std::shared_ptr<unencrypted::udp::client_socket>> clients;
-
-                //reserve space upfront so as that the clients vector is not resized while the sockets are being used
-                clients.reserve(client_count);
-
-                //server accept callback
-                auto accept_callback = [&](socket_poller& sp, const std::shared_ptr<unencrypted::udp::server_socket>& s, socket_poller::event_type e, socket_poller::status_flags f) {
-                    try {
-                        //accept client
-                        socket_address src;
-                        std::shared_ptr<unencrypted::udp::client_socket> client_socket = s->accept(src);
-
-                        //keep the socket
-                        clients.push_back(client_socket);
-
-                        //add the socket to the socket poller
-                        sp.add(client_socket, receive_callback);
-                    }
-                    catch (const std::exception& ex) {
-                        fail_test_with_exception(ex);
-                    }
-                };
-
-                //a socket poller thread
-                socket_poller_thread poller;
-
-                //add the server sockets
-                for (size_t i = 0; i < server_socket_count; ++i) {
-                    poller.add(std::make_shared<unencrypted::udp::server_socket>(ssa[i]), accept_callback);
-                }
-
-                //poll until stopped
-                poller.join();
-            }
-            catch (const std::exception& ex) {
-                fail_test_with_exception(ex);
-            }
-            } };
-
-        std::array<std::thread, client_count> client_threads;
-        std::atomic<size_t> client_message_count{};
-
-        //start the clients
-        for (size_t i = 0; i < client_count; ++i) {
-            const socket_address& server_addr = server_socket_addresses[i % server_socket_addresses.size()];
-            client_threads[i] = std::thread{ [&, sa = server_addr]() {
-                try {
-                    //the client socket
-                    unencrypted::udp::client_socket client_socket(sa, socket_address(ip_address::ip4::loopback, 0));
-
-                    //buffer to send
-                    std::vector<char> buffer(message.begin(), message.end());
-
-                    //send the data
-                    for (size_t i = 0; i < per_client_message_count; ++i) {
-                        check(client_socket.send(buffer));
-                        ++client_message_count;
-                    }
-                }
-                catch (const std::exception& ex) {
-                    fail_test_with_exception(ex);
-                }
-                } };
-        }
-
-        //wait for clients to send all their messages
-        for (std::thread& client_thread : client_threads) {
-            client_thread.join();
-        }
-
-        //wait for server to stop
-        server_thread.join();
-
-        //check the data
-        check(client_message_count == total_message_count);
-        check(server_message_count == client_message_count);
-        });
-}
+//static void test_udp_sockets() {
+//    socket_address server_address(ip_address::ip4::loopback, 10000);
+//    const std::string message = "hello world!";
+//    static constexpr size_t message_count = 10;
+//    static constexpr size_t client_count = 10;
+//
+//    test("udp sockets", [&]() {
+//        std::mutex mutex;
+//        std::vector<std::thread> threads;
+//
+//        execlib::counter<size_t> task_counter;
+//
+//        //create the server thread
+//        {
+//            ++task_counter;
+//            std::lock_guard lock(mutex);
+//            threads.push_back(std::thread([&]() {
+//                try {
+//                    unencrypted::udp::socket server_socket(server_address);
+//                    std::vector<char> buffer;
+//                    for (size_t i = 0; i < message_count; ++i) {
+//                        server_socket.receive(buffer);
+//                        std::string str(buffer.begin(), buffer.end());
+//                        check(str == message);
+//                    }
+//                    --task_counter;
+//                }
+//                catch (const std::exception& ex) {
+//                    --task_counter;
+//                    fail_test_with_exception(ex);
+//                }
+//                }));
+//        }
+//
+//        //create the client threads
+//        for(size_t i = 0; i < client_count; ++i) {
+//            ++task_counter;
+//            std::lock_guard lock(mutex);
+//            threads.push_back(std::thread([&, i]() {
+//                try {
+//                    unencrypted::udp::socket client_socket(socket_address(ip_address::ip4::loopback, numeric_cast<uint16_t>(10001 + i)), server_address);
+//                    std::vector<char> buffer(message.begin(), message.end());
+//                    for (size_t i = 0; i < message_count; ++i) {
+//                        client_socket.send(buffer);
+//                    }
+//                    --task_counter;
+//                }
+//                catch (const std::exception& ex) {
+//                    --task_counter;
+//                    fail_test_with_exception(ex);
+//                }
+//                }));
+//        }
+//
+//        //wait for threads to terminate
+//        task_counter.wait();
+//        std::lock_guard lock(mutex);
+//        for (std::thread& thread : threads) {
+//            thread.join();
+//        }
+//        });
+//}
+//
+//
+//static void test_udp_socket_polling() {
+//    test("udp socket polling", [&]() {
+//        static constexpr size_t server_socket_count = 10;
+//        static constexpr size_t client_count = 50;
+//        static constexpr size_t per_client_message_count = 10;
+//        const std::string message = "hello server!!!";
+//
+//        //server socket addresses
+//        std::array<socket_address, server_socket_count> server_socket_addresses;
+//        for (size_t i = 0; i < server_socket_count; ++i) {
+//            server_socket_addresses[i] = socket_address(ip_address::ip4::loopback, uint16_t(10000 + i));
+//        }
+//
+//        //a socket poller thread for server
+//        socket_poller_thread poller;
+//
+//        //init server
+//        std::thread server_thread{ [&, &ssa = server_socket_addresses]() {
+//            try {
+//                //server receive callback
+//                auto receive_callback = [&](socket_poller& sp, const std::shared_ptr<unencrypted::udp::socket>& s, socket_poller::event_type e, socket_poller::status_flags f) {
+//                    try {
+//                        std::vector<char> buffer;
+//                        socket_address src;
+//                        if (!s->receive(buffer)) {
+//                            return;
+//                        }
+//                        std::string str{ buffer.begin(), buffer.end() };
+//                        check(str == message);
+//                    }
+//                    catch (const std::exception& ex) {
+//                        fail_test_with_exception(ex);
+//                    }
+//                };
+//
+//                //client sockets of server
+//                std::vector<std::shared_ptr<unencrypted::udp::socket>> clients;
+//
+//                //reserve space upfront so as that the clients vector is not resized while the sockets are being used
+//                clients.reserve(client_count);
+//
+//                //add the server sockets
+//                for (size_t i = 0; i < server_socket_count; ++i) {
+//                    poller.add(std::make_shared<unencrypted::udp::socket>(ssa[i]), receive_callback);
+//                }
+//
+//                //poll until stopped
+//                poller.join();
+//            }
+//            catch (const std::exception& ex) {
+//                fail_test_with_exception(ex);
+//            }
+//            } };
+//
+//        std::array<std::thread, client_count> client_threads;
+//
+//        //start the clients
+//        for (size_t i = 0; i < client_count; ++i) {
+//            const socket_address& server_addr = server_socket_addresses[i % server_socket_addresses.size()];
+//            client_threads[i] = std::thread{ [&, sa = server_addr]() {
+//                try {
+//                    //the client socket
+//                    unencrypted::udp::socket client_socket(socket_address(ip_address::ip4::loopback, 0), sa);
+//
+//                    //buffer to send
+//                    std::vector<char> buffer(message.begin(), message.end());
+//
+//                    //send the data
+//                    for (size_t i = 0; i < per_client_message_count; ++i) {
+//                        check(client_socket.send(buffer));
+//                    }
+//                }
+//                catch (const std::exception& ex) {
+//                    fail_test_with_exception(ex);
+//                }
+//                } };
+//        }
+//
+//        //wait for clients to send all their messages
+//        for (std::thread& client_thread : client_threads) {
+//            client_thread.join();
+//        }
+//
+//        //wait for server to stop
+//        poller.stop();
+//        server_thread.join();
+//        });
+//}
 
 
 static void test_ssl_tcp_sockets() {
@@ -707,7 +671,7 @@ static void test_ssl_tcp_sockets() {
         std::thread client_thread([&]() {
             try {
                 ssl::tcp::client_context context;
-                ssl::tcp::client_socket client_socket(context, server_address);
+                ssl::tcp::client_socket client_socket(context, {}, server_address);
                 std::vector<char> buffer(message.begin(), message.end());
                 for (size_t i = 0; i < message_count; ++i) {
                     client_socket.send(buffer);
@@ -814,7 +778,7 @@ static void test_ssl_tcp_socket_polling() {
                 try {
                     //the client socket
                     ssl::tcp::client_context context;
-                    ssl::tcp::client_socket client_socket(context, sa);
+                    ssl::tcp::client_socket client_socket(context, {}, sa);
 
                     //buffer to send
                     std::vector<char> buffer(message.begin(), message.end());
@@ -852,8 +816,8 @@ int main() {
     test_socket_address();
     test_tcp_sockets();
     test_tcp_socket_polling();
-    test_udp_sockets();
-    test_udp_socket_polling();
+    //test_udp_sockets();
+    //test_udp_socket_polling();
     test_ssl_tcp_sockets();
     test_ssl_tcp_socket_polling();
     cleanup();

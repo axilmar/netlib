@@ -8,10 +8,10 @@ namespace netlib::unencrypted::tcp {
 
 
     //Creates a socket, binds it to the given address, and listens for connections.
-    server_socket::server_socket(const socket_address& addr, int backlog)
-        : socket(::socket(addr.type(), SOCK_STREAM, IPPROTO_TCP))
+    server_socket::server_socket(const socket_address& this_addr, int backlog)
+        : socket(::socket(this_addr.address_family(), SOCK_STREAM, IPPROTO_TCP))
     {
-        if (::bind(handle(), reinterpret_cast<const sockaddr*>(addr.data()), sizeof(sockaddr_storage))) {
+        if (::bind(handle(), reinterpret_cast<const sockaddr*>(this_addr.data()), sizeof(sockaddr_storage))) {
             throw std::system_error(get_last_error_number(), std::system_category());
         }
 
