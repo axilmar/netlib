@@ -4,6 +4,7 @@
 
 #include <vector>
 #include "unencrypted_socket.hpp"
+#include "udp.hpp"
 
 
 namespace netlib::unencrypted::udp {
@@ -47,23 +48,6 @@ namespace netlib::unencrypted::udp {
          */
         socket(const socket_address& this_addr, bool reuse_addr_and_port = false);
 
-        ///**
-        // * Sends data to the connected peer.
-        // * @param data data to send.
-        // * @return true on success, false if the socket is closed.
-        // * @exception std::system_error thrown if there was an error.
-        // */
-        //bool send(const std::vector<char>& data);
-
-        ///**
-        // * Receives data from the connected peer.
-        // * @param data reception buffer.
-        // * @param max_message_size number of bytes to allocate for the buffer.
-        // * @return true on success, false if the socket is closed.
-        // * @exception std::system_error thrown if there was an error.
-        // */
-        //bool receive(std::vector<char>& data, uint16_t max_message_size = 65535);
-
         /**
          * Sends data to the given address.
          * @param data data to send.
@@ -81,7 +65,7 @@ namespace netlib::unencrypted::udp {
          * @return true on success, false if the socket is closed.
          * @exception std::system_error thrown if there was an error.
          */
-        bool receive(std::vector<char>& data, socket_address& sender_addr, uint16_t max_message_size = 65535);
+        bool receive(std::vector<char>& data, socket_address& sender_addr, const uint16_t max_message_size = NETLIB_UDP_MAX_MESSAGE_SIZE);
     };
 
 

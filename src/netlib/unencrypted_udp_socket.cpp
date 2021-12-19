@@ -41,49 +41,6 @@ namespace netlib::unencrypted::udp {
     }
 
 
-    ////Sends data to the connected peer.
-    //bool socket::send(const std::vector<char>& data) {
-    //    //sent
-    //    int bytes = ::send(handle(), data.data(), numeric_cast<int>(data.size()), 0);
-
-    //    //sent ok
-    //    if (bytes == data.size()) {
-    //        return true;
-    //    }
-
-    //    //socket closed
-    //    if (is_socket_closed_error(get_last_error_number())) {
-    //        return false;
-    //    }
-
-    //    //error
-    //    throw std::system_error(get_last_error_number(), std::system_category());
-    //}
-
-
-    ////Receives data from the connected peer.
-    //bool socket::receive(std::vector<char>& data, uint16_t max_message_size) {
-    //    data.resize(max_message_size);
-
-    //    //receive
-    //    int bytes = ::recv(handle(), data.data(), numeric_cast<int>(data.size()), 0);
-
-    //    //receive ok
-    //    if (bytes >= 0) {
-    //        data.resize(bytes);
-    //        return true;
-    //    }
-
-    //    //socket closed
-    //    if (is_socket_closed_error(get_last_error_number())) {
-    //        return false;
-    //    }
-
-    //    //error
-    //    throw std::system_error(get_last_error_number(), std::system_category());
-    //}
-
-
     //Sends data to the given address.
     bool socket::send(const std::vector<char>& data, const socket_address& receiver_addr) {
         //sent
@@ -105,12 +62,12 @@ namespace netlib::unencrypted::udp {
 
 
     //Receives data from the network.
-    bool socket::receive(std::vector<char>& data, socket_address& sender_addr, uint16_t max_message_size) {
+    bool socket::receive(std::vector<char>& data, socket_address& sender_addr, const uint16_t max_message_size) {
         data.resize(max_message_size);
 
         //receive
         int fromlen = sizeof(socket_address);
-        int bytes = ::recvfrom(handle(), data.data(), numeric_cast<int>(data.size()), 0, reinterpret_cast<sockaddr*>(sender_addr.data()), &fromlen);
+        int bytes = ::recvfrom(handle(), data.data(), static_cast<int>(data.size()), 0, reinterpret_cast<sockaddr*>(sender_addr.data()), &fromlen);
 
         //receive ok
         if (bytes >= 0) {
