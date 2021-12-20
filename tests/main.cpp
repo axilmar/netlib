@@ -703,7 +703,7 @@ static void test_ssl_tcp_sockets() {
 
         std::thread client_thread([&]() {
             try {
-                ssl::tcp::client_context context;
+                ssl::tcp::client_context context("netlib.pem", "netlib.key");
                 ssl::tcp::client_socket client_socket(context, {}, server_address);
                 std::vector<char> buffer(message.begin(), message.end());
                 for (size_t i = 0; i < message_count; ++i) {
@@ -809,7 +809,7 @@ static void test_ssl_tcp_socket_polling() {
             client_threads[i] = std::thread{ [&, sa = server_addr]() {
                 try {
                     //the client socket
-                    ssl::tcp::client_context context;
+                    ssl::tcp::client_context context("netlib.pem", "netlib.key");
                     ssl::tcp::client_socket client_socket(context, {}, sa);
 
                     //buffer to send
@@ -844,14 +844,14 @@ static void test_ssl_tcp_socket_polling() {
 
 int main() {
     init();
-    test_ip_address();
-    test_socket_address();
-    test_tcp_sockets();
-    test_tcp_socket_polling();
-    test_udp_sockets();
-    test_udp_socket_polling();
-    test_ssl_tcp_sockets();
-    test_ssl_tcp_socket_polling();
+    //test_ip_address();
+    //test_socket_address();
+    //test_tcp_sockets();
+    //test_tcp_socket_polling();
+    //test_udp_sockets();
+    //test_udp_socket_polling();
+    //test_ssl_tcp_sockets();
+    //test_ssl_tcp_socket_polling();
     cleanup();
     system("pause");
     return static_cast<int>(testlib::get_globals().test_error_count);

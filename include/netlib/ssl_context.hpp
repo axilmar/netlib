@@ -32,10 +32,13 @@ namespace netlib::ssl {
 
     protected:
         /**
-         * The constructor.
+         * Constructor.
          * @param ctx context.
+         * @param certificate_file certificate file.
+         * @param key_file key file.
+         * @exception ssl_error thrown if there was an error.
          */
-        context(const std::shared_ptr<ssl_ctx_st>& ctx);
+        context(const std::shared_ptr<ssl_ctx_st>& ctx, const char* certificate_file, const char* key_file);
 
     private:
         std::shared_ptr<ssl_ctx_st> m_ctx;

@@ -2,7 +2,7 @@
 #define NETLIB_SSL_TCP_SERVER_CONTEXT_HPP
 
 
-#include "ssl_server_context.hpp"
+#include "ssl_context.hpp"
 
 
 namespace netlib::ssl::tcp {
@@ -11,7 +11,7 @@ namespace netlib::ssl::tcp {
     /**
      * Server context for tcp ssl sockets.
      */
-    class server_context : public ssl::server_context {
+    class server_context : public ssl::context {
     public:
         /**
          * Constructor.

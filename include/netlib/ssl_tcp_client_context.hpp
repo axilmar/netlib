@@ -15,9 +15,11 @@ namespace netlib::ssl::tcp {
     public:
         /**
          * Constructor.
+         * @param certificate_file certificate file (normally has 'pem' extension).
+         * @param key_file key file (normally has 'key' extension).
          * @exception ssl_error thrown if there was an error.
          */
-        client_context();
+        client_context(const char* certificate_file, const char* key_file);
     };
 
 

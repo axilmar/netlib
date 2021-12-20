@@ -13,8 +13,8 @@ namespace netlib::ssl::tcp {
 
 
     //constructor
-    client_context::client_context()
-        : ssl::context(create_context())
+    client_context::client_context(const char* certificate_file, const char* key_file)
+        : ssl::context(create_context(), certificate_file, key_file)
     {
     }
 
